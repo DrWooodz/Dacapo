@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>DaCapo Piano Coach</title>
+    <meta
+      name="description"
+      content="DaCapo: a free piano practice companion. Daily sessions, sight-reading, technique, real repertoire by Satie, Chopin, Debussy and Rachmaninoff, checked over MIDI."
+    />
+    <!-- site-only:start (installable app; left out of the Claude artifact) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#5F86B3" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="icon" href="icons/icon-192.png" />
+    <!-- site-only:end -->
+    <meta name="claude:viewport-fit-sides" content="cover" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <div class="brand">DaCapo<i>coach</i></div>
+        <button class="chipbtn" id="inputChip" type="button" aria-label="Piano connection">
+          <span class="dot" id="inputDot"></span><span id="inputChipTxt">Connect</span>
+        </button>
+        <button
+          class="iconbtn"
+          id="reportBtn"
+          type="button"
+          aria-label="Report a problem"
+          title="Report a problem"
+        >
+          <svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
+        </button>
+        <button class="iconbtn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M12 2.5v3M12 18.5v3M4.2 6.2l2.1 2.1M17.7 15.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 17.8l2.1-2.1M17.7 8.3l2.1-2.1"
+            />
+          </svg>
+        </button>
+      </header>
+      <nav class="tabs" id="tabs" aria-label="Sections">
+        <button type="button" data-view="practice">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="6" width="18" height="12" rx="1.5" />
+            <path d="M7.5 6v7M12 6v7M16.5 6v7M3 13h18" /></svg
+          >Practice
+        </button>
+        <button type="button" data-view="skills">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 20h16" />
+            <path d="M6 16l4-5 3 3 5-7" /></svg
+          >Skills
+        </button>
+        <button type="button" data-view="library">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 3h9l4 4v14H6z" />
+            <path d="M15 3v4h4" />
+            <ellipse cx="10" cy="16" rx="2.2" ry="1.7" />
+            <path d="M12.2 16V9l3 1" /></svg
+          >Library
+        </button>
+        <button type="button" data-view="free">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 18V6l10-2v12" />
+            <circle cx="6.5" cy="18" r="2.5" />
+            <circle cx="16.5" cy="16" r="2.5" /></svg
+          >Free play
+        </button>
+      </nav>
+      <main id="main"><div class="page" id="page"></div></main>
+    </div>
+    <div id="layer"></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

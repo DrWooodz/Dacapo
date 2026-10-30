@@ -1,0 +1,25 @@
+{
+  "name": "dacapo",
+  "version": "1.1.1",
+  "private": true,
+  "description": "A piano practice companion that listens over MIDI.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "python3 build.py",
+    "dev": "python3 -m http.server 8080 --directory src",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "python3 build.py && playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@playwright/test": "1.56.0",
+    "acorn": "^8.19.0",
+    "eslint": "9.39.5",
+    "eslint-scope": "^8.4.0",
+    "globals": "17.13.0",
+    "prettier": "3.9.10"
+  }
+}

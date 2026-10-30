@@ -1,0 +1,29 @@
+{
+  "name": "DaCapo Piano Coach",
+  "short_name": "DaCapo",
+  "description": "A piano practice companion that listens over MIDI: a daily session around a weekly focus, reading, technique, theory, pieces by Satie, Chopin, Debussy and Rachmaninoff, improvisation, and a loop station for fun.",
+  "start_url": "./#practice",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EDF1F6",
+  "theme_color": "#5F86B3",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
