@@ -118,7 +118,7 @@ test('damaged saved data does not stop the app: wrong shapes keep their defaults
   await page.reload();
   await page.waitForFunction(() => window.DaCapo && window.DaCapo.Store);
   await app.connectPiano();
-  for (const view of ['practice', 'skills', 'library', 'free']) {
+  for (const view of ['home', 'practice', 'library', 'free']) {
     await app.eval(v => window.DaCapo.go(v), view);
     await expect(page.locator('#page')).not.toContainText('This screen hit a problem');
   }

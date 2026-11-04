@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.0
+
+- Home screen: today's session step by step with times (start it or any step), the weekly focus, each skill's level and next item, and the week. Replaces the Practice and Skills tabs; three tabs remain (Home, Library, Free play).
+- One place per function: focus and placement check on Home; help and problem reports in Settings (flag button removed); style-study improvising under the Improvisation skill (removed from Free play); piece practice in the Library.
+- Practice screen: just the drill, a step strip that jumps to any step, and Back. Next replaces Skip.
+- Library shows one composer at a time; whole rows open a piece.
+- Fixed: a theory level could show "NaN".
+
+## 1.2.0
+
+- MIDI import for multi-instrument files: parts listed with instrument names; Full, Simple, My choice and As written piano versions, with preview. The file is kept so the arrangement can be changed later.
+- About the music: key or mode with an explanation, and each section's chords as numerals and names, playable.
+- Theory walkthroughs (step by step, with examples to hear) for 13 units; new units on ♭VII/Mixolydian, folk minor and Dorian.
+- Four modal style studies with walkthroughs: Mixolydian waltz, folk-minor ballad, Dorian, drone.
+- Jam: play your piano through the device with one sound or a split per hand (two layers when recording); harp and flute sounds.
+
 ## 1.1.1
 
 A full audit of the app. Fixes:

@@ -1,56 +1,83 @@
-/* Importing your own MIDI files into the library. */
-import { clamp, meanOf } from '../core/util.js';
+/* Importing your own MIDI files into the library.
+   readMidi() reads a file into its parts (instruments); importPlan() picks how to make a piano piece of it
+   (a piano file as written, or an automatic piano reduction); buildPiece() writes the piece in the same
+   packed form as the built-in library. The file itself is kept with the piece, so the arrangement can be
+   changed later. */
+import { clamp } from '../core/util.js';
 import { spellerFor } from './theory.js';
-import { detectKey } from './analysis.js';
+import { byHands, guessRoles, isPianoFile, pianoAsWritten, pianoReduction, readParts } from './arrange.js';
 import { parseMidiFile } from './midiread.js';
+import { detectKey } from './harmony.js';
 
-export function importMidi(buf, fileName, split = 'auto') {
-  const { div, tracks } = parseMidiFile(buf);
-  const notes = [];
-  const meta = { time: [], key: null, tempo: null };
-  tracks.forEach((tr, ti) => {
-    const open = new Map();
-    tr.ev.forEach(e => {
-      if (e.k === 'time') meta.time.push([e.tick, e.n, e.d]);
-      else if (e.k === 'key' && !meta.key) meta.key = e;
-      else if (e.k === 'tempo' && !meta.tempo) meta.tempo = e.us;
-      if (e.ch === 9) return; // drums
-      const key = e.ch * 128 + e.m;
-      if (e.k === 'on') {
-        if (open.has(key)) {
-          const o = open.get(key);
-          o.d = e.tick - o.t;
-        }
-        const n = { t: e.tick, d: 0, m: e.m, ti, ch: e.ch, vel: e.vel };
-        open.set(key, n);
-        notes.push(n);
-      } else if (e.k === 'off' && open.has(key)) {
-        const o = open.get(key);
-        o.d = e.tick - o.t;
-        open.delete(key);
-      }
-    });
+const MAX_NOTES = 6000;
+const KEEP_FILE_BYTES = 256 * 1024; // larger files are imported, but cannot be re-arranged later
+
+const toBase64 = bytes => {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return btoa(s);
+};
+export const fromBase64 = b64 => {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+};
+
+// the file's parts and facts; throws with a message for the person when the file cannot be used
+export function readMidi(buf) {
+  const read = readParts(parseMidiFile(buf));
+  const count = read.parts.filter(p => !p.drums).reduce((a, p) => a + p.n, 0);
+  if (count < 4) throw new Error('No notes found in this file.');
+  if (count > MAX_NOTES * 3)
+    throw new Error('This file is very long. Split it into shorter files (a few minutes of music each).');
+  read.bytes = buf.byteLength <= KEEP_FILE_BYTES ? toBase64(new Uint8Array(buf)) : null;
+  return read;
+}
+
+// the arrangement to start from: {style: 'written' | 'full' | 'simple' | 'hands', roles, assign}
+export function importPlan(read) {
+  const roles = guessRoles(read.parts);
+  const assign = Object.fromEntries(
+    read.parts.map(p => [p.id, roles[p.id] === 'melody' ? 'rh' : roles[p.id] === 'bass' ? 'lh' : 'skip']),
+  );
+  return { style: isPianoFile(read.parts) ? 'written' : 'full', roles, assign };
+}
+
+// the notes for an arrangement: [{t, d, m, h, vel}] in the file's ticks
+function arrangeNotes(read, plan) {
+  if (plan.style === 'written') return pianoAsWritten(read.parts);
+  if (plan.style === 'hands') return byHands(read.parts, plan.assign);
+  const [, n, d] = read.meta.time[0] || [0, 4, 4];
+  return pianoReduction(read.parts, plan.roles, {
+    style: plan.style,
+    beat: read.div,
+    bar: (read.div * 4 * n) / d,
   });
-  if (notes.length < 4) throw new Error('No notes found in this file.');
-  if (notes.length > 6000)
-    throw new Error('This file is very long (over 6,000 notes). Split it into shorter files.');
-  // hands: by track when there are two or more note tracks, otherwise split at middle C
-  const byTrack = {};
-  notes.forEach(n => (byTrack[n.ti] = byTrack[n.ti] || []).push(n.m));
-  const tks = Object.keys(byTrack);
-  const useTracks = split === 'tracks' || (split === 'auto' && tks.length >= 2);
-  if (useTracks && tks.length >= 2) {
-    const avg = Object.fromEntries(tks.map(k => [k, meanOf(byTrack[k])]));
-    const hi = tks.slice().sort((a, b) => avg[b] - avg[a])[0];
-    notes.forEach(n => (n.h = String(n.ti) === hi ? 0 : avg[n.ti] >= 60 && tks.length > 2 ? 0 : 1));
-  } else notes.forEach(n => (n.h = n.m >= 60 ? 0 : 1));
-  // snap onsets to a fine grid so chords line up even in hand-played files
-  const grid = div / 24;
-  notes.forEach(n => {
-    n.t = Math.round(n.t / grid) * grid;
-    n.d = Math.max(grid, Math.round(n.d / grid) * grid);
-  });
-  notes.sort((a, b) => a.t - b.t || a.h - b.h || a.m - b.m);
+}
+
+// the instruments of the original that the arrangement uses
+function usedParts(read, plan) {
+  const pitched = read.parts.filter(p => !p.drums);
+  if (plan.style === 'written') return pitched;
+  if (plan.style === 'hands') return pitched.filter(p => plan.assign[p.id] && plan.assign[p.id] !== 'skip');
+  return pitched.filter(p => plan.roles[p.id] && plan.roles[p.id] !== 'skip');
+}
+
+const STYLE_WORDS = {
+  written: 'kept as written for piano',
+  full: 'arranged for piano: melody, harmony and bass',
+  simple: 'arranged for piano: melody and bass',
+  hands: 'with the parts you chose for each hand',
+};
+
+// a library piece made from the file and an arrangement (id, title, bpm: kept when re-arranging)
+export function buildPiece(read, fileName, plan, { id, title, bpm } = {}) {
+  const { div, meta } = read;
+  const notes = arrangeNotes(read, plan).map(n => ({ ...n }));
+  if (notes.length < 4) throw new Error('This arrangement has no notes to play. Choose other parts.');
+  if (notes.length > MAX_NOTES)
+    throw new Error('This file is very long (over 6,000 notes to play). Split it into shorter files.');
   const t0 = notes[0].t;
   notes.forEach(n => (n.t -= t0));
   // key and spelling
@@ -61,62 +88,49 @@ export function importMidi(buf, fileName, split = 'auto') {
   }
   const sp = spellerFor(clamp(sig, -6, 6));
   // bars from the first time signature (later changes are applied too)
-  const ts = meta.time.length ? meta.time.sort((a, b) => a[0] - b[0]) : [[0, 4, 4]];
+  const ts = meta.time.length ? meta.time : [[0, 4, 4]];
   const endTick = Math.max(...notes.map(n => n.t + n.d));
   const bars = [0];
-  let tk = 0,
-    ti2 = 0;
+  let tk = 0;
+  let ti = 0;
   while (tk < endTick && bars.length < 2000) {
-    while (ti2 + 1 < ts.length && ts[ti2 + 1][0] - t0 <= tk) ti2++;
-    const [, n, d] = ts[ti2];
+    while (ti + 1 < ts.length && ts[ti + 1][0] - t0 <= tk) ti++;
+    const [, n, d] = ts[ti];
     tk += (div * 4 * n) / d;
     bars.push(tk);
   }
   const qbpm = meta.tempo ? Math.round(60e6 / meta.tempo) : 80;
-  // pack like the built-in library (tpq = 24)
+  // packed like the built-in library: 24 ticks per beat, varints
   const tpq = 24;
   const toTicks = x => Math.round((x / div) * tpq);
-  const bytes = [];
-  const vi = n => {
+  const varint = (out, n) => {
     do {
       let b = n & 0x7f;
       n = Math.floor(n / 128);
       if (n) b |= 0x80;
-      bytes.push(b);
+      out.push(b);
     } while (n);
   };
+  const bytes = [];
   let pt = 0;
   const prev = [60, 48];
   notes.forEach(n => {
     const t = toTicks(n.t);
-    vi(t - pt);
+    varint(bytes, t - pt);
     pt = t;
-    vi(toTicks(n.d));
+    varint(bytes, toTicks(n.d));
     const dz = n.m - prev[n.h];
     prev[n.h] = n.m;
-    vi(dz >= 0 ? dz * 2 : -dz * 2 - 1);
-    const s = sp(n.m);
-    bytes.push(s.a + 2 + 5 * n.h + 10 * n.h);
+    varint(bytes, dz >= 0 ? dz * 2 : -dz * 2 - 1);
+    bytes.push(sp(n.m).a + 2 + 5 * n.h + 10 * n.h); // accidental, hand, staff (each hand on its own)
   });
-  const bb = [];
+  const barBytes = [];
   let pb = 0;
   bars.forEach(b => {
     const t = toTicks(b);
-    let x = t - pb;
+    varint(barBytes, t - pb);
     pb = t;
-    do {
-      let c = x & 0x7f;
-      x = Math.floor(x / 128);
-      if (x) c |= 0x80;
-      bb.push(c);
-    } while (x);
   });
-  const b64 = arr => btoa(String.fromCharCode(...arr));
-  const b64big = arr => {
-    let s = '';
-    for (let i = 0; i < arr.length; i += 8192) s += String.fromCharCode(...arr.slice(i, i + 8192));
-    return btoa(s);
-  };
   const nb = bars.length - 1;
   // sections of four bars; one in which no note starts (a long rest or a held chord) joins the one before
   const secs = [];
@@ -126,23 +140,20 @@ export function importMidi(buf, fileName, split = 'auto') {
     if (secs.length && !starts(a, z)) secs[secs.length - 1][1] = z;
     else secs.push([a, z, -1]);
   }
-  const title =
+  const name =
     fileName
       .replace(/\.(mid|midi)$/i, '')
       .replace(/[_-]+/g, ' ')
       .trim() || 'My piece';
   return {
-    id: 'mine-' + Date.now().toString(36),
-    t: title,
+    id: id || 'mine-' + Date.now().toString(36),
+    t: String(title || name).slice(0, 80),
     sub: '',
     c: 'mine',
     y: '',
     lvl: 3,
-    bpm: clamp(qbpm, 30, 220),
-    tip:
-      'Imported from your MIDI file. Hands were assigned ' +
-      (useTracks ? 'by track' : 'by splitting at middle C') +
-      '.',
+    bpm: clamp(bpm || qbpm, 30, 220),
+    tip: `Imported from your MIDI file, ${STYLE_WORDS[plan.style]}.`,
     tempos: [],
     tpq,
     shift: 0,
@@ -155,8 +166,8 @@ export function importMidi(buf, fileName, split = 'auto') {
       [0, 0, 't'],
       [0, 1, 'b'],
     ],
-    bars: b64(bb),
-    notes: b64big(bytes),
+    bars: toBase64(Uint8Array.from(barBytes)),
+    notes: toBase64(Uint8Array.from(bytes)),
     fing: '',
     n: notes.length,
     secs,
@@ -165,5 +176,15 @@ export function importMidi(buf, fileName, split = 'auto') {
     mut: '',
     src: fileName,
     imported: Date.now(),
+    // to change the arrangement later: the file, and the choices made
+    orig: read.bytes,
+    arr: { style: plan.style, roles: plan.roles, assign: plan.assign },
+    from: [...new Set(usedParts(read, plan).map(p => p.name))],
   };
+}
+
+// the whole import in one step, with the automatic arrangement
+export function importMidi(buf, fileName) {
+  const read = readMidi(buf);
+  return buildPiece(read, fileName, importPlan(read));
 }

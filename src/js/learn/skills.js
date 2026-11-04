@@ -8,7 +8,7 @@ import { median, todayKey } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { Library } from '../music/library.js';
 import { addDays, daysBetween, itemState } from './curriculum.js';
-import { AREA_BY, AREAS, itemDef, pieceOrder, skillTiers, TIER_NAMES, workingPieces } from './areas.js';
+import { AREA_BY, AREAS, itemDef, pieceOrder, skillTiers, workingPieces } from './areas.js';
 import { areaHasWork } from './status.js';
 
 export const SKILLS = [
@@ -29,7 +29,13 @@ function itemProgress(id) {
   const it = itemState(id);
   const def = itemDef(id);
   if (!it || !def) return 0;
-  const between = (v, a, b) => (b === a ? 1 : Math.max(0, Math.min(1, (v - a) / (b - a))));
+  // (a value missing from old or damaged saved data counts as no progress, never as NaN)
+  const between = (v, a, b) =>
+    !Number.isFinite(v) || !Number.isFinite(a) || !Number.isFinite(b)
+      ? 0
+      : b === a
+        ? 1
+        : Math.max(0, Math.min(1, (v - a) / (b - a)));
   switch (it.stage) {
     case 'learn':
       return 0.05 + 0.2 * Math.min(1, (it.pc || 0) / 3);
@@ -97,8 +103,6 @@ export function skillLevel(skill) {
   }
   return tieredLevel(skill);
 }
-
-export const tierName = level => TIER_NAMES[Math.min(MAX_LEVEL, Math.floor(level) + 1)];
 
 // a short measurement under each skill, where there is one
 export function skillDetail(skill) {

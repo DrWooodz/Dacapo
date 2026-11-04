@@ -5,6 +5,7 @@ import { AudioEngine } from '../core/audio.js';
 import { Input } from '../core/input.js';
 import { loopBeats, loopEvents, MAX_LAYERS } from './loop.js';
 import { Sounds } from './sounds.js';
+import { Thru } from './thru.js';
 import { DRUM_BY_GM } from './instruments.js';
 
 const AHEAD = 0.12; // seconds scheduled ahead
@@ -147,7 +148,10 @@ export const Transport = {
     this.emit('disarmed');
   },
   beginRecording(pass) {
-    this.rec = { pass, sound: this.armed, notes: [], open: new Map() };
+    // 'thru': the sounds your piano plays through this device; with a split, one layer for each side
+    const c = Thru.cfg;
+    const sides = this.armed === 'thru' ? { split: c.split, left: c.left, right: c.right } : null;
+    this.rec = { pass, sound: sides ? sides.right : this.armed, sides, notes: [], open: new Map() };
     this.armed = null;
     this.emit('recording', pass);
   },
@@ -203,16 +207,33 @@ export const Transport = {
       this.emit('recorded', null);
       return;
     }
-    const layer = {
-      id: 'l' + Date.now().toString(36),
-      sound: r.sound,
-      grid: r.sound === 'pad' ? 'off' : '16',
+    const layerOf = (sound, ns, k = '') => ({
+      id: 'l' + Date.now().toString(36) + k,
+      sound,
+      grid: sound === 'pad' ? 'off' : '16',
       mute: false,
-      notes,
-    };
-    this.L.layers.push(layer);
+      notes: ns,
+    });
+    const S = r.sides;
+    const layers =
+      S && S.split
+        ? [
+            layerOf(
+              S.left,
+              notes.filter(n => n.m < S.split),
+              'l',
+            ),
+            layerOf(
+              S.right,
+              notes.filter(n => n.m >= S.split),
+              'r',
+            ),
+          ].filter(l => l.notes.length)
+        : [layerOf(r.sound, notes)];
+    const room = MAX_LAYERS - this.L.layers.length;
+    layers.slice(0, room).forEach(l => this.L.layers.push(l));
     this.changed();
-    Log.ev('jam layer recorded', { sound: layer.sound, notes: notes.length });
-    this.emit('recorded', layer);
+    Log.ev('jam layer recorded', { sounds: layers.map(l => l.sound), notes: notes.length });
+    this.emit('recorded', layers[layers.length - 1]);
   },
 };

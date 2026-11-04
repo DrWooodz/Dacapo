@@ -176,6 +176,55 @@ export const Sounds = {
       out.gain.setValueAtTime(0, t);
       out.gain.linearRampToValueAtTime(peak, t + 0.35);
       release = 0.7;
+    } else if (sound === 'harp') {
+      // plucked: a bright attack through a closing low-pass, ringing on for a few seconds
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(Math.min(6000, f * 10), t);
+      lp.frequency.exponentialRampToValueAtTime(Math.max(400, f * 2.5), t + 0.6);
+      osc('triangle', f).connect(lp);
+      const h2 = ctx.createGain();
+      h2.gain.value = 0.25;
+      osc('sine', f * 2)
+        .connect(h2)
+        .connect(lp);
+      lp.connect(out);
+      const peak = 0.28 * (0.4 + vel);
+      out.gain.setValueAtTime(0, t);
+      out.gain.linearRampToValueAtTime(peak, t + 0.003);
+      out.gain.exponentialRampToValueAtTime(peak * 0.35, t + 0.5);
+      out.gain.exponentialRampToValueAtTime(0.001, t + Math.max(1.5, 4.5 - (m - 48) / 12));
+      release = 0.6;
+    } else if (sound === 'flute') {
+      // a soft sine with a little breath, and a gentle vibrato that sets in once the note is held
+      const tone = osc('sine', f);
+      const tri = ctx.createGain();
+      tri.gain.value = 0.12;
+      osc('triangle', f * 2)
+        .connect(tri)
+        .connect(out);
+      const lfo = osc('sine', 5.2);
+      const depth = ctx.createGain();
+      depth.gain.setValueAtTime(0, t);
+      depth.gain.linearRampToValueAtTime(f * 0.006, t + 0.6);
+      lfo.connect(depth).connect(tone.frequency);
+      tone.connect(out);
+      const breath = ctx.createBufferSource();
+      breath.buffer = this.noiseBuffer();
+      breath.loop = true;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = Math.min(8000, f * 2);
+      bp.Q.value = 2;
+      const bg = ctx.createGain();
+      bg.gain.setValueAtTime(0.05 * vel, t);
+      bg.gain.exponentialRampToValueAtTime(0.008, t + 0.25);
+      breath.connect(bp).connect(bg).connect(out);
+      nodes.push(breath);
+      const peak = 0.2 * (0.5 + vel);
+      out.gain.setValueAtTime(0, t);
+      out.gain.linearRampToValueAtTime(peak, t + 0.06);
+      release = 0.12;
     } else {
       // bass: saw and square through a closing low-pass
       const lp = ctx.createBiquadFilter();

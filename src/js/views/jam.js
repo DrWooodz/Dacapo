@@ -3,10 +3,12 @@
 import { IN_CLAUDE } from '../env.js';
 import { Log } from '../core/log.js';
 import { $, $$, clamp, esc, toast } from '../core/util.js';
+import { Store } from '../core/store.js';
 import { AudioEngine } from '../core/audio.js';
 import { Input } from '../core/input.js';
 import { bindSegs, closeBtn, closeSheet, openSheet, seg } from '../core/ui.js';
 import { saveFile } from '../core/files.js';
+import { midiName } from '../music/theory.js';
 import { kbSVG } from '../music/render.js';
 import {
   BEAT_BY,
@@ -22,6 +24,7 @@ import {
   stepsPerBar,
 } from '../music/loop.js';
 import { DRUMS, SOUND_BY, SOUNDS } from '../music/instruments.js';
+import { Thru } from '../music/thru.js';
 import { Transport } from '../music/transport.js';
 import { Sounds } from '../music/sounds.js';
 
@@ -79,18 +82,25 @@ export const Sketches = {
   },
 };
 
+// split points offered: every C and F♯ from C3 to C5
+const SPLITS = [48, 54, 60, 66, 72];
 const SOUND_CHOICES = [...SOUNDS.map(s => [s.id, s.n]), ['drums', 'Drum pads']];
 const soundName = id => (id === 'drums' ? 'Drums' : SOUND_BY[id].n);
 
 /* ---------- the screen ---------- */
 export function drawJam(body) {
   const L = Sketches.current();
-  const ui = { sound: 'piano', play: 'keys', raf: 0 };
+  const ui = { sound: Thru.cfg.on ? 'thru' : 'piano', play: 'keys', raf: 0 };
   const keep = () => Sketches.keep(L);
   if (!Transport.playing) Transport.L = L;
   // the screen keys play the sound you record with
   Input.touchSound = {
-    on: (m, vel) => Sounds.start(ui.sound === 'drums' ? 'piano' : ui.sound, m, vel),
+    on: (m, vel) =>
+      Sounds.start(
+        ui.sound === 'thru' ? Thru.soundFor(m) : ui.sound === 'drums' ? 'piano' : ui.sound,
+        m,
+        vel,
+      ),
     off: h => Sounds.stop(h),
   };
 
@@ -168,6 +178,8 @@ export function drawJam(body) {
       <div id="jHere"></div>
     </div>
 
+    <div class="card" id="jThru"></div>
+
     <div class="card">
       <div class="cardhead"><h2 class="h2">Sketches</h2></div>
       <div class="row">
@@ -194,10 +206,24 @@ export function drawJam(body) {
     rec.setAttribute('aria-pressed', String(on));
     rec.textContent = Transport.rec ? 'Recording' : Transport.armed ? 'Waiting…' : 'Record';
     rec.disabled = L.layers.length >= MAX_LAYERS && !on;
-    $('#jSounds', body).innerHTML = SOUND_CHOICES.map(
-      ([id, n]) =>
-        `<button type="button" class="chip" data-sound="${id}" aria-pressed="${ui.sound === id}">${esc(n)}</button>`,
-    ).join('');
+    const c = Thru.cfg;
+    const choices = c.on
+      ? [
+          [
+            'thru',
+            c.split
+              ? `${soundName(c.left)} | ${soundName(c.right)} (split)`
+              : `${soundName(c.right)} (my piano)`,
+          ],
+          ['drums', 'Drum pads'],
+        ]
+      : SOUND_CHOICES;
+    $('#jSounds', body).innerHTML = choices
+      .map(
+        ([id, n]) =>
+          `<button type="button" class="chip" data-sound="${id}" aria-pressed="${ui.sound === id}">${esc(n)}</button>`,
+      )
+      .join('');
     $$('[data-sound]', body).forEach(b => {
       b.onclick = () => {
         ui.sound = b.dataset.sound;
@@ -356,6 +382,56 @@ export function drawJam(body) {
       });
     });
   }
+  // your piano through this device: one sound, or a sound for each side of a split
+  function paintThru() {
+    const c = Thru.cfg;
+    const box = $('#jThru', body);
+    const opts = v =>
+      SOUNDS.map(x => `<option value="${x.id}" ${x.id === v ? 'selected' : ''}>${esc(x.n)}</option>`).join(
+        '',
+      );
+    const splits = SPLITS.map(
+      m => `<option value="${m}" ${m === c.split ? 'selected' : ''}>${midiName(m)}</option>`,
+    ).join('');
+    box.innerHTML = `
+      <div class="cardhead"><h2 class="h2">Your piano, through this device</h2></div>
+      <label class="toggle"><input type="checkbox" id="jThruOn" ${c.on ? 'checked' : ''}>
+        <span><b>Play my piano’s notes with these sounds</b><span class="small">Turn your piano’s own volume
+          all the way down so you hear only these. Wired headphones or this device’s speaker; Bluetooth
+          headphones add a delay you can feel.</span></span></label>
+      <div class="stack" style="gap:8px" ${c.on ? '' : 'hidden'}>
+        <label class="toggle"><input type="checkbox" id="jSplit" ${c.split ? 'checked' : ''}>
+          <span><b>Split the keyboard</b><span class="small">A different sound for each hand. Recording
+            with the split makes two layers, one for each side.</span></span></label>
+        <div class="row">
+          ${
+            c.split
+              ? `<label class="field">Left of ${midiName(c.split)}<select class="input sm" id="jLeft">${opts(c.left)}</select></label>
+                 <label class="field">Split at<select class="input sm" id="jAt">${splits}</select></label>
+                 <label class="field">From ${midiName(c.split)} up<select class="input sm" id="jRight">${opts(c.right)}</select></label>`
+              : `<label class="field">Sound<select class="input sm" id="jRight">${opts(c.right)}</select></label>`
+          }
+        </div>
+      </div>`;
+    const set = (k, v) => {
+      c[k] = v;
+      Store.save();
+      paintThru();
+      paintTransport();
+    };
+    $('#jThruOn', box).onchange = e => {
+      // recording follows: with your piano's sounds while this is on
+      if (e.target.checked && ui.sound !== 'drums') ui.sound = 'thru';
+      if (!e.target.checked && ui.sound === 'thru') ui.sound = 'piano';
+      set('on', e.target.checked);
+    };
+    $('#jSplit', box).onchange = e => set('split', e.target.checked ? 60 : 0);
+    const left = $('#jLeft', box);
+    if (left) left.onchange = e => set('left', e.target.value);
+    const at = $('#jAt', box);
+    if (at) at.onchange = e => set('split', +e.target.value);
+    $('#jRight', box).onchange = e => set('right', e.target.value);
+  }
   // the playhead: where the loop is, as you hear it
   function animate() {
     const head = $('#jHead', body);
@@ -498,7 +574,7 @@ export function drawJam(body) {
     else if (kind === 'recorded') {
       msg(
         data
-          ? `Layer ${L.layers.length} recorded. Record another on top, or listen.`
+          ? `${data.id.endsWith('r') ? `Layers ${L.layers.length - 1} and ${L.layers.length}` : `Layer ${L.layers.length}`} recorded. Record another on top, or listen.`
           : 'Nothing was played; no layer added.',
       );
       keep();
@@ -514,7 +590,9 @@ export function drawJam(body) {
     paintGrid();
     paintLayers();
     paintHere();
+    paintThru();
   }
+  const offThru = Thru.listen();
   paintAll();
   animate();
   msg('Choose a beat (or none), then press Record and play.');
@@ -523,6 +601,7 @@ export function drawJam(body) {
     cancelAnimationFrame(ui.raf);
     offT();
     Transport.stop(true);
+    offThru();
     Input.touchSound = null;
     keep();
   };

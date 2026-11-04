@@ -1,4 +1,4 @@
-# Music data in `src/library.json`
+# Music data in `src/data/library.json`
 
 The note data of the built-in pieces is derived from editions typeset by volunteers of the Mutopia Project (https://www.mutopiaproject.org). Each source carries its own license, listed below. Data derived from a Creative Commons Attribution-ShareAlike edition is shared under that same license (version 3.0 or 4.0, as listed: https://creativecommons.org/licenses/by-sa/4.0/ and https://creativecommons.org/licenses/by-sa/3.0/). Public-domain data carries no restrictions. DaCapo's code is MIT-licensed separately.
 

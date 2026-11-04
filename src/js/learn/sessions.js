@@ -103,6 +103,28 @@ function buildSession() {
   return s;
 }
 
+// a step of a session still to play
+export const isOpen = e => e.state !== 'done' && e.state !== 'skipped';
+
+/* ---------- time per entry ---------- */
+// active minutes per item, by kind of drill; upkeep and daily pieces get less, cold checks are quick
+const TIMEBOX = {
+  scale: 7,
+  arp: 7,
+  read: 6,
+  rhythm: 4,
+  section: 10,
+  full: 14,
+  pattern: 6,
+  improv: 4,
+  theory: 6,
+};
+const ROLE_BOX = { warm: 4, daily: 6, check: 2, review: 2 };
+export function entryMinutes(e) {
+  const d = itemDef(e.id);
+  return e.box || ROLE_BOX[e.role] || (d && TIMEBOX[d.kind]) || 8;
+}
+
 // today's session, built on first use each day
 export function currentSession() {
   const t = todayKey();
@@ -113,6 +135,15 @@ export function currentSession() {
   }
   dropMissing(s);
   return s;
+}
+
+// go to step i of a session: the step you leave stays to do, or counts as done when you played it
+export function jumpTo(s, i) {
+  const cur = s.list[s.idx];
+  if (cur && cur.state === 'active') cur.state = cur.reps ? 'done' : 'todo';
+  s.idx = i;
+  s.list[i].state = 'active';
+  Store.save();
 }
 
 // rebuild today's session (after the focus changes), keeping what is already done

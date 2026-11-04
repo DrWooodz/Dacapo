@@ -16,5 +16,7 @@ export const SOUNDS = [
   { id: 'epiano', n: 'E-piano', gm: 4 },
   { id: 'pad', n: 'Pad', gm: 89 },
   { id: 'bass', n: 'Bass', gm: 33 },
+  { id: 'harp', n: 'Harp', gm: 46 },
+  { id: 'flute', n: 'Flute', gm: 73 },
 ];
 export const SOUND_BY = Object.fromEntries(SOUNDS.map(s => [s.id, s]));

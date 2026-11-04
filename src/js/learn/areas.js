@@ -57,9 +57,11 @@ const TECH_TIERS = [
 
 const THEORY_TIERS = [1, 2, 3].map(t => THEORY_UNITS.filter(u => u.tier === t).map(u => 'h:' + u.id));
 
-const IMPROV_TIERS = [['satie', 'penta'], ['chopin', 'debussy'], ['rach']].map(ids =>
-  ids.filter(id => PAL_BY_ID[id]).flatMap(id => [`i:pat:${id}`, `i:imp:${id}`]),
-);
+const IMPROV_TIERS = [
+  ['satie', 'penta'],
+  ['chopin', 'debussy', 'drone', 'mixo'],
+  ['rach', 'folkminor', 'dorian'],
+].map(ids => ids.filter(id => PAL_BY_ID[id]).flatMap(id => [`i:pat:${id}`, `i:imp:${id}`]));
 
 // the ordered units of a skill, grouped in tiers (pieces are ordered per piece, see piecesOrder)
 export function skillTiers(skill) {

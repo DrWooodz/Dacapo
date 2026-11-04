@@ -26,8 +26,8 @@ import {
 import { applyPlacement } from './learn/assess.js';
 import { libraryView, pieceSheet } from './views/library.js';
 import { reportSheet } from './views/report.js';
+import { homeView } from './views/home.js';
 import { practiceView } from './views/practice.js';
-import { skillsView } from './views/skills.js';
 import { freeView } from './views/free.js';
 import { assessView } from './views/assess.js';
 import { settingsSheet } from './views/settings.js';
@@ -83,8 +83,8 @@ function boot() {
   try {
     Log.setContext({ env: describeApp, state: describeLearning, openReport: () => reportSheet() });
     registerViews({
+      home: homeView,
       practice: practiceView,
-      skills: skillsView,
       library: libraryView,
       free: freeView,
       assess: assessView,
@@ -102,7 +102,6 @@ function boot() {
     $$('#tabs [data-view]').forEach(b => (b.onclick = () => go(b.dataset.view)));
     $('#inputChip').onclick = settingsSheet;
     $('#settingsBtn').onclick = settingsSheet;
-    $('#reportBtn').onclick = () => reportSheet();
     Input.mode = Store.s.settings.input || 'touch';
     if (Input.mode === 'midi') Input.setMode('midi');
     else if (Input.mode === 'mic') {
@@ -111,9 +110,10 @@ function boot() {
     }
     Input.paint();
     snapshotSkills();
-    let start = 'practice';
+    // a reload comes back to the same screen; a fresh start (or a session in progress) to Home
+    let start = 'home';
     try {
-      start = sessionStorage.getItem('dacapo.view') || 'practice';
+      start = sessionStorage.getItem('dacapo.view') || 'home';
     } catch (e) {}
     const hv = (location.hash || '').slice(1);
     if (hasView(hv)) start = hv;
@@ -138,7 +138,7 @@ function boot() {
     const p = document.getElementById('page');
     if (p)
       p.innerHTML =
-        '<div class="card"><h2 class="h2">DaCapo could not start</h2><p class="small">The problem was logged. Use the flag button at the top to report it.</p></div>';
+        '<div class="card"><h2 class="h2">DaCapo could not start</h2><p class="small">The problem was logged. Reload the page; if it happens again, Settings → Report a problem includes the log.</p></div>';
   }
 }
 

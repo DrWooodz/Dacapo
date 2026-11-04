@@ -74,7 +74,6 @@ export function settingsSheet() {
     <div class="row">
       <button class="btn sm" type="button" id="sHow">How DaCapo works</button>
       <button class="btn sm" type="button" id="sBody">Body and hands</button>
-      <button class="btn sm" type="button" id="sCheck">Placement check</button>
       <button class="btn sm" type="button" id="sReport">Report a problem</button>
       <button class="btn sm ghost" type="button" id="sAbout">About</button>
     </div>
@@ -165,10 +164,6 @@ export function settingsSheet() {
       $('#sRestore', sheet).onchange = e => restoreFile(e.target.files[0]);
       $('#sHow', sheet).onclick = howSheet;
       $('#sBody', sheet).onclick = bodySheet;
-      $('#sCheck', sheet).onclick = () => {
-        closeSheet();
-        go('assess');
-      };
       $('#sReport', sheet).onclick = () => reportSheet();
       $('#sAbout', sheet).onclick = aboutSheet;
       $('#sReset', sheet).onclick = () => {
@@ -180,12 +175,14 @@ export function settingsSheet() {
         Store.save();
         Log.ev('progress erased');
         closeSheet();
-        go('practice');
+        go('home');
         toast('Progress erased');
       };
       return () => {
         offS();
-        if (changed && UI.view === 'practice') setTimeout(() => go('practice', UI.params), 0);
+        // what Home and the session show depends on the areas and the input
+        if (changed && (UI.view === 'practice' || UI.view === 'home'))
+          setTimeout(() => go(UI.view, UI.params), 0);
       };
     },
     { label: 'Settings' },
@@ -233,7 +230,7 @@ function restoreFile(file) {
       Store.emit(); // brings the restored items up to date (see app.js)
       Log.ev('restored backup', { v: st.v });
       closeSheet();
-      go('practice');
+      go('home');
       toast('Progress restored');
     } catch (e) {
       Log.warn('restore failed', String(e.message || e));
@@ -247,19 +244,14 @@ function aboutSheet() {
   openSheet(
     `<div class="sheethead"><h2 class="h2">About DaCapo</h2>${closeBtn}</div>
     <div class="prose small">
-      <p>DaCapo is a free, open-source piano practice companion. It runs in your browser; nothing is sent
-      anywhere unless you send a report yourself.</p>
-      <p><b>Music.</b> The built-in pieces come from editions typeset by volunteers of the Mutopia Project,
-      in the public domain or under Creative Commons Attribution-ShareAlike (3.0 or 4.0); each piece names
-      its typesetter and license. DaCapo reads the notes from the LilyPond sources and checks every bar
-      against its time signature.</p>
-      <p><b>Notation.</b> Glyphs from the Bravura font by Steinberg (SIL Open Font License). Typefaces:
-      Bodoni Moda, Instrument Sans and IBM Plex Mono (Google Fonts).</p>
-      <p><b>Method.</b> Short daily sessions, one focus at a time across several days, accuracy before
-      speed, a metronome ladder that only climbs after clean runs, cold checks on separate days, and spaced
-      reviews: the practice methods with the strongest evidence for durable skill.</p>
-      <p>DaCapo gives practice guidance, not medical advice. If playing hurts, stop and have a teacher look
-      at your technique.</p>
+      <p>Free and open source (<a href="https://github.com/drwooodz/dacapo" target="_blank"
+        rel="noopener">github.com/drwooodz/dacapo</a>). Everything runs in your browser; nothing is sent
+        anywhere unless you send a report yourself.</p>
+      <p><b>Music:</b> Mutopia Project editions, public domain or CC BY-SA 3.0/4.0; each piece names its
+        typesetter and license. <b>Notation:</b> Bravura by Steinberg (SIL Open Font License).
+        <b>Typefaces:</b> Bodoni Moda, Instrument Sans, IBM Plex Mono.</p>
+      <p>Practice guidance, not medical advice: if playing hurts, stop and have a teacher look at your
+        technique.</p>
     </div>`,
     null,
     { label: 'About DaCapo' },

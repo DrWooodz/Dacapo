@@ -5,6 +5,7 @@
 import { LIBRARY_DATA } from '../data.js';
 import { Log } from '../core/log.js';
 import { spellAcc } from './theory.js';
+import { describeMusic } from './harmony.js';
 
 export const COMPOSERS = {
   satie: { n: 'Erik Satie', short: 'Satie', life: '1866–1925' },
@@ -82,7 +83,7 @@ export const Library = {
   },
   // forget everything decoded for a piece (after it is removed or replaced)
   forget(id) {
-    ['', 'bars:', 'secs:'].forEach(k => this.cache.delete(k + id));
+    ['', 'bars:', 'secs:', 'music:'].forEach(k => this.cache.delete(k + id));
   },
   all() {
     return (typeof LIBRARY_DATA !== 'undefined' ? LIBRARY_DATA : []).concat(this.imports());
@@ -149,10 +150,13 @@ export const Library = {
     const p = this.get(id);
     const key = 'bars:' + id;
     if (this.cache.has(key)) return this.cache.get(key);
-    let acc = 0;
-    const out = readVarints(b64bytes(p.bars)).map(x => (acc += x) / p.tpq - (p.shift || 0));
+    const out = this.decodeBars(p);
     this.cache.set(key, out);
     return out;
+  },
+  decodeBars(p) {
+    let acc = 0;
+    return readVarints(b64bytes(p.bars)).map(x => (acc += x) / p.tpq - (p.shift || 0));
   },
   // the practice sections of a piece: bars a..z, the section it repeats (same, or -1), and how many notes
   // start in it (n; a section without any cannot be practiced on its own)
@@ -167,6 +171,21 @@ export const Library = {
       same,
       n: this.range(id, a, z).length,
     }));
+    this.cache.set(key, out);
+    return out;
+  },
+  // the harmony of a piece: its mode and home note, and the chords of each section (see describeMusic)
+  music(id) {
+    const key = 'music:' + id;
+    if (this.cache.has(key)) return this.cache.get(key);
+    const p = this.get(id);
+    if (!p) return null;
+    const out = describeMusic(
+      this.notes(id),
+      this.bars(id),
+      this.keyAt(id, 0),
+      this.sections(id).map(s => [s.a, s.z]),
+    );
     this.cache.set(key, out);
     return out;
   },

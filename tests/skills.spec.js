@@ -1,4 +1,4 @@
-// The skills graph and the placement check that sets your starting points.
+// Skill levels (on Home) and the placement check that sets your starting points.
 import { test, expect } from './fixtures.js';
 
 test.beforeEach(async ({ app }) => {
@@ -21,13 +21,13 @@ test('levels come from integrated units, one point per tier', async ({ app, page
   expect((await app.eval(() => window.DaCapo.rankAreas())).find(r => r.area === 'reading').reason).toBe(
     'Bass reading is behind treble, and it holds back both hands together.',
   );
-  await page.locator('#tabs [data-view="skills"]').click();
-  await expect(page.locator('[data-skill="treble"]')).toContainText('1.0 · Developing');
+  await page.locator('#tabs [data-view="home"]').click();
+  await expect(page.locator('[data-skill="treble"]')).toContainText('1.0');
   await page.locator('[data-skill="treble"]').click();
   await expect(page.locator('.sheet')).toContainText('Tier 2 · Developing');
 });
 
-test('switching an area off shows it as off and keeps it out of the session', async ({ app, page }) => {
+test('switching an area off takes it off Home and out of the session', async ({ app, page }) => {
   await app.eval(() => {
     const S = window.DaCapo.Store;
     S.s.profile.areas.improv = false;
@@ -38,8 +38,11 @@ test('switching an area off shows it as off and keeps it out of the session', as
   });
   const ids = (await app.session()).map(e => e.split(' ')[1]);
   expect(ids.some(id => id.startsWith('t:') || id.startsWith('i:'))).toBe(false);
-  await page.locator('#tabs [data-view="skills"]').click();
-  await expect(page.locator('.skillrow.off', { hasText: 'Technique' })).toContainText('Off');
+  // Home lists only the skills of the areas you practice
+  await page.locator('#tabs [data-view="home"]').click();
+  await expect(page.locator('[data-skill="treble"]')).toBeVisible();
+  await expect(page.locator('[data-skill="technique"]')).toHaveCount(0);
+  await expect(page.locator('[data-skill="improv"]')).toHaveCount(0);
 });
 
 test('the placement check reads, plays a scale, and sets the starting points', async ({ app, page }) => {

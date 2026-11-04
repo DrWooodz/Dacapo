@@ -320,6 +320,6 @@ export const assessView = page => {
       go('practice');
     };
     const other = $('#asOther', page);
-    if (other) other.onclick = () => focusSheet(() => go('practice'));
+    if (other) other.onclick = () => focusSheet(() => go('home'));
   }
 };

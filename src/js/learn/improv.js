@@ -6,6 +6,7 @@ import { Input } from '../core/input.js';
 import { kbSVG } from '../music/render.js';
 import { mms, PAL_BY_ID, palChords } from '../music/drills.js';
 import { criterion, itemState, recordImprov } from './curriculum.js';
+import { guideSheet, hasGuide } from '../views/guide.js';
 
 /* ---------- improvisation over a backing loop ---------- */
 export const Improv = {
@@ -28,9 +29,17 @@ export const Improv = {
     const stage = root.querySelector('.pl-stage');
     const go = root.querySelector('#plGo');
     const info = root.querySelector('#plInfo');
-    const chordChips = chords.map((c, i) => `<span class="chip" data-c="${i}">${esc(c.n)}</span>`).join('');
+    const chordChips = chords
+      .map(
+        (c, i) =>
+          `<span class="chip" data-c="${i}">${esc(c.n)}${c.num ? ` <small>${esc(c.num)}</small>` : ''}</span>`,
+      )
+      .join('');
     stage.innerHTML = `<div class="improv-chords" id="ipChords">${chordChips}</div>
-      <p class="small improv-how">${esc(Pal.how)}</p>`;
+      <p class="small improv-how">${esc(Pal.how)}</p>
+      ${hasGuide(Pal.id) ? '<button class="btn sm ghost" type="button" id="ipGuide">How it works</button>' : ''}`;
+    const guide = stage.querySelector('#ipGuide');
+    if (guide) guide.onclick = () => guideSheet(Pal.id, Pal.t);
     const paint = () => {
       const marks = {};
       for (let k = 36; k <= 88; k++) if (pcs.has(k % 12)) marks[k] = { cls: 'tone' };

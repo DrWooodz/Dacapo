@@ -5,6 +5,8 @@ import { closeBtn, openSheet } from '../core/ui.js';
 import { COMPOSERS, Library, listenUrl, scoreUrl } from '../music/library.js';
 import { criterion, itemState, STAGE_TXT } from '../learn/curriculum.js';
 import { itemDef } from '../learn/areas.js';
+import { musicSheet, sectionChords } from './musicinfo.js';
+import { guideSheet, hasGuide } from './guide.js';
 
 export function shortTitle(d) {
   if (!d) return '';
@@ -68,13 +70,25 @@ export function aboutDrill(id) {
   if (!d) return;
   const piece = d.pid ? Library.get(d.pid) : null;
   const recent = ((it && it.log) || []).slice(-10).reverse();
-  const edition = piece
-    ? `<p class="small">${esc((COMPOSERS[piece.c] || {}).n || '')}${piece.y ? ', ' + piece.y : ''}.
+  // the walkthrough of a theory unit or of a style study
+  const guideId = d.kind === 'theory' ? d.unit : d.pal;
+  const edition = !piece
+    ? ''
+    : piece.c === 'mine'
+      ? `<p class="small">From your file ${esc(piece.src || '')}.</p>`
+      : `<p class="small">${esc((COMPOSERS[piece.c] || {}).n || '')}${piece.y ? ', ' + piece.y : ''}.
          Edition: ${esc(piece.lic || '')}${piece.by ? ', typeset by ' + esc(piece.by) : ''} (Mutopia Project).
          The notation here is simplified: spacing shows timing, open note heads are half and whole notes.
          <a href="${scoreUrl(piece)}" target="_blank" rel="noopener">Full score</a>
-         · <a href="${listenUrl(piece)}" target="_blank" rel="noopener">Listen</a></p>`
-    : '';
+         · <a href="${listenUrl(piece)}" target="_blank" rel="noopener">Listen</a></p>`;
+  const chords =
+    piece && d.kind === 'section'
+      ? `<div class="stack" style="gap:4px">
+           <span class="eyebrow">Its chords</span>${sectionChords(d.pid, d.k)}
+           <button class="btn sm ghost" type="button" id="adMusic" style="align-self:flex-start">
+             About the music</button>
+         </div>`
+      : '';
   const dayRow = h => `<div class="row between small">
     <span>${esc(h.d)}</span>
     <span>${h.reps} reps · ${h.clean} ${d.kind === 'theory' ? 'right' : 'clean'}${h.bpm ? ' · best ♩ ' + h.bpm : ''}</span>
@@ -85,6 +99,7 @@ export function aboutDrill(id) {
      ${d.use ? `<p class="small"><b>Where it helps:</b> ${esc(d.use)}</p>` : ''}
      ${DRILL_NOTES[d.kind] ? `<p class="small">${DRILL_NOTES[d.kind]}</p>` : ''}
      ${edition}
+     ${chords}
      <div class="stack" style="gap:4px">
        <span class="eyebrow">Where it stands</span>
        <p><b>${esc(STAGE_TXT[it ? it.stage : ''] || 'Not started')}</b> · ${esc(criterion(id))}</p>
@@ -96,9 +111,16 @@ export function aboutDrill(id) {
             </div>`
          : ''
      }
-     <button class="btn sm ghost" type="button" id="adHow" style="align-self:flex-start">How stages work</button>`,
+     <div class="row">
+       ${guideId && hasGuide(guideId) ? '<button class="btn sm" type="button" id="adGuide">How it works</button>' : ''}
+       <button class="btn sm ghost" type="button" id="adHow">How stages work</button>
+     </div>`,
     sheet => {
       $('#adHow', sheet).onclick = howSheet;
+      const guide = $('#adGuide', sheet);
+      if (guide) guide.onclick = () => guideSheet(guideId, d.title);
+      const music = $('#adMusic', sheet);
+      if (music) music.onclick = () => musicSheet(d.pid, { back: () => aboutDrill(id) });
     },
     { label: 'About this drill' },
   );

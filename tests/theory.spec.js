@@ -1,7 +1,8 @@
 // Theory: questions answered by playing, then speed, then a cold check of five questions.
 import { test, expect } from './fixtures.js';
 import { answersInChords, answerSize, check, THEORY_UNITS, makeQuestion } from '../src/js/learn/theory.js';
-import { midiOf } from '../src/js/music/theory.js';
+import { midiOf, pcOf } from '../src/js/music/theory.js';
+import { GUIDES, stepGroups } from '../src/js/learn/guides.js';
 
 test('every unit: the answer the app plays is accepted, and a wrong note is not', () => {
   for (const U of THEORY_UNITS) {
@@ -24,6 +25,47 @@ test('smooth voice leading: the chords written on the staff are the voicings tha
   }
 });
 
+test('every walkthrough belongs to a unit or a style study, and its examples are real notes', () => {
+  // (the style studies are checked in the app, in tests/rhythm-improv.spec.js)
+  const ids = new Set(THEORY_UNITS.map(u => u.id).concat(['mixo', 'folkminor', 'dorian', 'drone']));
+  for (const [id, steps] of Object.entries(GUIDES)) {
+    expect(ids.has(id), id).toBe(true);
+    expect(steps.length).toBeGreaterThanOrEqual(3);
+    for (const step of steps) {
+      expect(step.say.length).toBeGreaterThan(20);
+      stepGroups(step).forEach(g => g.forEach(n => expect(midiOf(n)).toBeGreaterThan(30)));
+    }
+  }
+  // the modal units' guides show the chords their questions ask for
+  const pcsOf = chord => [...new Set(chord.map(pcOf))].sort((a, b) => a - b);
+  const last = GUIDES.h18.at(-1).chords.map(c => pcsOf(stepGroups({ notes: c })[0]));
+  expect(last).toEqual([
+    [1, 4, 9],
+    [2, 7, 11],
+    [2, 6, 9],
+    [1, 4, 9],
+  ]); // A G D A
+});
+
+test('the modal progressions: ♭VII a whole step below home, folk minor with ♭VI and ♭VII, Dorian with a major IV', () => {
+  for (let i = 0; i < 60; i++) {
+    const q = makeQuestion('h18');
+    const home = q.answer.chords[0].pcs;
+    const flat7 = q.answer.chords.find(c => !c.pcs.includes(home[0]) && c.pcs.includes((home[0] + 10) % 12));
+    expect(flat7, q.prompt).toBeTruthy();
+    expect(flat7.pcs).toContain((home[0] + 2) % 12); // its 3rd is the 2nd of the scale: a major chord
+    const d = makeQuestion('h20');
+    if (/IV/.test(d.prompt)) {
+      const iv = d.answer.chords.find(
+        c =>
+          c.pcs.includes((d.answer.chords[0].pcs[0] + 5) % 12) &&
+          c.pcs.includes((d.answer.chords[0].pcs[0] + 9) % 12),
+      );
+      expect(iv, d.prompt).toBeTruthy(); // the raised 6th in the IV chord
+    }
+  }
+});
+
 test.describe('in the app', () => {
   test.beforeEach(async ({ app }) => {
     await app.connectPiano();
@@ -41,6 +83,28 @@ test.describe('in the app', () => {
     expect(await app.message()).toMatch(/^Skipped\./);
     const it = await app.item('h:h1');
     expect(it.answers.map(a => a.ok)).toEqual([true, false, false]);
+  });
+
+  test('a new unit opens with its walkthrough: steps to hear, then on to the questions', async ({
+    app,
+    page,
+  }) => {
+    await app.practice('h:h18');
+    const guide = page.locator('#qzGuide');
+    await expect(guide).toContainText('Step 1 of 4');
+    await expect(guide).toContainText('lower its 7th');
+    await guide.locator('[data-g="hear"]').click();
+    await guide.locator('[data-g="next"]').click();
+    await expect(guide).toContainText('Step 2 of 4');
+    await guide.locator('[data-g="back"]').click();
+    for (let k = 0; k < 3; k++) await guide.locator('[data-g="next"]').click();
+    await guide.locator('[data-g="done"]').click();
+    await expect(page.locator('#qzIntro')).toBeHidden();
+    expect(await app.answerQuiz()).toMatch(/^Right: /);
+    // and again from the (i) panel
+    await page.locator('#plAbout').click();
+    await page.locator('#adGuide').click();
+    await expect(page.locator('.sheet')).toContainText('Step 1 of 4');
   });
 
   test('a chord counts in any inversion', async ({ app }) => {

@@ -1,5 +1,5 @@
-/* Reading a standard MIDI file: per track, its name and its events (notes, tempo, meter, key), with
-   times in ticks. Making sense of them is in midifile.js. */
+/* Reading a standard MIDI file: per track, its name and its events (notes, instrument changes, tempo,
+   meter, key), with times in ticks. Making sense of them is in arrange.js and midifile.js. */
 
 export function parseMidiFile(buf) {
   const v = new DataView(buf);
@@ -50,7 +50,7 @@ export function parseMidiFile(buf) {
           ev.push({ tick, k: 'tempo', us: (data[0] << 16) | (data[1] << 8) | data[2] });
         else if (type === 0x58 && l >= 2) ev.push({ tick, k: 'time', n: data[0], d: Math.pow(2, data[1]) });
         else if (type === 0x59 && l >= 2) ev.push({ tick, k: 'key', sf: (data[0] << 24) >> 24, mi: data[1] });
-        else if (type === 0x03) name = String.fromCharCode(...data);
+        else if (type === 0x03) name = String.fromCharCode(...data.filter(c => c >= 32)).trim();
         else if (type === 0x2f) break;
         continue;
       }
@@ -64,7 +64,8 @@ export function parseMidiFile(buf) {
         ch = st & 0x0f;
       const d1 = v.getUint8(q++);
       const d2 = cmd === 0xc0 || cmd === 0xd0 ? 0 : v.getUint8(q++);
-      if (cmd === 0x90 && d2 > 0) ev.push({ tick, k: 'on', m: d1, vel: d2, ch });
+      if (cmd === 0xc0) ev.push({ tick, k: 'prog', p: d1, ch });
+      else if (cmd === 0x90 && d2 > 0) ev.push({ tick, k: 'on', m: d1, vel: d2, ch });
       else if (cmd === 0x80 || (cmd === 0x90 && d2 === 0)) ev.push({ tick, k: 'off', m: d1, ch });
     }
     tracks.push({ name, ev });

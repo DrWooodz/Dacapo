@@ -543,13 +543,79 @@ export const PALETTES = [
     ],
     how: 'Bass octaves and full chords in the left hand, played with arm weight. Improvise a slow right-hand melody in octaves, landing on chord tones.',
   },
+  /* modal styles: the harmony of folk tunes and of game soundtracks (each has a walkthrough) */
+  {
+    id: 'mixo',
+    t: 'Mixolydian waltz',
+    meter: 3,
+    bpm: 112,
+    key: 'A Mixolydian',
+    sig: 2,
+    scale: 'A4 B4 C#5 D5 E5 F#5 G5',
+    pat: 'oompah',
+    chords: [
+      ['A', 'A2', 'A3 C#4 E4', 'I'],
+      ['G', 'G2', 'G3 B3 D4', '♭VII'],
+      ['D', 'D2', 'A3 D4 F#4', 'IV'],
+      ['A', 'A2', 'A3 C#4 E4', 'I'],
+    ],
+    how: 'A bright, travelling waltz: bass on 1, chord on 2 and 3. A Mixolydian is A major with G instead of G♯. Over the G chord, land on G, B or D; over A, on A, C♯ or E. Let the tune lean on the G: that lowered 7th is the whole flavor.',
+  },
+  {
+    id: 'folkminor',
+    t: 'Folk minor ballad',
+    meter: 4,
+    bpm: 72,
+    key: 'D minor',
+    sig: -1,
+    scale: 'D4 E4 F4 G4 A4 Bb4 C5',
+    pat: 'arp',
+    chords: [
+      ['Dm', 'D2', 'A2 F3 A3', 'i'],
+      ['B♭', 'Bb1', 'F2 D3 F3', '♭VI'],
+      ['C', 'C2', 'G2 E3 G3', '♭VII'],
+      ['Dm', 'D2', 'A2 F3 A3', 'i'],
+    ],
+    how: 'An old-sounding minor: natural minor, with C (not C♯), so the climb B♭ – C – D minor sounds heroic rather than tragic. Broken chords in the left hand; in the right, a slow tune that rests on D, F or A when D minor comes back.',
+  },
+  {
+    id: 'dorian',
+    t: 'Dorian rocking',
+    meter: 4,
+    bpm: 84,
+    key: 'E Dorian',
+    sig: 2,
+    scale: 'E4 F#4 G4 A4 B4 C#5 D5',
+    pat: 'bells',
+    chords: [
+      ['Em', 'E2', 'G3 B3 E4', 'i'],
+      ['A', 'A1', 'A3 C#4 E4', 'IV'],
+    ],
+    how: 'Rock between E minor and A major. E Dorian is E minor with C♯ instead of C: that C♯ is the 3rd of the A chord, and leaning on it is what makes the minor sound hopeful. Bass octave on 1, chord on 1 and 3.',
+  },
+  {
+    id: 'drone',
+    t: 'Drone and harp',
+    meter: 4,
+    bpm: 60,
+    key: 'D Dorian over a drone',
+    sig: 0,
+    scale: 'D4 E4 F4 G4 A4 B4 C5',
+    pat: 'arp',
+    chords: [
+      ['D5', 'D2', 'A2 D3 A3'],
+      ['Dsus2', 'D2', 'A2 E3 A3'],
+    ],
+    how: 'The left hand ripples the open fifth D – A, like a harp over a drone; there is no third, so it is neither major nor minor until your tune decides. Every white key fits. Start and end phrases on D or A, and use B (the Dorian color) and F to tint it.',
+  },
 ];
 
 export const PAL_BY_ID = Object.fromEntries(PALETTES.map(p => [p.id, p]));
 
 export function palChords(P) {
-  return P.chords.map(([n, b, t]) => ({
+  return P.chords.map(([n, b, t, num]) => ({
     n,
+    num: num || '',
     bass: mm(b),
     tones: mms(t),
     pcs: new Set([mm(b), ...mms(t)].map(x => x % 12)),

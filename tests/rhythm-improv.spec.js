@@ -66,3 +66,20 @@ test('improvising on the screen keys is practice only: the minutes do not count'
   expect(await app.message()).toBe('Practice only: connect your piano to count the time.');
   expect(((await app.item('i:imp:satie')) || {}).mins || 0).toBe(0);
 });
+
+test('the modal style studies: numerals on the chords, a walkthrough, and a left-hand pattern to learn', async ({
+  app,
+  page,
+}) => {
+  for (const id of ['mixo', 'folkminor', 'dorian', 'drone']) {
+    await app.practice(`i:imp:${id}`);
+    await expect(page.locator('#ipGuide')).toBeVisible();
+  }
+  await app.practice('i:imp:mixo');
+  await expect(page.locator('#ipChords')).toContainText('G ♭VII');
+  await page.locator('#ipGuide').click();
+  await expect(page.locator('.sheet')).toContainText('A Mixolydian');
+  await app.eval(() => window.DaCapo.closeSheet());
+  await app.practice('i:pat:folkminor');
+  expect(await app.plan()).toMatchObject({ kind: 'pattern', hand: 'lh' });
+});

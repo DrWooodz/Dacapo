@@ -20,6 +20,7 @@ export const DEFAULT_STATE = () => ({
     clickOnPiano: false,
     keepAwake: true,
     instrument: 'other', // which guide to show: 'cdp-s360', 'acoustic' or any other digital piano
+    thru: { on: false, split: 0, left: 'bass', right: 'piano' }, // your piano through this device (Jam)
   },
   profile: {
     favorites: [], // composers you love

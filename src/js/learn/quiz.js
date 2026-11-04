@@ -7,12 +7,13 @@ import { AudioEngine } from '../core/audio.js';
 import { Input } from '../core/input.js';
 import { nameOf, spellerFor } from '../music/theory.js';
 import { flashKey, kbSVG, staffSVG } from '../music/render.js';
-import { detectChord } from '../music/analysis.js';
+import { detectChord } from '../music/harmony.js';
 import { answersInChords, check, makeQuestion, THEORY_BY_ID } from './theory.js';
 import { criterion, itemState, planFor, recordAnswer, STAGE_TXT } from './curriculum.js';
 import { itemDef } from './areas.js';
 import { collectAnswer } from './answer.js';
 import { aboutDrill } from '../views/drillinfo.js';
+import { guideBox, hasGuide } from '../views/guide.js';
 
 const HINT_AFTER_MS = 6000;
 const GUIDED_HINT_MS = 1500; // after a stall: the answer appears soon, to watch and copy
@@ -216,10 +217,13 @@ export const Quiz = {
     });
     $q('#plAbout').onclick = () => aboutDrill(id);
     // what the unit is about, above the questions: the first time, and again after a stall
+    // (with a walkthrough when the unit has one: step by step, with examples to hear)
     function showIntro() {
       const intro = $q('#qzIntro');
       intro.hidden = false;
-      intro.innerHTML = `<b>${esc(U.t)}</b><p>${esc(U.about)}</p>`;
+      intro.innerHTML = `<b>${esc(U.t)}</b><p>${esc(U.about)}</p><div id="qzGuide"></div>`;
+      if (hasGuide(U.id))
+        guideBox($q('#qzGuide'), U.id, { title: 'How it works', onDone: () => (intro.hidden = true) });
     }
     const it = itemState(id);
     if (!it || !it.reps) showIntro();

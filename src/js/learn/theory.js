@@ -69,7 +69,7 @@ const ROMAN = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
 const ROMAN_QUALITY = ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished'];
 
 /* ---------- scales by their steps ---------- */
-const MODES = {
+const MODE_STEPS = {
   major: [2, 2, 1, 2, 2, 2],
   dorian: [2, 1, 2, 2, 2, 1],
   lydian: [2, 2, 2, 1, 2, 2],
@@ -78,7 +78,7 @@ const MODES = {
   harmonic: [2, 1, 2, 2, 1, 3],
 };
 const scaleOf = (tonic, mode) => {
-  const s = spellScale(tonic, MODES[mode]);
+  const s = spellScale(tonic, MODE_STEPS[mode]);
   return s.concat([N(tonic.l, tonic.a, tonic.o + 1)]);
 };
 
@@ -545,6 +545,79 @@ export const THEORY_UNITS = [
         play: steps.map(x => midiOf(tonic) + x),
         explain: `${names(s)}: the major scale without its 4th and 7th.`,
       };
+    },
+  },
+  /* tier 3, continued: the modal harmony of folk and game music */
+  {
+    id: 'h18',
+    tier: 3,
+    t: 'The ♭VII chord',
+    goal: 12000,
+    about:
+      'Lower the 7th of a major scale and you get Mixolydian. The chord built on that lowered 7th, ♭VII, is a major chord a whole step below home: G in A, C in D. I – ♭VII – I is the open, adventurous sound of Celtic folk, rock and countless game soundtracks.',
+    use: 'It ends phrases without the "full stop" of V – I, so music can keep wandering.',
+    make() {
+      const k = pick(['A', 'D', 'G', 'E', 'C']);
+      const sc = scaleOf(note(k), 'mixolydian').slice(0, 7);
+      const [degs, label] = pick([
+        [[0, 6, 0], 'I – ♭VII – I'],
+        [[0, 6, 3, 0], 'I – ♭VII – IV – I'],
+        [[0, 3, 6, 0], 'I – IV – ♭VII – I'],
+      ]);
+      const chords = degs.map(d => ({ notes: degreeChord(sc, d) }));
+      return progressionQuestion(
+        chords,
+        `Play ${label} in ${prettyKey(k)} Mixolydian`,
+        `In ${prettyKey(k)} Mixolydian: ${chords.map(c => chordName(c.notes)).join(' – ')}. ♭VII is a whole step below home.`,
+      );
+    },
+  },
+  {
+    id: 'h19',
+    tier: 3,
+    t: 'Folk minor',
+    goal: 12000,
+    about:
+      'Natural minor leaves its 7th low, so V is a minor chord (v) and the chords on the low 6th and 7th, ♭VI and ♭VII, are major. i – ♭VI – ♭VII – i (A minor, F, G, A minor) climbs back home without the pull of a leading note: the earnest, ancient sound of ballads and of game music in minor keys.',
+    use: 'When a minor tune sounds like a legend rather than a tragedy, this is usually why.',
+    make() {
+      const k = pick(['A', 'D', 'E', 'G', 'C']);
+      const sc = scaleOf(note(k), 'aeolian').slice(0, 7);
+      const [degs, label] = pick([
+        [[0, 5, 6, 0], 'i – ♭VI – ♭VII – i'],
+        [[0, 6, 5, 6], 'i – ♭VII – ♭VI – ♭VII'],
+        [[0, 3, 4, 0], 'i – iv – v – i'],
+      ]);
+      const chords = degs.map(d => ({ notes: degreeChord(sc, d) }));
+      return progressionQuestion(
+        chords,
+        `Play ${label} in ${keyLabel(k, true)}`,
+        `In ${keyLabel(k, true)}: ${chords.map(c => chordName(c.notes)).join(' – ')}.`,
+      );
+    },
+  },
+  {
+    id: 'h20',
+    tier: 3,
+    t: 'Dorian: i – IV',
+    goal: 12000,
+    about:
+      'Dorian is minor with a raised 6th. That one note turns the IV chord major: in D Dorian, D minor to G major. Rocking between i and IV gives a minor that is hopeful instead of sad, the sound of many folk tunes, "Scarborough Fair" and adventure music.',
+    use: 'Swap a minor piece’s iv for IV and hear the mood lift.',
+    make() {
+      const k = pick(['D', 'A', 'E', 'G']);
+      const sc = scaleOf(note(k), 'dorian').slice(0, 7);
+      const [degs, label] = pick([
+        [[0, 3, 0], 'i – IV – i'],
+        [[0, 3, 6, 0], 'i – IV – ♭VII – i'],
+        [[0, 1, 3, 0], 'i – ii – IV – i'],
+      ]);
+      const chords = degs.map(d => ({ notes: degreeChord(sc, d) }));
+      return progressionQuestion(
+        chords,
+        `Play ${label} in ${prettyKey(k)} Dorian`,
+        `In ${prettyKey(k)} Dorian: ${chords.map(c => chordName(c.notes)).join(' – ')}. IV is major because of the raised 6th.`,
+      );
     },
   },
 ];

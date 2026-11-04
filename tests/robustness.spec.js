@@ -69,7 +69,7 @@ test('Free play names chords and shows every tab', async ({ app, page }) => {
   await app.eval(() => [60, 64, 67].forEach(m => window.__t.noteOn(m)));
   await expect(page.locator('#lvChord')).toHaveText('C');
   await app.eval(() => [60, 64, 67].forEach(m => window.__t.noteOff(m)));
-  for (const tab of ['Improvise', 'Record', 'Metronome', 'Listen']) {
+  for (const tab of ['Jam', 'Echo', 'Record', 'Metronome', 'Listen']) {
     await page.locator('[data-seg="ftab"] button', { hasText: tab }).click();
     await expect(page.locator('#fBody')).not.toBeEmpty();
   }

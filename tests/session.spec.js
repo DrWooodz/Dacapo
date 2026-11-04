@@ -47,20 +47,37 @@ test('after the goal card, the next item starts by itself', async ({ app, page }
   expect(await app.eval(() => window.DaCapo.Store.s.session.list[0].state)).toBe('done');
 });
 
-test('a finished session shows a summary', async ({ app, page }) => {
+test('a finished session returns to Home, which shows the day as done', async ({ app, page }) => {
   await app.eval(() => {
     window.DaCapo.Store.s.session.list.forEach(e => (e.state = 'done'));
     window.DaCapo.Store.save();
     window.DaCapo.go('practice');
   });
-  await expect(page.locator('.summary h1')).toHaveText('Session done.');
-  await expect(page.locator('#smPieces')).toBeVisible();
+  await expect(page.locator('.today h2')).toHaveText('Today: done.');
+  await expect(page.locator('[data-act="start"]')).toHaveCount(0);
+  // any step can be played again from there
+  await page.locator('.todayrow').first().click();
+  await expect(page.locator('#plHost .player')).toBeVisible();
+});
+
+test('Home: today, step by step; start at any step; back to Home from the session', async ({ app, page }) => {
+  await page.locator('#ssBack').click();
+  const rows = page.locator('.todayrow');
+  const n = (await app.session()).length;
+  await expect(rows).toHaveCount(n);
+  await expect(page.locator('[data-act="start"]')).toHaveText('Continue');
+  await rows.nth(1).click();
+  expect(await app.eval(() => window.DaCapo.Store.s.session.idx)).toBe(1);
+  // the strip in the session goes to any step too
+  await page.locator('.sess-step[data-step="0"]').click();
+  expect(await app.eval(() => window.DaCapo.Store.s.session.idx)).toBe(0);
 });
 
 test('a suggested focus is confirmed with one tap', async ({ app, page }) => {
-  await expect(page.locator('.focusbar')).toContainText('Reading');
-  await page.locator('[data-focus="keep"]').click();
-  await expect(page.locator('.focusbar.compact')).toContainText('Reading');
+  await app.eval(() => window.DaCapo.go('home'));
+  await expect(page.locator('.focusline.suggest')).toContainText('Reading');
+  await page.locator('[data-act="keep"]').click();
+  await expect(page.locator('button.focusline')).toContainText('Reading');
   expect(await app.eval(() => window.DaCapo.Store.s.focus)).toMatchObject({
     area: 'reading',
     confirmed: true,
@@ -68,7 +85,8 @@ test('a suggested focus is confirmed with one tap', async ({ app, page }) => {
 });
 
 test('choosing another focus rebuilds the session and teaches the suggestions', async ({ app, page }) => {
-  await page.locator('[data-focus="change"]').first().click();
+  await app.eval(() => window.DaCapo.go('home'));
+  await page.locator('[data-act="focus"]').first().click();
   await expect(page.locator('.sheet [data-area="reading"]')).toContainText('suggested');
   await page.locator('.sheet [data-area="technique"]').click();
   const list = await app.session();
@@ -77,6 +95,7 @@ test('choosing another focus rebuilds the session and teaches the suggestions', 
   const weights = await app.eval(() => window.DaCapo.Store.s.profile.weights);
   expect(weights.technique).toBeCloseTo(1.1);
   expect(weights.reading).toBeCloseTo(0.95);
+  await page.locator('[data-act="start"]').click();
   expect(await app.eval(() => window.DaCapo.Player.debug.P.id)).toBe('t:sc:major:D');
 });
 
@@ -87,7 +106,8 @@ test('what matters to you shapes the first suggestion', async ({ app, page }) =>
   });
   await app.onboard(null, { matters: ['theory'] });
   expect(await app.eval(() => window.DaCapo.currentFocus().area)).toBe('theory');
-  await expect(page.locator('.focusbar')).toContainText('Theory matters to you.');
+  await app.eval(() => window.DaCapo.go('home'));
+  await expect(page.locator('.focusline.suggest')).toContainText('Theory matters to you.');
   expect((await app.session())[0]).toBe('focus h:h1');
 });
 

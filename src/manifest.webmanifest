@@ -1,7 +1,7 @@
 {
   "name": "DaCapo Piano Coach",
   "short_name": "DaCapo",
-  "description": "A piano practice companion that listens over MIDI: a daily session around a weekly focus, reading, technique, theory, pieces by Satie, Chopin, Debussy and Rachmaninoff, improvisation, and a loop station for fun.",
+  "description": "Piano practice that listens over MIDI: daily sessions for reading, technique, theory, pieces and improvisation.",
   "start_url": "./#practice",
   "scope": "./",
   "display": "standalone",

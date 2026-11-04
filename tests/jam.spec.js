@@ -172,6 +172,74 @@ test.describe('in the app', () => {
     expect(tracks[2].ev.filter(e => e.k === 'on')).toHaveLength(16);
   });
 
+  test('your piano through this device: a sound for each side of a split, recorded as two layers', async ({
+    app,
+    page,
+  }) => {
+    await page.locator('#jThruOn').check();
+    await page.locator('#jSplit').check();
+    await page.locator('#jLeft').selectOption('bass');
+    await page.locator('#jRight').selectOption('flute');
+    await expect(page.locator('#jSounds [aria-pressed="true"]')).toHaveText('Bass | Flute (split)');
+    // the piano's notes sound here: below middle C with the bass, from it up with the flute
+    const played = await app.eval(async () => {
+      const { Sounds } = window.DaCapo;
+      const got = [];
+      const start = Sounds.start;
+      Sounds.start = function (sound, m, vel, t) {
+        got.push([sound, m]);
+        return start.call(this, sound, m, vel, t);
+      };
+      window.__t.noteOn(48);
+      window.__t.noteOn(72);
+      await window.__t.sleep(50);
+      window.__t.noteOff(48);
+      window.__t.noteOff(72);
+      Sounds.start = start;
+      return got;
+    });
+    expect(played).toEqual([
+      ['bass', 48],
+      ['flute', 72],
+    ]);
+    await app.eval(() => {
+      const L = window.DaCapo.Transport.L;
+      L.bars = 1;
+      L.bpm = 160;
+    });
+    await page.locator('#jRec').click();
+    await expect(page.locator('#jRec')).toHaveText('Recording', { timeout: 4000 });
+    await app.eval(async () => {
+      const { Transport, AudioEngine } = window.DaCapo;
+      const spb = 60 / Transport.L.bpm;
+      const base = Transport.rec.pass * 4;
+      for (const [b, ms] of [
+        [0.02, [45, 69]],
+        [2.01, [43, 71]],
+      ]) {
+        const t = AudioEngine.toPerf(Transport.start + (base + b) * spb);
+        while (performance.now() < t) await window.__t.sleep(4);
+        ms.forEach(m => window.__t.send(0x90, m, 90, t));
+        setTimeout(() => ms.forEach(m => window.__t.send(0x80, m, 0)), 200);
+      }
+    });
+    await expect(page.locator('.layer')).toHaveCount(2, { timeout: 4000 });
+    const layers = await app.eval(() =>
+      window.DaCapo.Transport.L.layers.map(l => [l.sound, l.notes.map(n => n.m)]),
+    );
+    expect(layers).toEqual([
+      ['bass', [45, 43]],
+      ['flute', [69, 71]],
+    ]);
+    await expect(page.locator('#jMsg')).toContainText('Layers 1 and 2 recorded');
+    expect(await app.eval(() => window.DaCapo.Store.s.settings.thru)).toEqual({
+      on: true,
+      split: 60,
+      left: 'bass',
+      right: 'flute',
+    });
+  });
+
   test('drum pads record a drum layer; layers can be muted and undone', async ({ app, page }) => {
     await app.eval(() => {
       const L = window.DaCapo.Transport.L;

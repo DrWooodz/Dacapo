@@ -9,22 +9,22 @@ test('opens on the welcome screen', async ({ app }) => {
 
 test('every screen opens', async ({ app }) => {
   const { page } = app;
+  // three tabs: Home (the welcome screen until you have started), Library and Free play
+  await expect(page.locator('#tabs [data-view]')).toHaveCount(3);
   for (const [tab, heading] of [
-    ['skills', 'Skills'],
     ['library', 'Library'],
     ['free', 'Free play'],
-    ['practice', 'Welcome'],
+    ['home', 'Open it, and play.'],
   ]) {
     await page.locator(`#tabs [data-view="${tab}"]`).click();
-    await expect(page.locator('#page .eyebrow').first()).toContainText(heading, { ignoreCase: true });
+    await expect(page.locator('#page h1').first()).toContainText(heading);
   }
 });
 
-test('settings show the version, and the flag opens a report', async ({ app }) => {
+test('settings show the version, and Help opens a problem report', async ({ app }) => {
   const { page } = app;
   await page.locator('#settingsBtn').click();
   await expect(page.locator('.sheet')).toContainText(/DaCapo (\d+\.\d+\.\d+ · site|dev · dev)/);
-  await page.locator('[data-closebtn]').click();
-  await page.locator('#reportBtn').click();
+  await page.locator('#sReport').click();
   await expect(page.locator('.sheet')).toContainText('Report a problem');
 });

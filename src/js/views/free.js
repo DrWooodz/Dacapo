@@ -1,36 +1,32 @@
-/* Free play: play anything. DaCapo names what it hears, keeps a loop going (Jam), plays ear games (Echo),
-   backs your improvising, records you, and keeps time. */
+/* Free play: play anything, nothing is scored. DaCapo names what it hears, keeps a loop going (Jam), plays
+   an ear game (Echo), records you, and keeps time. Improvising over a style study is practice: it lives
+   with the Improvisation skill. */
 import { Log } from '../core/log.js';
-import { $, $$, clamp, esc } from '../core/util.js';
+import { $, $$, clamp } from '../core/util.js';
 import { AudioEngine, Metro } from '../core/audio.js';
 import { Input } from '../core/input.js';
 import { bindSegs, onUnmount, seg, UI } from '../core/ui.js';
 import { prettyKey, spellerFor } from '../music/theory.js';
 import { kbSVG, staffSVG } from '../music/render.js';
-import { detectChord, detectKey, dynName, groupSteps, Live } from '../music/analysis.js';
-import { PALETTES } from '../music/drills.js';
-import { Player } from '../learn/player.js';
+import { dynName, groupSteps, Live } from '../music/analysis.js';
+import { detectChord, detectKey } from '../music/harmony.js';
 import { drawJam } from './jam.js';
 import { drawEcho } from './echo.js';
 import { bindConnect, connectNotice } from './practice.js';
 import { bindTakes, takesCardHTML } from './takes.js';
 
 export const freeView = (page, params) => {
-  const st = Object.assign({ tab: 'live', pal: 'satie' }, UI.freeState || {}, params);
+  const st = Object.assign({ tab: 'live' }, UI.freeState || {}, params);
   UI.freeState = st;
   const tabs = [
     ['live', 'Listen'],
     ['jam', 'Jam'],
     ['echo', 'Echo'],
-    ['improv', 'Improvise'],
     ['takes', 'Record'],
     ['metro', 'Metronome'],
   ];
   page.innerHTML = `
-    <div class="stack">
-      <span class="eyebrow">Free play</span>
-      <h1 class="h1">Just <em>play</em>.</h1>
-    </div>
+    <h1 class="h1 pagetitle">Free <em>play</em></h1>
     ${seg('ftab', tabs, st.tab, 'wrap')}
     <div id="fBody" class="stack" style="gap:16px"></div>`;
   let off = null;
@@ -58,7 +54,6 @@ export const freeView = (page, params) => {
       live: drawLive,
       jam: () => drawJam(body),
       echo: () => drawEcho(body),
-      improv: drawImprov,
       takes: drawTakes,
       metro: drawMetro,
     };
@@ -180,27 +175,6 @@ export const freeView = (page, params) => {
       cancelAnimationFrame(raf);
       clearTimeout(keyT);
     };
-  }
-  function drawImprov() {
-    const chip = p =>
-      `<button type="button" class="chip" data-pal="${p.id}" aria-pressed="${p.id === st.pal}">${esc(p.t.split(':')[0])}</button>`;
-    body.innerHTML = `
-      <div class="card">
-        <div class="chips">${PALETTES.map(chip).join('')}</div>
-        <p class="small">Improvise over a backing in the style of each composer. Time you spend here counts
-          toward that style in your improvisation skill.</p>
-      </div>
-      ${connectNotice()}
-      <div id="fImp" style="position:relative"></div>`;
-    bindConnect();
-    body.querySelectorAll('[data-pal]').forEach(b => {
-      b.onclick = () => {
-        st.pal = b.dataset.pal;
-        draw();
-      };
-    });
-    const pl = Player.mount($('#fImp', body), { id: `i:imp:${st.pal}`, role: 'focus' });
-    return () => pl.destroy();
   }
   function drawTakes() {
     body.innerHTML = `${connectNotice()}<div class="card" id="fTakes">${takesCardHTML()}</div>`;
