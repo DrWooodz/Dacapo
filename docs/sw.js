@@ -1,5 +1,5 @@
 /* DaCapo service worker: lets the installed app open without a connection. */
-const CACHE = 'dacapo-1.3.0';
+const CACHE = 'dacapo-1.3.1';
 const CORE = [
   './',
   './index.html',
@@ -17,11 +17,14 @@ self.addEventListener('install', e => {
       .then(() => self.skipWaiting()),
   );
 });
+// Other apps share this origin (drwooodz.github.io), so only DaCapo's own older caches are deleted.
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches
       .keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys =>
+        Promise.all(keys.filter(k => k.startsWith('dacapo-') && k !== CACHE).map(k => caches.delete(k))),
+      )
       .then(() => self.clients.claim()),
   );
 });

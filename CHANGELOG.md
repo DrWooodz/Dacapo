@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+
+- The service worker now deletes only DaCapo's own old caches. Other apps on drwooodz.github.io (Katalog) keep their offline files when DaCapo updates.
+- The manifest states the app's id (`/Dacapo/`, the same id Chrome already derived), so another app on the same site can't be mistaken for DaCapo. Installed copies are unaffected.
+
 ## 1.3.0
 
 - Home screen: today's session step by step with times (start it or any step), the weekly focus, each skill's level and next item, and the week. Replaces the Practice and Skills tabs; three tabs remain (Home, Library, Free play).

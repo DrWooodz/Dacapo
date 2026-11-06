@@ -1,6 +1,6 @@
 {
   "name": "dacapo",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "private": true,
   "description": "Piano practice that listens over MIDI.",
   "license": "MIT",
