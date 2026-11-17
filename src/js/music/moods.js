@@ -1,7 +1,7 @@
 /* Moods: the scales to improvise in, by the sound they make. A mood is a scale type (its intervals); it can
    be played from any of the 12 keys. This module is pure: the moods, each one spelled in every key, its
    fingering, and the ways to group keys (by hand shape, by neighbor). */
-import { midiOf, N, scaleFingers, spellAbove } from './theory.js';
+import { midiOf, N, scaleFingers, spellAbove, spellerFor } from './theory.js';
 
 /* ---------- the moods ----------
    semis: the scale's notes above the tonic. letters: the letter of each note above the tonic's letter
@@ -24,11 +24,36 @@ export const MOODS = [
     hear: 'most minor-key pop and rock ballads',
     how: 'The plain minor scale: its 3rd, 6th and 7th are low. Its chords on the low 6th and 7th are major, so i – ♭VI – ♭VII climbs home without a leading note.',
     semis: [0, 2, 3, 5, 7, 8, 10],
-    chords: [
-      [0, 'min'],
-      [8, 'maj'],
-      [10, 'maj'],
-      [0, 'min'],
+    color: [8, 'the low 6th', 'the sad note: lean on it and let it fall a half step to the 5th'],
+    sigChord: 8,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [8, 'maj'],
+          [10, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'climbs home without a leading note: earnest, heroic',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [10, 'maj'],
+          [8, 'maj'],
+          [10, 'maj'],
+        ],
+        why: 'the rock and pop minor loop',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'min'],
+          [7, 'min'],
+          [0, 'min'],
+        ],
+        why: 'all minor chords: old and modal',
+      },
     ],
   },
   {
@@ -39,11 +64,40 @@ export const MOODS = [
     hear: 'classical and baroque minor pieces, neoclassical metal',
     how: 'Natural minor with its 7th raised a half step. That leaves a wide gap (a step and a half) between the 6th and 7th, which gives its exotic edge, and makes V a major chord that pulls hard back home.',
     semis: [0, 2, 3, 5, 7, 8, 11],
-    chords: [
-      [0, 'min'],
-      [5, 'min'],
-      [7, 'maj'],
-      [0, 'min'],
+    color: [
+      11,
+      'the raised 7th',
+      'a half step under home: it pulls up hard, and the gap below it sounds exotic',
+    ],
+    sigChord: 7,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'min'],
+          [7, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'the classical minor cadence: V pulls home',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [8, 'maj'],
+          [7, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'dramatic: ♭VI sinks to V',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [7, 'dom7'],
+          [0, 'min'],
+          [7, 'dom7'],
+        ],
+        why: 'rocking between home and its pull',
+      },
     ],
   },
   {
@@ -54,11 +108,27 @@ export const MOODS = [
     hear: 'flamenco, heavy-metal riffs, menacing film cues',
     how: 'Natural minor with its 2nd lowered a half step. That low 2nd, a half step above home, is its whole flavor: the chord on it (♭II) sliding down to i sounds like a threat.',
     semis: [0, 1, 3, 5, 7, 8, 10],
-    chords: [
-      [0, 'min'],
-      [1, 'maj'],
-      [0, 'min'],
-      [1, 'maj'],
+    color: [1, 'the low 2nd', 'a half step above home: menacing; slide it down onto the tonic'],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [1, 'maj'],
+          [0, 'min'],
+          [1, 'maj'],
+        ],
+        why: 'the Phrygian vamp: ♭II sliding down to i',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [1, 'maj'],
+          [3, 'maj'],
+          [1, 'maj'],
+        ],
+        why: 'a heavy-metal climb and fall',
+      },
     ],
   },
   {
@@ -69,11 +139,27 @@ export const MOODS = [
     hear: 'horror cues and some heavy metal; rare as a home key',
     how: 'Phrygian with its 5th lowered too. Its home chord is diminished, so it never quite settles: use it for unease, not for rest.',
     semis: [0, 1, 3, 5, 6, 8, 10],
-    chords: [
-      [0, 'dim'],
-      [1, 'maj'],
-      [10, 'min'],
-      [0, 'dim'],
+    color: [6, 'the low 5th', 'the tritone above home: it makes the tonic chord diminished'],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'dim'],
+          [1, 'maj'],
+          [0, 'dim'],
+          [1, 'maj'],
+        ],
+        why: 'uneasy: home never settles',
+      },
+      {
+        chords: [
+          [0, 'dim'],
+          [6, 'maj'],
+          [1, 'maj'],
+          [0, 'dim'],
+        ],
+        why: 'wandering, horror-film',
+      },
     ],
   },
   {
@@ -84,11 +170,36 @@ export const MOODS = [
     hear: '"Scarborough Fair", Santana\'s "Oye Como Va", Miles Davis\'s "So What"',
     how: 'Natural minor with its 6th raised a half step. That one brighter note makes IV a major chord: rocking between i and IV is the Dorian sound.',
     semis: [0, 2, 3, 5, 7, 9, 10],
-    chords: [
-      [0, 'min'],
-      [5, 'maj'],
-      [0, 'min'],
-      [5, 'maj'],
+    color: [9, 'the raised 6th', 'the bright note in a minor scale: land on it over the IV chord'],
+    sigChord: 5,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'maj'],
+          [0, 'min'],
+          [5, 'maj'],
+        ],
+        why: 'the Dorian vamp (Oye Como Va, So What)',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [3, 'maj'],
+          [5, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'climbing, hopeful',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [10, 'maj'],
+          [5, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'folk and adventure',
+      },
     ],
   },
   {
@@ -99,11 +210,31 @@ export const MOODS = [
     hear: 'jazz (players call it the jazz minor)',
     how: 'A major scale with a lowered 3rd: minor at the bottom, major at the top. Here it is played the same way up and down, as jazz players use it.',
     semis: [0, 2, 3, 5, 7, 9, 11],
-    chords: [
-      [0, 'min'],
-      [5, 'dom7'],
-      [7, 'dom7'],
-      [0, 'min'],
+    color: [
+      11,
+      'the raised 7th over a minor 3rd',
+      'minor below, major above: let a phrase climb through 6 and 7 to home',
+    ],
+    sigChord: 5,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'dom7'],
+          [0, 'min'],
+          [5, 'dom7'],
+        ],
+        why: 'a jazz minor vamp',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [2, 'min'],
+          [7, 'dom7'],
+          [0, 'min'],
+        ],
+        why: 'minor ii – V – i',
+      },
     ],
   },
   {
@@ -114,11 +245,28 @@ export const MOODS = [
     hear: 'blues and rock guitar solos',
     how: 'Five notes of natural minor, without the 2nd and 6th. No half steps, so no note clashes with another: the easiest scale to improvise in.',
     semis: [0, 3, 5, 7, 10],
-    chords: [
-      [0, 'min'],
-      [5, 'min'],
-      [0, 'min'],
-      [10, 'maj'],
+    color: [3, 'the minor 3rd', 'bend toward it from the 2nd below, the way guitarists do'],
+    sigChord: 10,
+    parent: 'natural',
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'min'],
+          [0, 'min'],
+          [10, 'maj'],
+        ],
+        why: 'a blues-rock minor groove',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [10, 'maj'],
+          [8, 'maj'],
+          [10, 'maj'],
+        ],
+        why: 'the rock loop: every note fits',
+      },
     ],
   },
   {
@@ -129,11 +277,40 @@ export const MOODS = [
     hear: 'klezmer and Middle Eastern music ("Hava Nagila"), flamenco',
     how: 'Phrygian with a major 3rd: the low 2nd and the wide gap up to the 3rd make it sound unmistakably Middle Eastern. It is harmonic minor started from its 5th note.',
     semis: [0, 1, 4, 5, 7, 8, 10],
-    chords: [
-      [0, 'maj'],
-      [1, 'maj'],
-      [10, 'min'],
-      [0, 'maj'],
+    color: [
+      1,
+      'the low 2nd against a major 3rd',
+      'the wide gap between them is the sound: play 1 – ♭2 – 3 slowly',
+    ],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [1, 'maj'],
+          [0, 'maj'],
+          [1, 'maj'],
+        ],
+        why: 'the Middle Eastern vamp',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [1, 'maj'],
+          [10, 'min'],
+          [0, 'maj'],
+        ],
+        why: 'circling home',
+      },
+      {
+        chords: [
+          [5, 'min'],
+          [1, 'maj'],
+          [0, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'a flamenco close: iv – ♭II – I',
+      },
     ],
   },
   {
@@ -144,11 +321,31 @@ export const MOODS = [
     hear: 'Dick Dale\'s "Misirlou", Arabic and Indian music',
     how: 'Two wide gaps, one in each half: a low 2nd up to a major 3rd, and a low 6th up to a major 7th. Both halves have the same shape.',
     semis: [0, 1, 4, 5, 7, 8, 11],
-    chords: [
-      [0, 'maj'],
-      [1, 'maj'],
-      [0, 'maj'],
-      [1, 'maj'],
+    color: [
+      1,
+      'the low 2nd and the major 7th',
+      'two wide gaps around home: trill between 7 and 1, and between ♭2 and 1',
+    ],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [1, 'maj'],
+          [0, 'maj'],
+          [1, 'maj'],
+        ],
+        why: 'the snake-charmer vamp',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [5, 'min'],
+          [1, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'darker, with iv',
+      },
     ],
   },
   {
@@ -159,11 +356,27 @@ export const MOODS = [
     hear: 'Japanese koto music',
     how: 'Five notes with two half steps (2nd to 3rd, 5th to 6th) and two wide gaps. Slow, spacious phrases suit it best.',
     semis: [0, 2, 3, 7, 8],
-    chords: [
-      [0, 'min'],
-      [8, 'maj'],
-      [0, 'min'],
-      [8, 'maj'],
+    color: [8, 'the low 6th', 'the half step above the 5th: let phrases fall onto the 5th'],
+    sigChord: 8,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [8, 'maj'],
+          [0, 'min'],
+          [8, 'maj'],
+        ],
+        why: 'still and spacious',
+      },
+      {
+        chords: [
+          [8, 'maj'],
+          [0, 'min'],
+          [8, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'the same, starting away from home',
+      },
     ],
   },
   {
@@ -176,11 +389,31 @@ export const MOODS = [
     semis: [0, 2, 4, 6, 8, 10],
     usual: [0, 1, 2, 3, 4, 5], // written C D E F♯ G♯ A♯
 
-    chords: [
-      [0, 'aug'],
-      [2, 'aug'],
-      [0, 'aug'],
-      [2, 'aug'],
+    color: [
+      6,
+      'the raised 4th',
+      'every note is a whole step from the next: no note feels like home, so drift',
+    ],
+    sigChord: 2,
+    progs: [
+      {
+        chords: [
+          [0, 'aug'],
+          [2, 'aug'],
+          [0, 'aug'],
+          [2, 'aug'],
+        ],
+        why: 'floating: two augmented chords',
+      },
+      {
+        chords: [
+          [0, 'aug'],
+          [2, 'aug'],
+          [4, 'aug'],
+          [2, 'aug'],
+        ],
+        why: 'a dream sequence, drifting up',
+      },
     ],
   },
   {
@@ -191,11 +424,27 @@ export const MOODS = [
     hear: 'suspense and villain cues; jazz over diminished chords',
     how: 'Whole step, half step, over and over: eight notes. It repeats every three half steps, so it sounds the same from four places: tense and circling.',
     semis: [0, 2, 3, 5, 6, 8, 9, 11],
-    chords: [
-      [0, 'dim7'],
-      [2, 'dim7'],
-      [0, 'dim7'],
-      [2, 'dim7'],
+    color: [3, 'the alternating half steps', 'whole, half, whole, half: play it in pairs of notes'],
+    sigChord: 2,
+    progs: [
+      {
+        chords: [
+          [0, 'dim7'],
+          [2, 'dim7'],
+          [0, 'dim7'],
+          [2, 'dim7'],
+        ],
+        why: 'suspense: two diminished chords',
+      },
+      {
+        chords: [
+          [0, 'dim7'],
+          [2, 'maj'],
+          [0, 'dim7'],
+          [5, 'maj'],
+        ],
+        why: 'tension with major chords hidden in it',
+      },
     ],
   },
   {
@@ -206,11 +455,40 @@ export const MOODS = [
     hear: 'most cheerful pop, folk songs and hymns',
     how: 'The plain major scale: whole, whole, half, whole, whole, whole, half. Home is I; IV and V lead back to it.',
     semis: [0, 2, 4, 5, 7, 9, 11],
-    chords: [
-      [0, 'maj'],
-      [5, 'maj'],
-      [7, 'maj'],
-      [0, 'maj'],
+    color: [
+      11,
+      'the leading note (the 7th)',
+      'a half step under home: it pulls up, and sounds finished when it gets there',
+    ],
+    sigChord: 7,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [5, 'maj'],
+          [7, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'home, away, tension, home',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [9, 'min'],
+          [5, 'maj'],
+          [7, 'maj'],
+        ],
+        why: 'the 1950s progression',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [7, 'maj'],
+          [9, 'min'],
+          [5, 'maj'],
+        ],
+        why: 'the most common pop progression',
+      },
     ],
   },
   {
@@ -221,11 +499,27 @@ export const MOODS = [
     hear: 'The Beatles\' "Norwegian Wood", Celtic folk tunes',
     how: 'Major with its 7th lowered a half step. The chord on that lowered 7th (♭VII) going back to I sounds open rather than final.',
     semis: [0, 2, 4, 5, 7, 9, 10],
-    chords: [
-      [0, 'maj'],
-      [10, 'maj'],
-      [5, 'maj'],
-      [0, 'maj'],
+    color: [10, 'the low 7th', 'a whole step under home: phrases come home from below without pulling'],
+    sigChord: 10,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [10, 'maj'],
+          [5, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'the folk and rock progression',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [10, 'maj'],
+          [0, 'maj'],
+          [10, 'maj'],
+        ],
+        why: 'the Mixolydian vamp',
+      },
     ],
   },
   {
@@ -236,11 +530,27 @@ export const MOODS = [
     hear: '"The Simpsons" theme, film scores for flying and wonder',
     how: 'Major with its 4th raised a half step. That makes II a major chord: I to II floats upward without ever settling.',
     semis: [0, 2, 4, 6, 7, 9, 11],
-    chords: [
-      [0, 'maj'],
-      [2, 'maj'],
-      [0, 'maj'],
-      [2, 'maj'],
+    color: [6, 'the raised 4th', 'one note above the plain 4th: hold it over the I chord and it shimmers'],
+    sigChord: 2,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [2, 'maj'],
+          [0, 'maj'],
+          [2, 'maj'],
+        ],
+        why: 'the Lydian float: I – II',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [2, 'maj'],
+          [11, 'min'],
+          [0, 'maj'],
+        ],
+        why: 'wonder, film music',
+      },
     ],
   },
   {
@@ -251,11 +561,28 @@ export const MOODS = [
     hear: 'folk melodies, country, many East Asian folk tunes',
     how: 'Five notes of the major scale, without the 4th and 7th. No half steps, so nothing clashes.',
     semis: [0, 2, 4, 7, 9],
-    chords: [
-      [0, 'maj'],
-      [9, 'min'],
-      [0, 'maj'],
-      [9, 'min'],
+    color: [9, 'the 6th', 'sweet and open: end phrases on it instead of on home'],
+    sigChord: 9,
+    parent: 'major',
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [9, 'min'],
+          [0, 'maj'],
+          [9, 'min'],
+        ],
+        why: 'gentle, folk',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [5, 'maj'],
+          [0, 'maj'],
+          [7, 'maj'],
+        ],
+        why: 'country: every note fits over all three',
+      },
     ],
   },
   {
@@ -266,11 +593,35 @@ export const MOODS = [
     hear: 'blues, rock and roll, jazz',
     how: 'Minor pentatonic plus one passing note between the 4th and 5th, the blue note. Slide through it; do not sit on it.',
     semis: [0, 3, 5, 6, 7, 10],
-    chords: [
-      [0, 'dom7'],
-      [5, 'dom7'],
-      [0, 'dom7'],
-      [7, 'dom7'],
+    color: [6, 'the blue note', 'the flat 5th: slide through it to the 5th, never sit on it'],
+    sigChord: 5,
+    progs: [
+      {
+        chords: [
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [5, 'dom7'],
+          [5, 'dom7'],
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [7, 'dom7'],
+          [5, 'dom7'],
+          [0, 'dom7'],
+          [7, 'dom7'],
+        ],
+        why: 'the 12-bar blues',
+      },
+      {
+        chords: [
+          [0, 'dom7'],
+          [5, 'dom7'],
+          [0, 'dom7'],
+          [5, 'dom7'],
+        ],
+        why: 'a two-chord blues vamp',
+      },
     ],
   },
 ];
@@ -419,7 +770,7 @@ export function moodFingering(moodId, pc, hand, octs) {
     // a raised note (melodic minor's 6th and 7th) can put the parent's thumb on a black key: work it out
     if (!f.some((x, i) => x === 1 && onBlack(up[i]))) return f.concat(f.slice(0, -1).reverse());
   }
-  return scaleFingering(up, hand);
+  return scaleFingering(up, hand, octs);
 }
 
 /* The other scales (pentatonics, blues, whole tone, diminished, Hirajoshi, double harmonic) have no
@@ -431,18 +782,24 @@ export function moodFingering(moodId, pc, hand, octs) {
      - the 5th finger only at the top (right hand) or bottom (left hand) end
    The cheapest fingering wins (dynamic programming). */
 const REACH = { 12: 5, 13: 7, 14: 8, 15: 9, 23: 3, 24: 5, 25: 7, 34: 3, 35: 5, 45: 3 };
+// arpeggios leap: the hand opens wider, and the thumb passes under a bigger gap
+const ARP = {
+  reach: { 12: 6, 13: 8, 14: 9, 15: 10, 23: 5, 24: 7, 25: 8, 34: 4, 35: 6, 45: 4 },
+  under: [4, 6],
+};
+const SCALE = { reach: REACH, under: [3, 4] };
 
 // moving outward (away from the thumb) by d semitones from finger f1 to f2; b1, b2: black keys
-function stepCost(d, b1, b2, f1, f2) {
+function stepCost(d, b1, b2, f1, f2, hand = SCALE) {
   if (f2 > f1) {
-    if (d > REACH[f1 * 10 + f2]) return Infinity;
+    if (d > hand.reach[f1 * 10 + f2]) return Infinity;
     const skipped = f2 - f1 - 1;
     // a skipped finger is natural over a wide gap, awkward over a step
     return skipped * (d >= 3 ? 0.3 : 1.5) + (d >= 4 && skipped === 0 && f1 > 1 ? 1 : 0);
   }
   if (f2 === 1 && f1 >= 2 && f1 <= 4) {
     // the thumb passes under
-    if (d > (f1 === 2 ? 3 : 4)) return Infinity;
+    if (d > hand.under[f1 === 2 ? 0 : 1]) return Infinity;
     let c = 1.6 + (f1 === 2 ? 1.2 : 0) + (d >= 3 ? 0.6 : 0);
     if (b2) c += 7;
     if (b1 && !b2) c -= 1.2; // the classic place: thumb on the white key right after a black one
@@ -461,13 +818,14 @@ function nodeCost(black, f, i, last) {
 }
 
 // fingers for keys played moving outward from the thumb (right hand up, left hand down), in that order
-function fingerOutward(midis) {
+function fingerOutward(midis, hand = SCALE, { open = false, first = 0, end = 0 } = {}) {
   const n = midis.length;
-  const last = n - 1;
+  const last = open ? -1 : n - 1; // open: the last note is not an end, the run goes on from it
   const black = midis.map(onBlack);
   const cost = Array.from({ length: n }, () => Array(6).fill(Infinity));
   const from = Array.from({ length: n }, () => Array(6).fill(0));
   for (let f = 1; f <= 5; f++) {
+    if (first && f !== first) continue;
     // a scale starts on the thumb from a white key, on 2 (or 3 or 4) from a black one
     const start = black[0] ? (f === 2 ? 0 : f === 3 || f === 4 ? 0.8 : 4) : f === 1 ? 0 : 3;
     cost[0][f] = start + nodeCost(black[0], f, 0, last);
@@ -477,25 +835,57 @@ function fingerOutward(midis) {
     for (let f2 = 1; f2 <= 5; f2++)
       for (let f1 = 1; f1 <= 5; f1++) {
         const c =
-          cost[i - 1][f1] + stepCost(d, black[i - 1], black[i], f1, f2) + nodeCost(black[i], f2, i, last);
+          cost[i - 1][f1] +
+          stepCost(d, black[i - 1], black[i], f1, f2, hand) +
+          nodeCost(black[i], f2, i, last);
         if (c < cost[i][f2]) {
           cost[i][f2] = c;
           from[i][f2] = f1;
         }
       }
   }
-  let f = 1;
-  for (let g = 2; g <= 5; g++) if (cost[last][g] < cost[last][f]) f = g;
+  let f = end || 1;
+  if (!end) for (let g = 2; g <= 5; g++) if (cost[n - 1][g] < cost[n - 1][f]) f = g;
+  if (cost[n - 1][f] === Infinity) return null;
   const out = [f];
-  for (let i = last; i > 0; i--) out.unshift((f = from[i][f]));
+  for (let i = n - 1; i > 0; i--) out.unshift((f = from[i][f]));
+  out.cost = cost[n - 1][out[n - 1]];
   return out;
+}
+
+/* fingers for a run of several octaves that repeats one octave's pattern, as published fingerings do.
+   oneUp: one octave going up, with the top note. Worked out moving outward from the thumb (the right
+   hand going up, the left hand coming down from the top). For two octaves or more the octave's pattern
+   must loop: its top note takes the finger its first note had, so the next octave starts the same way. */
+function octaveFingers(oneUp, octs, handId, reach = SCALE) {
+  const outward = handId === 'rh' ? oneUp : oneUp.slice().reverse();
+  const flip = f => (handId === 'rh' ? f : f.slice().reverse());
+  if (octs === 1) return flip(fingerOutward(outward, reach));
+  const n = outward.length - 1;
+  let cyc = null;
+  for (let s = 1; s <= 5; s++) {
+    const r = fingerOutward(outward, reach, { open: true, first: s, end: s });
+    if (r && (!cyc || r.cost < cyc.cost)) cyc = r;
+  }
+  const seq = [];
+  for (let o = 0; o < octs; o++) seq.push(...cyc.slice(0, n));
+  // the last note: the next finger up if it reaches, as a run normally ends
+  const prev = seq[seq.length - 1];
+  const d = Math.abs(outward[n] - outward[n - 1]);
+  const black = onBlack(outward[n]);
+  let end = cyc[n];
+  for (let f = prev + 1; f <= 5; f++)
+    if (stepCost(d, onBlack(outward[n - 1]), black, prev, f, reach) < Infinity) end = f;
+  seq.push(end);
+  return flip(seq);
 }
 
 /* fingers for a scale run up and back down, as the drill plays it. midisUp: the notes going up, tonic to
    tonic. The left hand's thumb is on the right, so going down it moves like the right hand going up: its
    fingering is worked out from the top note down. */
-function scaleFingering(midisUp, hand) {
-  const up = hand === 'rh' ? fingerOutward(midisUp) : fingerOutward(midisUp.slice().reverse()).reverse();
+function scaleFingering(midisUp, hand, octs) {
+  const n = (midisUp.length - 1) / octs;
+  const up = octaveFingers(midisUp.slice(0, n + 1), octs, hand);
   return up.concat(up.slice(0, -1).reverse());
 }
 
@@ -552,3 +942,236 @@ export function handShapes(moodId) {
 
 // by neighbor: around the circle of fifths, each key one note different from the last
 export const CIRCLE = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+
+/* ---------- chords ----------
+   Chords are [semitones above the tonic, type]. Numerals count from the tonic on its major scale, so the
+   same numeral sounds the same in every mood: ♭VII is a major chord a whole step below home. */
+export const CHORD_TONES = {
+  maj: [0, 4, 7],
+  min: [0, 3, 7],
+  dim: [0, 3, 6],
+  aug: [0, 4, 8],
+  sus2: [0, 2, 7],
+  sus4: [0, 5, 7],
+  maj7: [0, 4, 7, 11],
+  dom7: [0, 4, 7, 10],
+  min7: [0, 3, 7, 10],
+  hdim7: [0, 3, 6, 10],
+  dim7: [0, 3, 6, 9],
+  minmaj7: [0, 3, 7, 11],
+  augmaj7: [0, 4, 8, 11],
+};
+const SUFFIX = {
+  maj: '',
+  min: 'm',
+  dim: '°',
+  aug: '+',
+  sus2: 'sus2',
+  sus4: 'sus4',
+  maj7: 'maj7',
+  dom7: '7',
+  min7: 'm7',
+  hdim7: 'm7♭5',
+  dim7: '°7',
+  minmaj7: 'm(maj7)',
+  augmaj7: '+maj7',
+};
+const TYPE_WORD = {
+  maj: 'major',
+  min: 'minor',
+  dim: 'diminished',
+  aug: 'augmented',
+  sus2: 'suspended 2nd',
+  sus4: 'suspended 4th',
+  maj7: 'major 7th',
+  dom7: 'dominant 7th',
+  min7: 'minor 7th',
+  hdim7: 'half-diminished',
+  dim7: 'diminished 7th',
+  minmaj7: 'minor-major 7th',
+  augmaj7: 'augmented major 7th',
+};
+const DEGREE = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII'];
+const LOWER = new Set(['min', 'dim', 'min7', 'hdim7', 'dim7', 'minmaj7']);
+const NUM_SUFFIX = {
+  dim: '°',
+  aug: '+',
+  dim7: '°7',
+  hdim7: 'ø7',
+  maj7: 'maj7',
+  dom7: '7',
+  min7: '7',
+  minmaj7: '(maj7)',
+  augmaj7: '+maj7',
+  sus2: 'sus2',
+  sus4: 'sus4',
+};
+export function roman(semis, type) {
+  const d = DEGREE[((semis % 12) + 12) % 12];
+  return (LOWER.has(type) ? d.toLowerCase() : d) + (NUM_SUFFIX[type] || '');
+}
+
+// the notes of a chord, spelled from the scale where they are in it
+function spellMoodChord(moodId, pc, semis, type) {
+  const scale = moodScale(moodId, pc);
+  const tonic = scale[0];
+  const inScale = s => scale.find((n, i) => MOOD_BY[moodId].semis[i] === ((s % 12) + 12) % 12);
+  const root = inScale(semis) || spellAbove(tonic, USUAL_LETTER[semis % 12], semis % 12);
+  // each note a 3rd, 5th or 7th above the root: rising, and spelled as a chord
+  return CHORD_TONES[type].map((x, i) => spellAbove(root, [0, 2, 4, 6][i], x));
+}
+const noteName = n => 'CDEFGAB'[n.l] + (n.a > 0 ? '♯'.repeat(n.a) : n.a < 0 ? '♭'.repeat(-n.a) : '');
+
+// a chord of a mood, ready to show: numeral, name ("F♯m"), its notes, and what kind it is
+function chordInfo(moodId, pc, [semis, type]) {
+  const notes = spellMoodChord(moodId, pc, semis, type);
+  return {
+    semis,
+    type,
+    num: roman(semis, type),
+    name: noteName(notes[0]) + SUFFIX[type],
+    notes,
+    word: TYPE_WORD[type],
+  };
+}
+
+/* the chords of a mood: the triad and seventh chord on each note of the scale. Seven-note scales stack
+   every other note (the chords the scale makes by itself). The pentatonics use the chords of the scale
+   they come from; the blues uses its three dominant 7ths; the others list the chords that fit inside them. */
+const TRIAD_OF = { '4,7': 'maj', '3,7': 'min', '3,6': 'dim', '4,8': 'aug' };
+const SEVENTH_OF = {
+  maj: { 11: 'maj7', 10: 'dom7' },
+  min: { 10: 'min7', 11: 'minmaj7' },
+  dim: { 10: 'hdim7', 9: 'dim7' },
+  aug: { 11: 'augmaj7' },
+};
+export function moodChords(moodId, pc) {
+  const M = MOOD_BY[moodId];
+  if (M.parent) return moodChords(M.parent, pc);
+  let list;
+  if (moodId === 'blues')
+    list = [
+      [0, 'dom7'],
+      [5, 'dom7'],
+      [7, 'dom7'],
+    ].map(c => ({ triad: c, seventh: null }));
+  else if (M.semis.length === 7)
+    list = M.semis.map((s, i) => {
+      const at = k => (M.semis[(i + k) % 7] - s + 12) % 12;
+      const triad = TRIAD_OF[[at(2), at(4)].join()];
+      const seventh = triad && SEVENTH_OF[triad] ? SEVENTH_OF[triad][at(6)] : null;
+      return { triad: [s, triad], seventh: seventh ? [s, seventh] : null };
+    });
+  else {
+    // every triad (and diminished 7th) that lies entirely inside the scale
+    const has = s => M.semis.includes(((s % 12) + 12) % 12);
+    list = M.semis.flatMap(s =>
+      ['maj', 'min', 'dim', 'aug', 'sus4', 'sus2']
+        .filter(t => CHORD_TONES[t].every(x => has(s + x)))
+        .slice(0, 1)
+        .map(t => ({ triad: [s, t], seventh: t === 'dim' && has(s + 9) ? [s, 'dim7'] : null })),
+    );
+  }
+  return list
+    .filter(c => c.triad[1])
+    .map(c => ({
+      ...chordInfo(moodId, pc, c.triad),
+      seventh: c.seventh ? chordInfo(moodId, pc, c.seventh) : null,
+      signature: c.triad[0] === M.sigChord,
+    }));
+}
+
+/* ---------- voicings: chords that move as little as possible ----------
+   Each chord takes the inversion (and octave) nearest the one before, so the hand stays in one place
+   while the harmony changes: voice leading. Right hand around middle C; left hand from E2 to D♯3 for the
+   root, the chord just above. */
+function nearestVoicing(pcs, prev, lo, hi) {
+  let best = null;
+  for (let base = lo; base <= hi; base++) {
+    if (pcs[0] !== base % 12 && !pcs.includes(base % 12)) continue;
+    // a close voicing with its lowest note at base
+    const start = pcs.indexOf(base % 12);
+    const v = [];
+    let m = base;
+    for (let k = 0; k < pcs.length; k++) {
+      const p = pcs[(start + k) % pcs.length];
+      while (m % 12 !== p) m++;
+      v.push(m);
+    }
+    const cost = prev
+      ? v.reduce((a, x, i) => a + Math.abs(x - prev[Math.min(i, prev.length - 1)]), 0)
+      : Math.abs(v[0] - (lo + hi) / 2);
+    if (!best || cost < best.cost) best = { v, cost };
+  }
+  return best.v;
+}
+export function voiceProgression(moodId, pc, chords, { lo = 55, hi = 66 } = {}) {
+  const tonic = moodScale(moodId, pc)[0];
+  const t = ((midiOf(tonic) % 12) + 12) % 12;
+  let prev = null;
+  return chords.map(([s, type]) => {
+    const pcs = CHORD_TONES[type].slice(0, 3).map(x => (t + s + x) % 12);
+    const right = nearestVoicing(pcs, prev, lo, hi);
+    prev = right;
+    const root = 40 + ((t + s - 40 + 120) % 12);
+    return { right, root, info: chordInfo(moodId, pc, [s, type]) };
+  });
+}
+
+/* ---------- drills: a progression, an arpeggio ---------- */
+// the progression, one chord a step: the right hand's voiced chord, the left hand's root, or both
+export function progressionRun(moodId, pc, prog, hand) {
+  const V = voiceProgression(moodId, pc, MOOD_BY[moodId].progs[prog].chords);
+  const sp = spellerFor(sigFor(moodScale(moodId, pc)));
+  const steps = V.map((v, i) => {
+    const notes = [];
+    if (hand !== 'lh') v.right.forEach(m => notes.push({ n: sp(m), st: 't', fcls: 'rh' }));
+    if (hand !== 'rh') notes.push({ n: sp(v.root), st: 'b', fcls: 'lh', f: 5 });
+    if (hand !== 'lh') [1, 3, 5].forEach((f, k) => (notes[k].f = f));
+    return { midis: notes.map(x => midiOf(x.n)), notes, beat: i * 2, chord: v.info.name };
+  });
+  return {
+    steps,
+    sig: sigFor(moodScale(moodId, pc)),
+    clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
+  };
+}
+
+// an arpeggio of one chord, root position, up `octs` octaves and back, with fingering for each hand:
+// white-root major and minor triads use the standard fingering; the rest is worked out like the scales
+export function arpeggioRun(moodId, pc, chord, hand, octs) {
+  const info = chordInfo(moodId, pc, chord);
+  const tones = CHORD_TONES[chord[1]];
+  const root = info.notes[0];
+  const side = h => {
+    const rm = midiOf(root);
+    const shift = (rm > 64 ? -1 : 0) + (h === 'lh' ? -1 : 0);
+    const up = [];
+    for (let o = 0; o < octs; o++) info.notes.forEach(n => up.push(N(n.l, n.a, n.o + shift + o)));
+    up.push(N(root.l, root.a, root.o + shift + octs));
+    const ms = up.map(midiOf);
+    let f;
+    const triad = tones.length === 3 && (chord[1] === 'maj' || chord[1] === 'min') && !onBlack(ms[0]);
+    if (triad && h === 'rh') f = ms.map((_, i) => (i === ms.length - 1 ? 5 : [1, 2, 3][i % 3]));
+    else if (triad) {
+      // the left hand takes 3 on a black third (D, A, E major), 4 otherwise
+      const third = onBlack(ms[1]) ? 3 : 4;
+      f = ms.map((_, i) => (i === 0 ? 5 : [1, third, 2][i % 3]));
+    } else f = octaveFingers(ms.slice(0, tones.length + 1), octs, h, ARP);
+    return { notes: up.concat(up.slice(0, -1).reverse()), fingers: f.concat(f.slice(0, -1).reverse()) };
+  };
+  const R = side('rh');
+  const L = side('lh');
+  const note = (S, h, i) => ({ n: S.notes[i], st: h === 'rh' ? 't' : 'b', f: S.fingers[i], fcls: h });
+  const steps = R.notes.map((_, i) => {
+    const notes =
+      hand === 'ht' ? [note(R, 'rh', i), note(L, 'lh', i)] : [note(hand === 'rh' ? R : L, hand, i)];
+    return { midis: notes.map(x => midiOf(x.n)), notes, beat: i / 2 };
+  });
+  return {
+    steps,
+    sig: sigFor(moodScale(moodId, pc)),
+    clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
+    info,
+  };
+}

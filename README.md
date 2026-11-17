@@ -11,11 +11,13 @@ No account, server or tracking. Progress stays in the browser; Settings has back
 
 ## Moods
 
-- **16 moods in 12 keys.** Dark (natural and harmonic minor, Phrygian, Locrian), bittersweet (Dorian, melodic minor, minor pentatonic), exotic (Phrygian dominant, double harmonic, Hirajoshi), strange (whole tone, diminished) and bright (major, Mixolydian, Lydian, major pentatonic, blues). Each comes with what it sounds like, where you have heard it, and what makes it different.
+- **17 moods in 12 keys.** Dark (natural and harmonic minor, Phrygian, Locrian), bittersweet (Dorian, melodic minor, minor pentatonic), exotic (Phrygian dominant, double harmonic, Hirajoshi), strange (whole tone, diminished) and bright (major, Mixolydian, Lydian, major pentatonic, blues). Each comes with what it sounds like, where you have heard it, and its color note: the one that makes it different.
 - **Fingering for every scale.** Major and minor scales use the published fingerings; modes use their parent scale's (D Dorian is fingered like C major). The rest are worked out from the rules pianists use: thumb off black keys, crossings after 3 or 4, no overstretching.
-- **A sitting** has five steps, in any order: listen, right hand, left hand, both hands, improvise. Help is yours to switch: keys lit, finger numbers, a metronome.
+- **A sitting** has five steps, in any order: listen; the scale (right, left or both hands); its chords and progressions; arpeggios of its chords; improvise. Help is yours to switch: keys lit, finger numbers, a metronome.
+- **Chords:** the chords the scale makes, with numerals, notes and the signature chord marked, and two or three progressions that carry the mood, voiced so the hand barely moves. Hear any of them, or play them.
 - **Progress:** a key is *comfortable* after three clean runs with each hand, and *solid* after a check passed on two different days (both hands, two octaves, no help, every note right and even). Checks happen only when you ask. A mood is *yours* once three keys are solid, one of them a black-key one.
-- **Improvising:** a drone or the mood's chords as backing, and a left-hand pattern to try. DaCapo notes what your left hand did and how long the pedal was down, and suggests what to try next.
+- **Improvising:** a held drone or one of the progressions as backing; ten left-hand patterns (from root and fifth to Alberti, open tenths, walking bass and pedal point); and ideas for the right hand (color note, chord tones on the strong beats, motif and sequence, thirds and sixths, call and response). DaCapo says what it heard for each and suggests what to try next.
+- **Which mood?** An ear game on Home: hear a phrase, name its mood, learn the note that gave it away.
 - **Home** shows where you left off, the suggested next sitting, what DaCapo noticed in your playing, every mood and key (browsed by mood, by shared hand shape, or around the circle of fifths), and your trajectory.
 
 ## The full course
@@ -57,7 +59,7 @@ npm run lint && npm run format:check && node tools/fix-imports.mjs --check
 
 ```
 src/js/core/    log, util, store (state, migration), audio, input (MIDI, mic, touch), ui (router, sheets)
-src/js/music/   theory, notation, analysis, harmony, moods (scales, spelling, fingering), MIDI read/write, the Jam's sounds and loop
+src/js/music/   theory, notation, analysis, harmony, moods (scales, spelling, fingering, chords), improvising tools, MIDI read/write, the Jam's sounds and loop
 src/js/learn/   curriculum and stages, sessions, skills and focus, moods progress, theory units, walkthroughs, the players
 src/js/views/   home (both paths), a moods sitting, practice, library, free play, settings and panels
 tests/          Playwright tests; pure modules are unit-tested directly

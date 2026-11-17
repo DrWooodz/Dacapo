@@ -1,8 +1,19 @@
 # Changelog
 
+## 1.5.0
+
+- A Moods sitting has five steps: Listen, Scale (right, left or both hands inside it), Chords, Arpeggios, Improvise.
+- Chords: the chords each scale makes (numeral, name, notes, its 7th), the signature chord marked, and two or three progressions per mood, voiced so each chord takes the shape nearest the last. Hear them, or play them as a drill (right-hand chords, left-hand roots, or both).
+- Arpeggios of the home chord, the signature chord or any chord of the scale, fingered for both hands, one or two octaves. They count apart from the scale's progress.
+- Every mood names its color note: the note that makes it sound the way it does, and what to do with it.
+- Improvising: ten left-hand patterns, each voice-led over the progression with fingers and a Hear it button (root and fifth, octaves, chord on the beat, broken chord, bass and chord, Alberti, open tenth, sweep, walking bass, pedal point), and six right-hand ideas with feedback (free, color note, targets, motif and sequence, thirds and sixths, call and response).
+- The backing plays: the drone is a held pad in the middle of the piano, started when you choose it; the chords backing plays the progression you pick, with a bass. (The drone was too low to hear on most speakers.)
+- Which mood?, an ear game on Home: a phrase, four choices, and the color note that gave it away. Moods you miss come back more.
+- Removed unused styles.
+
 ## 1.4.0
 
-- Moods, a second way to use DaCapo, made for short sittings: 16 scales by the sound they make (dark, bittersweet, exotic, strange, bright), each in all 12 keys, with fingering for both hands. A sitting has five steps in any order (listen, right hand, left hand, both hands, improvise); help (keys lit, finger numbers, metronome) is switchable; checks are strict and happen only when asked.
+- Moods, a second way to use DaCapo, made for short sittings: 17 scales by the sound they make (dark, bittersweet, exotic, strange, bright), each in all 12 keys, with fingering for both hands. A sitting has five steps in any order (listen, right hand, left hand, both hands, improvise); help (keys lit, finger numbers, metronome) is switchable; checks are strict and happen only when asked.
 - Home is built around the chosen path (Moods or the full course), switchable there. On Moods it shows where you left off, the next sitting, insights from your playing (left-hand patterns, pedal), every mood and key (by mood, by hand shape, around the circle of fifths), and your trajectory.
 - The welcome screen offers the two paths.
 - Recorder: a take played with the sustain pedal held down now shows every note (key presses as solid bars, the pedal's ringing as a faint tail); the pedal share no longer exceeds 100%.

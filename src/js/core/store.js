@@ -48,6 +48,7 @@ export const DEFAULT_STATE = () => ({
     keys: {}, // 'mood:pc' -> {met, clean: {rh, lh, ht}, checks: [days], last}
     sittings: [], // recent sittings: {d, at, mood, pc, runs, clean, imp}
     prefs: { keys: true, fingers: true, tempo: false, bpm: 60, octs: 1, browse: 'mood', mood: null },
+    ear: { n: 0, right: 0, by: {} }, // "which mood?": answers, right ones, and per mood [heard, right]
   },
   legacy: null, // set when the state came from version 1 or 2
 });

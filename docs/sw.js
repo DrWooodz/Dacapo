@@ -1,5 +1,5 @@
 /* DaCapo service worker: lets the installed app open without a connection. */
-const CACHE = 'dacapo-1.4.0';
+const CACHE = 'dacapo-1.5.0';
 const CORE = [
   './',
   './index.html',

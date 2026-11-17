@@ -66,6 +66,7 @@ img {
   --key-lh: #f0e2c4;
   --key-ok: #cfebdd;
   --key-bad: #f4d3d3;
+  --key-color: #e4d2f0;
   --f-display: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif;
   --f-ui: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -102,6 +103,7 @@ img {
     --key-lh: #e3cb96;
     --key-ok: #a6dcc2;
     --key-bad: #edb0b0;
+    --key-color: #c9a9df;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     color-scheme: dark;
   }
@@ -134,6 +136,7 @@ img {
   --key-lh: #e3cb96;
   --key-ok: #a6dcc2;
   --key-bad: #edb0b0;
+  --key-color: #c9a9df;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   color-scheme: dark;
 }
@@ -357,9 +360,6 @@ main {
 .tabs button[aria-current='page'] svg {
   stroke-width: 2.2;
 }
-.rail-foot {
-  display: none;
-}
 
 @media (min-width: 900px) {
   .app {
@@ -397,13 +397,6 @@ main {
   main {
     grid-row: 2;
     padding-block: 24px 110px;
-  }
-  .rail-foot {
-    display: block;
-    margin-top: auto;
-    font-size: 12px;
-    color: var(--muted);
-    padding: 12px;
   }
 }
 
@@ -478,24 +471,6 @@ main {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-}
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-.grid3 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-@media (min-width: 760px) {
-  .grid2 {
-    grid-template-columns: 1fr 1fr;
-  }
-  .grid3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 .row {
   display: flex;
@@ -826,6 +801,12 @@ svg.kb .w.bad {
 }
 svg.kb .b.bad {
   fill: var(--bad);
+}
+svg.kb .w.color {
+  fill: var(--key-color);
+}
+svg.kb .b.color {
+  fill: #7a4f96;
 }
 svg.kb .w.tone {
   fill: var(--key-lh);
@@ -1488,24 +1469,6 @@ textarea.input {
   color: var(--muted);
   font-weight: 600;
 }
-.trackcard .itemline {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-top: 1px solid var(--line);
-}
-.trackcard .itemline:first-of-type {
-  border-top: 0;
-}
-.itemline .grow {
-  flex: 1;
-  min-width: 0;
-}
-.itemline .ttl {
-  font-weight: 600;
-  font-size: 14px;
-}
 .dot3 {
   width: 10px;
   height: 10px;
@@ -1524,28 +1487,6 @@ textarea.input {
 }
 .dot3.done {
   background: var(--ok);
-}
-.trackbar {
-  display: flex;
-  gap: 2px;
-  height: 8px;
-}
-.trackbar i {
-  flex: 1;
-  border-radius: 2px;
-  background: var(--sunk);
-}
-.trackbar i.done {
-  background: var(--ok);
-}
-.trackbar i.check {
-  background: var(--brass);
-}
-.trackbar i.learn,
-.trackbar i.pace,
-.trackbar i.tempo,
-.trackbar i.create {
-  background: var(--cover);
 }
 
 /* ---------- library ---------- */
@@ -2286,6 +2227,61 @@ button.focusline {
   margin-left: auto;
 }
 
+/* a mood's chords and progressions */
+.chordtable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.chordtable th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 6px 4px;
+}
+.chordtable td {
+  padding: 6px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.chordtable td .small {
+  display: block;
+}
+.chordtable tr.sig td {
+  background: var(--brass-soft);
+}
+.progrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.progrow .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.progrow .btn {
+  white-space: nowrap;
+}
+.progrow.on {
+  border-color: var(--cover);
+}
+.morechords summary {
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+/* which mood? */
+.earopts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 /* a four-octave keyboard stays readable on a phone: it scrolls sideways instead of shrinking */
 .widekb {
   min-width: 760px;
@@ -2342,7 +2338,7 @@ button.focusline {
 /* Facts about this copy of the app. python3 build.py fills in BUILD and APP_VERSION;
    running straight from src/ shows 'dev'. */
 const BUILD = 'site';
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 // opened inside the Claude app (artifact viewer), where progress syncs to the Claude account
 const IN_CLAUDE = !!(window.claude && window.claude.use);
 
@@ -2683,6 +2679,7 @@ const DEFAULT_STATE = () => ({
     keys: {}, // 'mood:pc' -> {met, clean: {rh, lh, ht}, checks: [days], last}
     sittings: [], // recent sittings: {d, at, mood, pc, runs, clean, imp}
     prefs: { keys: true, fingers: true, tempo: false, bpm: 60, octs: 1, browse: 'mood', mood: null },
+    ear: { n: 0, right: 0, by: {} }, // "which mood?": answers, right ones, and per mood [heard, right]
   },
   legacy: null, // set when the state came from version 1 or 2
 });
@@ -13515,11 +13512,36 @@ const MOODS = [
     hear: 'most minor-key pop and rock ballads',
     how: 'The plain minor scale: its 3rd, 6th and 7th are low. Its chords on the low 6th and 7th are major, so i – ♭VI – ♭VII climbs home without a leading note.',
     semis: [0, 2, 3, 5, 7, 8, 10],
-    chords: [
-      [0, 'min'],
-      [8, 'maj'],
-      [10, 'maj'],
-      [0, 'min'],
+    color: [8, 'the low 6th', 'the sad note: lean on it and let it fall a half step to the 5th'],
+    sigChord: 8,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [8, 'maj'],
+          [10, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'climbs home without a leading note: earnest, heroic',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [10, 'maj'],
+          [8, 'maj'],
+          [10, 'maj'],
+        ],
+        why: 'the rock and pop minor loop',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'min'],
+          [7, 'min'],
+          [0, 'min'],
+        ],
+        why: 'all minor chords: old and modal',
+      },
     ],
   },
   {
@@ -13530,11 +13552,40 @@ const MOODS = [
     hear: 'classical and baroque minor pieces, neoclassical metal',
     how: 'Natural minor with its 7th raised a half step. That leaves a wide gap (a step and a half) between the 6th and 7th, which gives its exotic edge, and makes V a major chord that pulls hard back home.',
     semis: [0, 2, 3, 5, 7, 8, 11],
-    chords: [
-      [0, 'min'],
-      [5, 'min'],
-      [7, 'maj'],
-      [0, 'min'],
+    color: [
+      11,
+      'the raised 7th',
+      'a half step under home: it pulls up hard, and the gap below it sounds exotic',
+    ],
+    sigChord: 7,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'min'],
+          [7, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'the classical minor cadence: V pulls home',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [8, 'maj'],
+          [7, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'dramatic: ♭VI sinks to V',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [7, 'dom7'],
+          [0, 'min'],
+          [7, 'dom7'],
+        ],
+        why: 'rocking between home and its pull',
+      },
     ],
   },
   {
@@ -13545,11 +13596,27 @@ const MOODS = [
     hear: 'flamenco, heavy-metal riffs, menacing film cues',
     how: 'Natural minor with its 2nd lowered a half step. That low 2nd, a half step above home, is its whole flavor: the chord on it (♭II) sliding down to i sounds like a threat.',
     semis: [0, 1, 3, 5, 7, 8, 10],
-    chords: [
-      [0, 'min'],
-      [1, 'maj'],
-      [0, 'min'],
-      [1, 'maj'],
+    color: [1, 'the low 2nd', 'a half step above home: menacing; slide it down onto the tonic'],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [1, 'maj'],
+          [0, 'min'],
+          [1, 'maj'],
+        ],
+        why: 'the Phrygian vamp: ♭II sliding down to i',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [1, 'maj'],
+          [3, 'maj'],
+          [1, 'maj'],
+        ],
+        why: 'a heavy-metal climb and fall',
+      },
     ],
   },
   {
@@ -13560,11 +13627,27 @@ const MOODS = [
     hear: 'horror cues and some heavy metal; rare as a home key',
     how: 'Phrygian with its 5th lowered too. Its home chord is diminished, so it never quite settles: use it for unease, not for rest.',
     semis: [0, 1, 3, 5, 6, 8, 10],
-    chords: [
-      [0, 'dim'],
-      [1, 'maj'],
-      [10, 'min'],
-      [0, 'dim'],
+    color: [6, 'the low 5th', 'the tritone above home: it makes the tonic chord diminished'],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'dim'],
+          [1, 'maj'],
+          [0, 'dim'],
+          [1, 'maj'],
+        ],
+        why: 'uneasy: home never settles',
+      },
+      {
+        chords: [
+          [0, 'dim'],
+          [6, 'maj'],
+          [1, 'maj'],
+          [0, 'dim'],
+        ],
+        why: 'wandering, horror-film',
+      },
     ],
   },
   {
@@ -13575,11 +13658,36 @@ const MOODS = [
     hear: '"Scarborough Fair", Santana\'s "Oye Como Va", Miles Davis\'s "So What"',
     how: 'Natural minor with its 6th raised a half step. That one brighter note makes IV a major chord: rocking between i and IV is the Dorian sound.',
     semis: [0, 2, 3, 5, 7, 9, 10],
-    chords: [
-      [0, 'min'],
-      [5, 'maj'],
-      [0, 'min'],
-      [5, 'maj'],
+    color: [9, 'the raised 6th', 'the bright note in a minor scale: land on it over the IV chord'],
+    sigChord: 5,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'maj'],
+          [0, 'min'],
+          [5, 'maj'],
+        ],
+        why: 'the Dorian vamp (Oye Como Va, So What)',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [3, 'maj'],
+          [5, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'climbing, hopeful',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [10, 'maj'],
+          [5, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'folk and adventure',
+      },
     ],
   },
   {
@@ -13590,11 +13698,31 @@ const MOODS = [
     hear: 'jazz (players call it the jazz minor)',
     how: 'A major scale with a lowered 3rd: minor at the bottom, major at the top. Here it is played the same way up and down, as jazz players use it.',
     semis: [0, 2, 3, 5, 7, 9, 11],
-    chords: [
-      [0, 'min'],
-      [5, 'dom7'],
-      [7, 'dom7'],
-      [0, 'min'],
+    color: [
+      11,
+      'the raised 7th over a minor 3rd',
+      'minor below, major above: let a phrase climb through 6 and 7 to home',
+    ],
+    sigChord: 5,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'dom7'],
+          [0, 'min'],
+          [5, 'dom7'],
+        ],
+        why: 'a jazz minor vamp',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [2, 'min'],
+          [7, 'dom7'],
+          [0, 'min'],
+        ],
+        why: 'minor ii – V – i',
+      },
     ],
   },
   {
@@ -13605,11 +13733,28 @@ const MOODS = [
     hear: 'blues and rock guitar solos',
     how: 'Five notes of natural minor, without the 2nd and 6th. No half steps, so no note clashes with another: the easiest scale to improvise in.',
     semis: [0, 3, 5, 7, 10],
-    chords: [
-      [0, 'min'],
-      [5, 'min'],
-      [0, 'min'],
-      [10, 'maj'],
+    color: [3, 'the minor 3rd', 'bend toward it from the 2nd below, the way guitarists do'],
+    sigChord: 10,
+    parent: 'natural',
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [5, 'min'],
+          [0, 'min'],
+          [10, 'maj'],
+        ],
+        why: 'a blues-rock minor groove',
+      },
+      {
+        chords: [
+          [0, 'min'],
+          [10, 'maj'],
+          [8, 'maj'],
+          [10, 'maj'],
+        ],
+        why: 'the rock loop: every note fits',
+      },
     ],
   },
   {
@@ -13620,11 +13765,40 @@ const MOODS = [
     hear: 'klezmer and Middle Eastern music ("Hava Nagila"), flamenco',
     how: 'Phrygian with a major 3rd: the low 2nd and the wide gap up to the 3rd make it sound unmistakably Middle Eastern. It is harmonic minor started from its 5th note.',
     semis: [0, 1, 4, 5, 7, 8, 10],
-    chords: [
-      [0, 'maj'],
-      [1, 'maj'],
-      [10, 'min'],
-      [0, 'maj'],
+    color: [
+      1,
+      'the low 2nd against a major 3rd',
+      'the wide gap between them is the sound: play 1 – ♭2 – 3 slowly',
+    ],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [1, 'maj'],
+          [0, 'maj'],
+          [1, 'maj'],
+        ],
+        why: 'the Middle Eastern vamp',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [1, 'maj'],
+          [10, 'min'],
+          [0, 'maj'],
+        ],
+        why: 'circling home',
+      },
+      {
+        chords: [
+          [5, 'min'],
+          [1, 'maj'],
+          [0, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'a flamenco close: iv – ♭II – I',
+      },
     ],
   },
   {
@@ -13635,11 +13809,31 @@ const MOODS = [
     hear: 'Dick Dale\'s "Misirlou", Arabic and Indian music',
     how: 'Two wide gaps, one in each half: a low 2nd up to a major 3rd, and a low 6th up to a major 7th. Both halves have the same shape.',
     semis: [0, 1, 4, 5, 7, 8, 11],
-    chords: [
-      [0, 'maj'],
-      [1, 'maj'],
-      [0, 'maj'],
-      [1, 'maj'],
+    color: [
+      1,
+      'the low 2nd and the major 7th',
+      'two wide gaps around home: trill between 7 and 1, and between ♭2 and 1',
+    ],
+    sigChord: 1,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [1, 'maj'],
+          [0, 'maj'],
+          [1, 'maj'],
+        ],
+        why: 'the snake-charmer vamp',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [5, 'min'],
+          [1, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'darker, with iv',
+      },
     ],
   },
   {
@@ -13650,11 +13844,27 @@ const MOODS = [
     hear: 'Japanese koto music',
     how: 'Five notes with two half steps (2nd to 3rd, 5th to 6th) and two wide gaps. Slow, spacious phrases suit it best.',
     semis: [0, 2, 3, 7, 8],
-    chords: [
-      [0, 'min'],
-      [8, 'maj'],
-      [0, 'min'],
-      [8, 'maj'],
+    color: [8, 'the low 6th', 'the half step above the 5th: let phrases fall onto the 5th'],
+    sigChord: 8,
+    progs: [
+      {
+        chords: [
+          [0, 'min'],
+          [8, 'maj'],
+          [0, 'min'],
+          [8, 'maj'],
+        ],
+        why: 'still and spacious',
+      },
+      {
+        chords: [
+          [8, 'maj'],
+          [0, 'min'],
+          [8, 'maj'],
+          [0, 'min'],
+        ],
+        why: 'the same, starting away from home',
+      },
     ],
   },
   {
@@ -13667,11 +13877,31 @@ const MOODS = [
     semis: [0, 2, 4, 6, 8, 10],
     usual: [0, 1, 2, 3, 4, 5], // written C D E F♯ G♯ A♯
 
-    chords: [
-      [0, 'aug'],
-      [2, 'aug'],
-      [0, 'aug'],
-      [2, 'aug'],
+    color: [
+      6,
+      'the raised 4th',
+      'every note is a whole step from the next: no note feels like home, so drift',
+    ],
+    sigChord: 2,
+    progs: [
+      {
+        chords: [
+          [0, 'aug'],
+          [2, 'aug'],
+          [0, 'aug'],
+          [2, 'aug'],
+        ],
+        why: 'floating: two augmented chords',
+      },
+      {
+        chords: [
+          [0, 'aug'],
+          [2, 'aug'],
+          [4, 'aug'],
+          [2, 'aug'],
+        ],
+        why: 'a dream sequence, drifting up',
+      },
     ],
   },
   {
@@ -13682,11 +13912,27 @@ const MOODS = [
     hear: 'suspense and villain cues; jazz over diminished chords',
     how: 'Whole step, half step, over and over: eight notes. It repeats every three half steps, so it sounds the same from four places: tense and circling.',
     semis: [0, 2, 3, 5, 6, 8, 9, 11],
-    chords: [
-      [0, 'dim7'],
-      [2, 'dim7'],
-      [0, 'dim7'],
-      [2, 'dim7'],
+    color: [3, 'the alternating half steps', 'whole, half, whole, half: play it in pairs of notes'],
+    sigChord: 2,
+    progs: [
+      {
+        chords: [
+          [0, 'dim7'],
+          [2, 'dim7'],
+          [0, 'dim7'],
+          [2, 'dim7'],
+        ],
+        why: 'suspense: two diminished chords',
+      },
+      {
+        chords: [
+          [0, 'dim7'],
+          [2, 'maj'],
+          [0, 'dim7'],
+          [5, 'maj'],
+        ],
+        why: 'tension with major chords hidden in it',
+      },
     ],
   },
   {
@@ -13697,11 +13943,40 @@ const MOODS = [
     hear: 'most cheerful pop, folk songs and hymns',
     how: 'The plain major scale: whole, whole, half, whole, whole, whole, half. Home is I; IV and V lead back to it.',
     semis: [0, 2, 4, 5, 7, 9, 11],
-    chords: [
-      [0, 'maj'],
-      [5, 'maj'],
-      [7, 'maj'],
-      [0, 'maj'],
+    color: [
+      11,
+      'the leading note (the 7th)',
+      'a half step under home: it pulls up, and sounds finished when it gets there',
+    ],
+    sigChord: 7,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [5, 'maj'],
+          [7, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'home, away, tension, home',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [9, 'min'],
+          [5, 'maj'],
+          [7, 'maj'],
+        ],
+        why: 'the 1950s progression',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [7, 'maj'],
+          [9, 'min'],
+          [5, 'maj'],
+        ],
+        why: 'the most common pop progression',
+      },
     ],
   },
   {
@@ -13712,11 +13987,27 @@ const MOODS = [
     hear: 'The Beatles\' "Norwegian Wood", Celtic folk tunes',
     how: 'Major with its 7th lowered a half step. The chord on that lowered 7th (♭VII) going back to I sounds open rather than final.',
     semis: [0, 2, 4, 5, 7, 9, 10],
-    chords: [
-      [0, 'maj'],
-      [10, 'maj'],
-      [5, 'maj'],
-      [0, 'maj'],
+    color: [10, 'the low 7th', 'a whole step under home: phrases come home from below without pulling'],
+    sigChord: 10,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [10, 'maj'],
+          [5, 'maj'],
+          [0, 'maj'],
+        ],
+        why: 'the folk and rock progression',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [10, 'maj'],
+          [0, 'maj'],
+          [10, 'maj'],
+        ],
+        why: 'the Mixolydian vamp',
+      },
     ],
   },
   {
@@ -13727,11 +14018,27 @@ const MOODS = [
     hear: '"The Simpsons" theme, film scores for flying and wonder',
     how: 'Major with its 4th raised a half step. That makes II a major chord: I to II floats upward without ever settling.',
     semis: [0, 2, 4, 6, 7, 9, 11],
-    chords: [
-      [0, 'maj'],
-      [2, 'maj'],
-      [0, 'maj'],
-      [2, 'maj'],
+    color: [6, 'the raised 4th', 'one note above the plain 4th: hold it over the I chord and it shimmers'],
+    sigChord: 2,
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [2, 'maj'],
+          [0, 'maj'],
+          [2, 'maj'],
+        ],
+        why: 'the Lydian float: I – II',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [2, 'maj'],
+          [11, 'min'],
+          [0, 'maj'],
+        ],
+        why: 'wonder, film music',
+      },
     ],
   },
   {
@@ -13742,11 +14049,28 @@ const MOODS = [
     hear: 'folk melodies, country, many East Asian folk tunes',
     how: 'Five notes of the major scale, without the 4th and 7th. No half steps, so nothing clashes.',
     semis: [0, 2, 4, 7, 9],
-    chords: [
-      [0, 'maj'],
-      [9, 'min'],
-      [0, 'maj'],
-      [9, 'min'],
+    color: [9, 'the 6th', 'sweet and open: end phrases on it instead of on home'],
+    sigChord: 9,
+    parent: 'major',
+    progs: [
+      {
+        chords: [
+          [0, 'maj'],
+          [9, 'min'],
+          [0, 'maj'],
+          [9, 'min'],
+        ],
+        why: 'gentle, folk',
+      },
+      {
+        chords: [
+          [0, 'maj'],
+          [5, 'maj'],
+          [0, 'maj'],
+          [7, 'maj'],
+        ],
+        why: 'country: every note fits over all three',
+      },
     ],
   },
   {
@@ -13757,11 +14081,35 @@ const MOODS = [
     hear: 'blues, rock and roll, jazz',
     how: 'Minor pentatonic plus one passing note between the 4th and 5th, the blue note. Slide through it; do not sit on it.',
     semis: [0, 3, 5, 6, 7, 10],
-    chords: [
-      [0, 'dom7'],
-      [5, 'dom7'],
-      [0, 'dom7'],
-      [7, 'dom7'],
+    color: [6, 'the blue note', 'the flat 5th: slide through it to the 5th, never sit on it'],
+    sigChord: 5,
+    progs: [
+      {
+        chords: [
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [5, 'dom7'],
+          [5, 'dom7'],
+          [0, 'dom7'],
+          [0, 'dom7'],
+          [7, 'dom7'],
+          [5, 'dom7'],
+          [0, 'dom7'],
+          [7, 'dom7'],
+        ],
+        why: 'the 12-bar blues',
+      },
+      {
+        chords: [
+          [0, 'dom7'],
+          [5, 'dom7'],
+          [0, 'dom7'],
+          [5, 'dom7'],
+        ],
+        why: 'a two-chord blues vamp',
+      },
     ],
   },
 ];
@@ -13910,7 +14258,7 @@ function moodFingering(moodId, pc, hand, octs) {
     // a raised note (melodic minor's 6th and 7th) can put the parent's thumb on a black key: work it out
     if (!f.some((x, i) => x === 1 && onBlack(up[i]))) return f.concat(f.slice(0, -1).reverse());
   }
-  return scaleFingering(up, hand);
+  return scaleFingering(up, hand, octs);
 }
 
 /* The other scales (pentatonics, blues, whole tone, diminished, Hirajoshi, double harmonic) have no
@@ -13922,18 +14270,24 @@ function moodFingering(moodId, pc, hand, octs) {
      - the 5th finger only at the top (right hand) or bottom (left hand) end
    The cheapest fingering wins (dynamic programming). */
 const REACH = { 12: 5, 13: 7, 14: 8, 15: 9, 23: 3, 24: 5, 25: 7, 34: 3, 35: 5, 45: 3 };
+// arpeggios leap: the hand opens wider, and the thumb passes under a bigger gap
+const ARP = {
+  reach: { 12: 6, 13: 8, 14: 9, 15: 10, 23: 5, 24: 7, 25: 8, 34: 4, 35: 6, 45: 4 },
+  under: [4, 6],
+};
+const SCALE = { reach: REACH, under: [3, 4] };
 
 // moving outward (away from the thumb) by d semitones from finger f1 to f2; b1, b2: black keys
-function stepCost(d, b1, b2, f1, f2) {
+function stepCost(d, b1, b2, f1, f2, hand = SCALE) {
   if (f2 > f1) {
-    if (d > REACH[f1 * 10 + f2]) return Infinity;
+    if (d > hand.reach[f1 * 10 + f2]) return Infinity;
     const skipped = f2 - f1 - 1;
     // a skipped finger is natural over a wide gap, awkward over a step
     return skipped * (d >= 3 ? 0.3 : 1.5) + (d >= 4 && skipped === 0 && f1 > 1 ? 1 : 0);
   }
   if (f2 === 1 && f1 >= 2 && f1 <= 4) {
     // the thumb passes under
-    if (d > (f1 === 2 ? 3 : 4)) return Infinity;
+    if (d > hand.under[f1 === 2 ? 0 : 1]) return Infinity;
     let c = 1.6 + (f1 === 2 ? 1.2 : 0) + (d >= 3 ? 0.6 : 0);
     if (b2) c += 7;
     if (b1 && !b2) c -= 1.2; // the classic place: thumb on the white key right after a black one
@@ -13952,13 +14306,14 @@ function nodeCost(black, f, i, last) {
 }
 
 // fingers for keys played moving outward from the thumb (right hand up, left hand down), in that order
-function fingerOutward(midis) {
+function fingerOutward(midis, hand = SCALE, { open = false, first = 0, end = 0 } = {}) {
   const n = midis.length;
-  const last = n - 1;
+  const last = open ? -1 : n - 1; // open: the last note is not an end, the run goes on from it
   const black = midis.map(onBlack);
   const cost = Array.from({ length: n }, () => Array(6).fill(Infinity));
   const from = Array.from({ length: n }, () => Array(6).fill(0));
   for (let f = 1; f <= 5; f++) {
+    if (first && f !== first) continue;
     // a scale starts on the thumb from a white key, on 2 (or 3 or 4) from a black one
     const start = black[0] ? (f === 2 ? 0 : f === 3 || f === 4 ? 0.8 : 4) : f === 1 ? 0 : 3;
     cost[0][f] = start + nodeCost(black[0], f, 0, last);
@@ -13968,25 +14323,57 @@ function fingerOutward(midis) {
     for (let f2 = 1; f2 <= 5; f2++)
       for (let f1 = 1; f1 <= 5; f1++) {
         const c =
-          cost[i - 1][f1] + stepCost(d, black[i - 1], black[i], f1, f2) + nodeCost(black[i], f2, i, last);
+          cost[i - 1][f1] +
+          stepCost(d, black[i - 1], black[i], f1, f2, hand) +
+          nodeCost(black[i], f2, i, last);
         if (c < cost[i][f2]) {
           cost[i][f2] = c;
           from[i][f2] = f1;
         }
       }
   }
-  let f = 1;
-  for (let g = 2; g <= 5; g++) if (cost[last][g] < cost[last][f]) f = g;
+  let f = end || 1;
+  if (!end) for (let g = 2; g <= 5; g++) if (cost[n - 1][g] < cost[n - 1][f]) f = g;
+  if (cost[n - 1][f] === Infinity) return null;
   const out = [f];
-  for (let i = last; i > 0; i--) out.unshift((f = from[i][f]));
+  for (let i = n - 1; i > 0; i--) out.unshift((f = from[i][f]));
+  out.cost = cost[n - 1][out[n - 1]];
   return out;
+}
+
+/* fingers for a run of several octaves that repeats one octave's pattern, as published fingerings do.
+   oneUp: one octave going up, with the top note. Worked out moving outward from the thumb (the right
+   hand going up, the left hand coming down from the top). For two octaves or more the octave's pattern
+   must loop: its top note takes the finger its first note had, so the next octave starts the same way. */
+function octaveFingers(oneUp, octs, handId, reach = SCALE) {
+  const outward = handId === 'rh' ? oneUp : oneUp.slice().reverse();
+  const flip = f => (handId === 'rh' ? f : f.slice().reverse());
+  if (octs === 1) return flip(fingerOutward(outward, reach));
+  const n = outward.length - 1;
+  let cyc = null;
+  for (let s = 1; s <= 5; s++) {
+    const r = fingerOutward(outward, reach, { open: true, first: s, end: s });
+    if (r && (!cyc || r.cost < cyc.cost)) cyc = r;
+  }
+  const seq = [];
+  for (let o = 0; o < octs; o++) seq.push(...cyc.slice(0, n));
+  // the last note: the next finger up if it reaches, as a run normally ends
+  const prev = seq[seq.length - 1];
+  const d = Math.abs(outward[n] - outward[n - 1]);
+  const black = onBlack(outward[n]);
+  let end = cyc[n];
+  for (let f = prev + 1; f <= 5; f++)
+    if (stepCost(d, onBlack(outward[n - 1]), black, prev, f, reach) < Infinity) end = f;
+  seq.push(end);
+  return flip(seq);
 }
 
 /* fingers for a scale run up and back down, as the drill plays it. midisUp: the notes going up, tonic to
    tonic. The left hand's thumb is on the right, so going down it moves like the right hand going up: its
    fingering is worked out from the top note down. */
-function scaleFingering(midisUp, hand) {
-  const up = hand === 'rh' ? fingerOutward(midisUp) : fingerOutward(midisUp.slice().reverse()).reverse();
+function scaleFingering(midisUp, hand, octs) {
+  const n = (midisUp.length - 1) / octs;
+  const up = octaveFingers(midisUp.slice(0, n + 1), octs, hand);
   return up.concat(up.slice(0, -1).reverse());
 }
 
@@ -14044,6 +14431,519 @@ function handShapes(moodId) {
 // by neighbor: around the circle of fifths, each key one note different from the last
 const CIRCLE = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
+/* ---------- chords ----------
+   Chords are [semitones above the tonic, type]. Numerals count from the tonic on its major scale, so the
+   same numeral sounds the same in every mood: ♭VII is a major chord a whole step below home. */
+const CHORD_TONES = {
+  maj: [0, 4, 7],
+  min: [0, 3, 7],
+  dim: [0, 3, 6],
+  aug: [0, 4, 8],
+  sus2: [0, 2, 7],
+  sus4: [0, 5, 7],
+  maj7: [0, 4, 7, 11],
+  dom7: [0, 4, 7, 10],
+  min7: [0, 3, 7, 10],
+  hdim7: [0, 3, 6, 10],
+  dim7: [0, 3, 6, 9],
+  minmaj7: [0, 3, 7, 11],
+  augmaj7: [0, 4, 8, 11],
+};
+const SUFFIX = {
+  maj: '',
+  min: 'm',
+  dim: '°',
+  aug: '+',
+  sus2: 'sus2',
+  sus4: 'sus4',
+  maj7: 'maj7',
+  dom7: '7',
+  min7: 'm7',
+  hdim7: 'm7♭5',
+  dim7: '°7',
+  minmaj7: 'm(maj7)',
+  augmaj7: '+maj7',
+};
+const TYPE_WORD = {
+  maj: 'major',
+  min: 'minor',
+  dim: 'diminished',
+  aug: 'augmented',
+  sus2: 'suspended 2nd',
+  sus4: 'suspended 4th',
+  maj7: 'major 7th',
+  dom7: 'dominant 7th',
+  min7: 'minor 7th',
+  hdim7: 'half-diminished',
+  dim7: 'diminished 7th',
+  minmaj7: 'minor-major 7th',
+  augmaj7: 'augmented major 7th',
+};
+const DEGREE = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII'];
+const LOWER = new Set(['min', 'dim', 'min7', 'hdim7', 'dim7', 'minmaj7']);
+const NUM_SUFFIX = {
+  dim: '°',
+  aug: '+',
+  dim7: '°7',
+  hdim7: 'ø7',
+  maj7: 'maj7',
+  dom7: '7',
+  min7: '7',
+  minmaj7: '(maj7)',
+  augmaj7: '+maj7',
+  sus2: 'sus2',
+  sus4: 'sus4',
+};
+function roman(semis, type) {
+  const d = DEGREE[((semis % 12) + 12) % 12];
+  return (LOWER.has(type) ? d.toLowerCase() : d) + (NUM_SUFFIX[type] || '');
+}
+
+// the notes of a chord, spelled from the scale where they are in it
+function spellMoodChord(moodId, pc, semis, type) {
+  const scale = moodScale(moodId, pc);
+  const tonic = scale[0];
+  const inScale = s => scale.find((n, i) => MOOD_BY[moodId].semis[i] === ((s % 12) + 12) % 12);
+  const root = inScale(semis) || spellAbove(tonic, USUAL_LETTER[semis % 12], semis % 12);
+  // each note a 3rd, 5th or 7th above the root: rising, and spelled as a chord
+  return CHORD_TONES[type].map((x, i) => spellAbove(root, [0, 2, 4, 6][i], x));
+}
+const noteName = n => 'CDEFGAB'[n.l] + (n.a > 0 ? '♯'.repeat(n.a) : n.a < 0 ? '♭'.repeat(-n.a) : '');
+
+// a chord of a mood, ready to show: numeral, name ("F♯m"), its notes, and what kind it is
+function chordInfo(moodId, pc, [semis, type]) {
+  const notes = spellMoodChord(moodId, pc, semis, type);
+  return {
+    semis,
+    type,
+    num: roman(semis, type),
+    name: noteName(notes[0]) + SUFFIX[type],
+    notes,
+    word: TYPE_WORD[type],
+  };
+}
+
+/* the chords of a mood: the triad and seventh chord on each note of the scale. Seven-note scales stack
+   every other note (the chords the scale makes by itself). The pentatonics use the chords of the scale
+   they come from; the blues uses its three dominant 7ths; the others list the chords that fit inside them. */
+const TRIAD_OF = { '4,7': 'maj', '3,7': 'min', '3,6': 'dim', '4,8': 'aug' };
+const SEVENTH_OF = {
+  maj: { 11: 'maj7', 10: 'dom7' },
+  min: { 10: 'min7', 11: 'minmaj7' },
+  dim: { 10: 'hdim7', 9: 'dim7' },
+  aug: { 11: 'augmaj7' },
+};
+function moodChords(moodId, pc) {
+  const M = MOOD_BY[moodId];
+  if (M.parent) return moodChords(M.parent, pc);
+  let list;
+  if (moodId === 'blues')
+    list = [
+      [0, 'dom7'],
+      [5, 'dom7'],
+      [7, 'dom7'],
+    ].map(c => ({ triad: c, seventh: null }));
+  else if (M.semis.length === 7)
+    list = M.semis.map((s, i) => {
+      const at = k => (M.semis[(i + k) % 7] - s + 12) % 12;
+      const triad = TRIAD_OF[[at(2), at(4)].join()];
+      const seventh = triad && SEVENTH_OF[triad] ? SEVENTH_OF[triad][at(6)] : null;
+      return { triad: [s, triad], seventh: seventh ? [s, seventh] : null };
+    });
+  else {
+    // every triad (and diminished 7th) that lies entirely inside the scale
+    const has = s => M.semis.includes(((s % 12) + 12) % 12);
+    list = M.semis.flatMap(s =>
+      ['maj', 'min', 'dim', 'aug', 'sus4', 'sus2']
+        .filter(t => CHORD_TONES[t].every(x => has(s + x)))
+        .slice(0, 1)
+        .map(t => ({ triad: [s, t], seventh: t === 'dim' && has(s + 9) ? [s, 'dim7'] : null })),
+    );
+  }
+  return list
+    .filter(c => c.triad[1])
+    .map(c => ({
+      ...chordInfo(moodId, pc, c.triad),
+      seventh: c.seventh ? chordInfo(moodId, pc, c.seventh) : null,
+      signature: c.triad[0] === M.sigChord,
+    }));
+}
+
+/* ---------- voicings: chords that move as little as possible ----------
+   Each chord takes the inversion (and octave) nearest the one before, so the hand stays in one place
+   while the harmony changes: voice leading. Right hand around middle C; left hand from E2 to D♯3 for the
+   root, the chord just above. */
+function nearestVoicing(pcs, prev, lo, hi) {
+  let best = null;
+  for (let base = lo; base <= hi; base++) {
+    if (pcs[0] !== base % 12 && !pcs.includes(base % 12)) continue;
+    // a close voicing with its lowest note at base
+    const start = pcs.indexOf(base % 12);
+    const v = [];
+    let m = base;
+    for (let k = 0; k < pcs.length; k++) {
+      const p = pcs[(start + k) % pcs.length];
+      while (m % 12 !== p) m++;
+      v.push(m);
+    }
+    const cost = prev
+      ? v.reduce((a, x, i) => a + Math.abs(x - prev[Math.min(i, prev.length - 1)]), 0)
+      : Math.abs(v[0] - (lo + hi) / 2);
+    if (!best || cost < best.cost) best = { v, cost };
+  }
+  return best.v;
+}
+function voiceProgression(moodId, pc, chords, { lo = 55, hi = 66 } = {}) {
+  const tonic = moodScale(moodId, pc)[0];
+  const t = ((midiOf(tonic) % 12) + 12) % 12;
+  let prev = null;
+  return chords.map(([s, type]) => {
+    const pcs = CHORD_TONES[type].slice(0, 3).map(x => (t + s + x) % 12);
+    const right = nearestVoicing(pcs, prev, lo, hi);
+    prev = right;
+    const root = 40 + ((t + s - 40 + 120) % 12);
+    return { right, root, info: chordInfo(moodId, pc, [s, type]) };
+  });
+}
+
+/* ---------- drills: a progression, an arpeggio ---------- */
+// the progression, one chord a step: the right hand's voiced chord, the left hand's root, or both
+function progressionRun(moodId, pc, prog, hand) {
+  const V = voiceProgression(moodId, pc, MOOD_BY[moodId].progs[prog].chords);
+  const sp = spellerFor(sigFor(moodScale(moodId, pc)));
+  const steps = V.map((v, i) => {
+    const notes = [];
+    if (hand !== 'lh') v.right.forEach(m => notes.push({ n: sp(m), st: 't', fcls: 'rh' }));
+    if (hand !== 'rh') notes.push({ n: sp(v.root), st: 'b', fcls: 'lh', f: 5 });
+    if (hand !== 'lh') [1, 3, 5].forEach((f, k) => (notes[k].f = f));
+    return { midis: notes.map(x => midiOf(x.n)), notes, beat: i * 2, chord: v.info.name };
+  });
+  return {
+    steps,
+    sig: sigFor(moodScale(moodId, pc)),
+    clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
+  };
+}
+
+// an arpeggio of one chord, root position, up `octs` octaves and back, with fingering for each hand:
+// white-root major and minor triads use the standard fingering; the rest is worked out like the scales
+function arpeggioRun(moodId, pc, chord, hand, octs) {
+  const info = chordInfo(moodId, pc, chord);
+  const tones = CHORD_TONES[chord[1]];
+  const root = info.notes[0];
+  const side = h => {
+    const rm = midiOf(root);
+    const shift = (rm > 64 ? -1 : 0) + (h === 'lh' ? -1 : 0);
+    const up = [];
+    for (let o = 0; o < octs; o++) info.notes.forEach(n => up.push(N(n.l, n.a, n.o + shift + o)));
+    up.push(N(root.l, root.a, root.o + shift + octs));
+    const ms = up.map(midiOf);
+    let f;
+    const triad = tones.length === 3 && (chord[1] === 'maj' || chord[1] === 'min') && !onBlack(ms[0]);
+    if (triad && h === 'rh') f = ms.map((_, i) => (i === ms.length - 1 ? 5 : [1, 2, 3][i % 3]));
+    else if (triad) {
+      // the left hand takes 3 on a black third (D, A, E major), 4 otherwise
+      const third = onBlack(ms[1]) ? 3 : 4;
+      f = ms.map((_, i) => (i === 0 ? 5 : [1, third, 2][i % 3]));
+    } else f = octaveFingers(ms.slice(0, tones.length + 1), octs, h, ARP);
+    return { notes: up.concat(up.slice(0, -1).reverse()), fingers: f.concat(f.slice(0, -1).reverse()) };
+  };
+  const R = side('rh');
+  const L = side('lh');
+  const note = (S, h, i) => ({ n: S.notes[i], st: h === 'rh' ? 't' : 'b', f: S.fingers[i], fcls: h });
+  const steps = R.notes.map((_, i) => {
+    const notes =
+      hand === 'ht' ? [note(R, 'rh', i), note(L, 'lh', i)] : [note(hand === 'rh' ? R : L, hand, i)];
+    return { midis: notes.map(x => midiOf(x.n)), notes, beat: i / 2 };
+  });
+  return {
+    steps,
+    sig: sigFor(moodScale(moodId, pc)),
+    clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
+    info,
+  };
+}
+
+// ---- music/moodtools.js ----
+/* Tools for improvising in a mood (pure): the left-hand patterns, each written out over a voice-led
+   progression with fingers; how to read what the left hand played; and the right hand's ideas (color
+   note, targets, motif and sequence, thirds and sixths, call and response) with what each listens for. */
+
+const pc12 = m => ((m % 12) + 12) % 12;
+
+/* ---------- the left hand ----------
+   Each pattern is one bar of 4/4 over one chord: [{b, ms, f, d}]: the beat it starts on, its notes, their
+   fingers (null where the hand has a choice) and how many beats it lasts. Chords are voiced so each takes
+   the inversion nearest the one before: the hand barely moves while the harmony changes. */
+const LH_PATTERNS = [
+  { id: 'fifth', n: 'Root and fifth', how: 'Root and fifth together on beat 1, held. Simple and strong.' },
+  { id: 'octave', n: 'Octaves', how: 'The root in octaves on beats 1 and 3: a big, open floor.' },
+  {
+    id: 'block',
+    n: 'Chord on the beat',
+    how: 'The chord on beats 1 and 3, each the nearest shape to the last.',
+  },
+  {
+    id: 'broken',
+    n: 'Broken chord',
+    how: 'Root, fifth, octave, fifth, one note per beat: the left hand keeps moving.',
+  },
+  {
+    id: 'oompah',
+    n: 'Bass and chord',
+    how: 'The root alone on 1, the chord above it on 2, 3 and 4. Jump, and land.',
+  },
+  {
+    id: 'alberti',
+    n: 'Alberti bass',
+    how: 'The chord broken low, high, middle, high in even eighths: the classical accompaniment.',
+  },
+  {
+    id: 'tenth',
+    n: 'Open tenth',
+    how: 'Root, fifth, then the third an octave up: the tenth. A wide, warm sound, the ballad left hand.',
+  },
+  {
+    id: 'sweep',
+    n: 'Sweep',
+    how: 'Root, fifth, octave, tenth and back down, six even notes a bar: the hand rolls, finger 2 crossing over the thumb.',
+  },
+  {
+    id: 'walking',
+    n: 'Walking bass',
+    how: 'Root, third, fifth, then the note a half step below the next chord: the bass walks into each change.',
+  },
+  {
+    id: 'pedal',
+    n: 'Pedal point',
+    how: 'The home note stays in the bass, in octaves, while the chords change above it: tension against a floor.',
+  },
+];
+const LH_BY = Object.fromEntries(LH_PATTERNS.map(p => [p.id, p]));
+
+// the left hand's chords for a progression: a close voicing from C3 up, and the root from E2 to D♯3
+const lhVoicing = (mood, pc, chords) => voiceProgression(mood, pc, chords, { lo: 47, hi: 55 });
+
+// one bar of a pattern over chord i of a voiced progression V
+function patternBar(id, V, i, tonicPc) {
+  const v = V[i];
+  const next = V[(i + 1) % V.length];
+  const R = v.root;
+  const [, third, fifth] = CHORD_TONES[v.info.type];
+  const ch = v.right;
+  const q = (ms, f) => ms.map((m, k) => ({ b: k, ms: [m], f: [f[k]], d: 1 }));
+  switch (id) {
+    case 'fifth':
+      return [{ b: 0, ms: [R, R + fifth], f: [5, 1], d: 4 }];
+    case 'octave':
+      return [0, 2].map(b => ({ b, ms: [R, R + 12], f: [5, 1], d: 1.8 }));
+    case 'block':
+      return [0, 2].map(b => ({ b, ms: ch, f: [5, 3, 1], d: 1.8 }));
+    case 'broken':
+      return q([R, R + fifth, R + 12, R + fifth], [5, 2, 1, 2]);
+    case 'oompah':
+      return [{ b: 0, ms: [R], f: [5], d: 1 }, ...[1, 2, 3].map(b => ({ b, ms: ch, f: [5, 3, 1], d: 0.9 }))];
+    case 'alberti':
+      return [0, 2, 1, 2, 0, 2, 1, 2].map((k, j) => ({ b: j / 2, ms: [ch[k]], f: [[5, 3, 1][k]], d: 0.5 }));
+    case 'tenth':
+      return q([R, R + fifth, R + 12 + third, R + fifth], [5, 2, 1, 2]);
+    case 'sweep':
+      return [R, R + fifth, R + 12, R + 12 + third, R + 12, R + fifth].map((m, j) => ({
+        b: (j * 2) / 3,
+        ms: [m],
+        f: [[5, 2, 1, 2, 1, 2][j]],
+        d: 2 / 3,
+      }));
+    case 'walking': {
+      // the half step below the next root, in the octave nearest the fifth (above it when the chord repeats)
+      const target = next.root === R ? R + 1 : next.root - 1;
+      const approach = R + fifth + ((((pc12(target) - pc12(R + fifth) + 6) % 12) + 12) % 12) - 6;
+      return q([R, R + third, R + fifth, approach], [5, 3, 1, null]);
+    }
+    case 'pedal': {
+      const T = 40 + pc12(tonicPc - 40);
+      return [{ b: 0, ms: [T, T + 12], f: [5, 1], d: 4 }];
+    }
+    default:
+      return [];
+  }
+}
+
+/* what one left-hand gesture was (notes struck within a moment of each other): a chord, an octave, root
+   and fifth, a broken chord tone (3rd or 7th), the home note held under another chord (a pedal), or a
+   passing note outside the chord (walking) */
+function lhKind(ms, rootPc, type, tonicPc) {
+  const tones = CHORD_TONES[type].map(x => pc12(rootPc + x));
+  const pcs = [...new Set(ms.map(pc12))];
+  if (ms.length >= 2) {
+    if (pcs.length === 1)
+      return pcs[0] === pc12(tonicPc) && pc12(rootPc) !== pc12(tonicPc) ? 'pedal' : 'octaves';
+    if (pcs.length === 2 && pcs.every(p => p === tones[0] || p === tones[2])) return 'rootFifth';
+    return 'chords';
+  }
+  const p = pcs[0];
+  if (p === pc12(tonicPc) && pc12(rootPc) !== pc12(tonicPc)) return 'pedal';
+  if (p === tones[0] || p === tones[2]) return 'rootFifth';
+  if (tones.includes(p)) return 'broken';
+  return 'passing';
+}
+const LH_KINDS = ['chords', 'octaves', 'rootFifth', 'broken', 'pedal', 'passing'];
+
+/* ---------- the right hand ---------- */
+const RH_TOOLS = [
+  { id: 'free', n: 'Free' },
+  { id: 'color', n: 'Color note' },
+  { id: 'targets', n: 'Targets' },
+  { id: 'motif', n: 'Motif and sequence' },
+  { id: 'dyads', n: 'Thirds and sixths' },
+  { id: 'call', n: 'Call and response' },
+];
+
+// the mood's color note in this key: {pc, name, what, tip}
+function colorNote(mood, pc) {
+  const M = MOOD_BY[mood];
+  const [semis, what, tip] = M.color;
+  const scale = moodScale(mood, pc);
+  const i = M.semis.indexOf(semis);
+  const n = scale[i];
+  return { pc: pc12(midiOf(n)), name: nameOf(n, false), what, tip };
+}
+
+function toolHow(id, mood, pc) {
+  const c = colorNote(mood, pc);
+  return {
+    free: 'Anything with the lit keys. A good start: a few notes, a rest, the same few notes again.',
+    color: `${c.name} is ${c.what}: ${c.tip}. It is marked on the keyboard.`,
+    targets:
+      'Land on a note of the chord (marked) on beats 1 and 3; anything in the scale between them. The melody follows the harmony.',
+    motif:
+      'Play a short idea, three or four notes, then play it again starting a step higher or lower: a sequence. Most melodies are built this way.',
+    dyads:
+      'Two notes at once from the scale, a third or a sixth apart (skip one note, or five). Move them together: instant harmony.',
+    call: 'Tap Play a call: DaCapo plays a short phrase, then you answer it. Echo its rhythm, and end on the home note.',
+  }[id];
+}
+
+// where a note sits in the scale, counted in scale steps from the tonic (across octaves); null if outside
+function degreeOf(m, semis, tonicPc) {
+  const rel = m - tonicPc;
+  const i = semis.indexOf(pc12(rel));
+  return i < 0 ? null : Math.floor(rel / 12) * semis.length + i;
+}
+
+/* a motif came back: the last three notes have the same shape (in scale steps) as three notes just before
+   them. 'sequence' when it starts on another note, 'repeat' when on the same one; else null */
+function motifEcho(degrees) {
+  const n = degrees.length;
+  if (n < 6) return null;
+  const shape = (k, j) => [degrees[k + 1] - degrees[k], degrees[k + 2] - degrees[k + 1], j];
+  const [a, b] = shape(n - 3);
+  if (a === 0 && b === 0) return null;
+  for (let k = Math.max(0, n - 12); k <= n - 6; k++) {
+    const [x, y] = shape(k);
+    if (x === a && y === b) return degrees[k] === degrees[n - 3] ? 'repeat' : 'sequence';
+  }
+  return null;
+}
+
+// two right-hand notes at once: a third or a sixth (or their octave-up versions), else null
+function dyadKind(ms) {
+  if (ms.length !== 2) return null;
+  const d = Math.abs(ms[1] - ms[0]) % 12;
+  return d === 3 || d === 4 ? 'third' : d === 8 || d === 9 ? 'sixth' : null;
+}
+
+/* a call: a short phrase in the scale, mostly steps, that ends away from home (on the 2nd, 5th or 7th
+   degree) so it asks for an answer. rnd is a function returning [0, 1). [{m, b, d}] in beats. */
+function callPhrase(mood, pc, rnd = Math.random) {
+  const M = MOOD_BY[mood];
+  const tonic = 60 + pc12(midiOf(moodScale(mood, pc)[0]));
+  const L = M.semis.length;
+  const at = d => tonic + Math.floor(d / L) * 12 + M.semis[((d % L) + L) % L];
+  const RHYTHMS = [
+    [0, 0.5, 1, 2],
+    [0, 1, 1.5, 2],
+    [0, 0.5, 1, 1.5, 2],
+    [0, 1, 2, 2.5, 3],
+  ];
+  const rh = RHYTHMS[Math.floor(rnd() * RHYTHMS.length)];
+  let d = Math.floor(rnd() * 3) + Math.floor(L / 2) - 1; // start around the middle of the scale
+  // (it stays between home and an octave and a half up, in the right hand)
+  const degs = rh.map((_, i) => {
+    if (i) {
+      const s = [-2, -1, -1, 1, 1, 2][Math.floor(rnd() * 6)];
+      d += d + s < 0 || d + s > L + (L >> 1) ? -s : s;
+    }
+    return d;
+  });
+  // end on a degree that wants to move: the scale's 2nd or 5th-ish note, or the one below home
+  const ends = [1, Math.round(L * 0.6), L - 1];
+  const last = degs[degs.length - 2];
+  const end = ends
+    .map(e => e + Math.max(0, Math.round((last - e) / L)) * L)
+    .filter(e => e !== last)
+    .sort((x, y) => Math.abs(x - last) - Math.abs(y - last))[0];
+  degs[degs.length - 1] = end;
+  return rh.map((b, i) => ({ m: at(degs[i]), b, d: (rh[i + 1] ?? b + 1) - b }));
+}
+
+// an answer: how many notes, and whether it ended on the home note (or at least on a scale note)
+function judgeAnswer(ms, semis, tonicPc) {
+  const last = ms[ms.length - 1];
+  return {
+    n: ms.length,
+    home: ms.length > 0 && pc12(last) === pc12(tonicPc),
+    inScale: ms.length > 0 && semis.includes(pc12(last - tonicPc)),
+  };
+}
+
+/* ---------- ear: which mood? ----------
+   A phrase in a mood: its first progression under the scale rising, then the color note held and home. */
+function earPhrase(mood, pc, bar = 1.6) {
+  const M = MOOD_BY[mood];
+  const chords = M.progs[0].chords;
+  const V = voiceProgression(mood, pc, chords);
+  const out = [];
+  for (let i = 0; i < 4; i++) {
+    const v = V[i % V.length];
+    out.push({ m: v.root, t: i * bar, d: bar, v: 0.45 });
+    v.right.forEach(m => out.push({ m, t: i * bar, d: bar, v: 0.25 }));
+  }
+  const top = Math.max(...V.flatMap(v => v.right));
+  const tonic = top + 1 + pc12(midiOf(moodScale(mood, pc)[0]) - top - 1); // the first tonic above the chords
+  const run = [...M.semis.map(s => tonic + s), tonic + 12];
+  const step = (bar * 2) / run.length;
+  run.forEach((m, i) => out.push({ m, t: i * step, d: step, v: 0.55 }));
+  // the color note, then the nearest home
+  out.push({ m: tonic + M.color[0], t: bar * 2, d: bar * 0.9, v: 0.6 });
+  out.push({ m: tonic + (M.color[0] > 6 ? 12 : 0), t: bar * 3, d: bar, v: 0.55 });
+  return out;
+}
+
+// a round: a mood (the ones you miss come back more), a key, and four choices from more than one family
+function earRound(by = {}, rnd = Math.random, pool = Object.keys(MOOD_BY)) {
+  const weight = id => {
+    const [n = 0, right = 0] = by[id] || [];
+    return 1 + (n - right) * 2 + (n < 2 ? 1 : 0);
+  };
+  const total = pool.reduce((a, id) => a + weight(id), 0);
+  let x = rnd() * total;
+  const mood = pool.find(id => (x -= weight(id)) < 0) || pool[0];
+  const pick = list => list.splice(Math.floor(rnd() * list.length), 1)[0];
+  const fam = MOOD_BY[mood].fam;
+  const same = pool.filter(id => id !== mood && MOOD_BY[id].fam === fam);
+  const other = pool.filter(id => MOOD_BY[id].fam !== fam);
+  const options = [mood];
+  if (same.length) options.push(pick(same));
+  while (options.length < 4 && other.length) options.push(pick(other));
+  // shuffle
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  return { mood, pc: Math.floor(rnd() * 12), options };
+}
+
 // ---- learn/moods.js ----
 /* Moods: where you are with each scale, what a run counts for, and what to play next.
    A key of a mood (C♯ Phrygian) is
@@ -14091,35 +14991,76 @@ const moodCounts = mood => {
   return c;
 };
 
-/* ---------- a drill for the player ----------
-   id: m:<mood>:<pc>:<hand>:<octaves>[:check] */
-const runId = (mood, pc, hand, octs, check = false) =>
-  `m:${mood}:${pc}:${hand}:${octs}${check ? ':check' : ''}`;
+/* ---------- drills for the player ----------
+   id: m:<mood>:<pc>:<hand>:<octaves>[:<what>], what: (the scale) | check | arp<semis>.<type> | prog<n> */
+const runId = (mood, pc, hand, octs, what = '') =>
+  `m:${mood}:${pc}:${hand}:${octs}${what ? ':' + what : ''}`;
 function parseRun(id) {
-  const [, mood, pc, hand, octs, check] = id.split(':');
-  return { mood, pc: +pc, hand, octs: +octs, check: check === 'check' };
+  const [, mood, pc, hand, octs, what = ''] = id.split(':');
+  const arp = /^arp(\d+)\.(\w+)$/.exec(what);
+  const prog = /^prog(\d+)$/.exec(what);
+  return {
+    mood,
+    pc: +pc,
+    hand,
+    octs: +octs,
+    check: what === 'check',
+    arp: arp ? [+arp[1], arp[2]] : null,
+    prog: prog ? +prog[1] : null,
+  };
 }
 const HAND_WORD = { rh: 'right hand', lh: 'left hand', ht: 'hands together' };
+const cap = s => s[0].toUpperCase() + s.slice(1);
 
-// the player's source for a Moods run: free practice, with the help you choose; checks are strict
+// what a drill plays: a scale run, an arpeggio, or a progression of chords
+function drillOf(r) {
+  if (r.arp) {
+    const run = arpeggioRun(r.mood, r.pc, r.arp, r.hand, r.octs);
+    return {
+      title: `${run.info.name} arpeggio`,
+      sub: `${HAND_WORD[r.hand]} · ${r.octs} octave${r.octs > 1 ? 's' : ''}`,
+      run,
+      kind: 'arp',
+    };
+  }
+  if (r.prog != null) {
+    const run = progressionRun(r.mood, r.pc, r.prog, r.hand);
+    return {
+      title: run.steps.map(s => s.chord).join(' – '),
+      sub: r.hand === 'ht' ? 'right hand chords, left hand roots' : HAND_WORD[r.hand],
+      run,
+      kind: 'chords',
+    };
+  }
+  const run = moodRun(r.mood, r.pc, r.hand, r.octs);
+  return {
+    title: r.check ? 'Check' : cap(HAND_WORD[r.hand]),
+    sub: `${r.check ? 'hands together · ' : ''}${r.octs} octave${r.octs > 1 ? 's' : ''}`,
+    run,
+    kind: 'scale',
+  };
+}
+
+// the player's source for a Moods drill: free practice, with the help you choose; checks are strict
 function moodSource({ onAbout = () => {} } = {}) {
   return {
     def(id) {
       const r = parseRun(id);
       if (!MOOD_BY[r.mood]) return null;
+      const D = drillOf(r);
       return {
-        kind: 'scale',
-        title: r.check ? 'Check' : HAND_WORD[r.hand][0].toUpperCase() + HAND_WORD[r.hand].slice(1),
-        sub: `${r.check ? 'hands together · ' : ''}${r.octs} octave${r.octs > 1 ? 's' : ''}`,
+        kind: { scale: 'scale', arp: 'arp', chords: 'pattern' }[D.kind], // (the player's cues for each)
+        title: D.title,
+        sub: D.sub,
         phases: [r.hand],
         target: prefs().bpm,
         build: () => {
-          const run = moodRun(r.mood, r.pc, r.hand, r.octs);
+          const npb = D.kind === 'chords' ? 0.5 : 2;
           return {
-            ...run,
-            npb: 2,
+            ...D.run,
+            npb,
             even: true,
-            beats: run.steps.length / 2,
+            beats: D.run.steps.length / npb,
             meter: [4, 4],
             unit: 1,
             clicks: 4,
@@ -14147,8 +15088,12 @@ function moodSource({ onAbout = () => {} } = {}) {
   };
 }
 
-function criterionOf({ mood, pc, hand, check }) {
-  const k = keyState(mood, pc) || { clean: { rh: 0, lh: 0 }, checks: [] };
+function criterionOf({ mood, pc, hand, check, arp, prog }) {
+  const k = keyState(mood, pc) || { clean: { rh: 0, lh: 0 }, checks: [], extra: {} };
+  if (arp || prog != null) {
+    const n = (k.extra || {})[extraKey({ arp, prog, hand })] || 0;
+    return n ? `Played clean ${n} time${n > 1 ? 's' : ''}` : 'Not played clean yet';
+  }
   const days = new Set(k.checks).size;
   if (check) return `Checks passed: ${days} of ${CHECK_DAYS} days`;
   const st = keyStatus(mood, pc);
@@ -14157,6 +15102,8 @@ function criterionOf({ mood, pc, hand, check }) {
   if (hand === 'ht') return `Together: ${k.clean.ht || 0} clean run${k.clean.ht === 1 ? '' : 's'}`;
   return `Clean runs, ${HAND_WORD[hand]}: ${Math.min(COMFORT_RUNS, k.clean[hand] || 0)} of ${COMFORT_RUNS}`;
 }
+// arpeggios and progressions count separately: they add to what you know, not to the scale's status
+const extraKey = ({ arp, prog, hand }) => (arp ? `arp${arp.join('.')}` : `prog${prog}`) + ':' + hand;
 
 // a run is done: count it, and (for a check) see whether it passes
 function recordRun(id, rep) {
@@ -14165,6 +15112,17 @@ function recordRun(id, rep) {
   const before = keyStatus(r.mood, r.pc);
   k.last = todayKey();
   const sit = sitting(r.mood, r.pc);
+  if (r.arp || r.prog != null) {
+    const what = r.arp ? 'arpeggios' : 'chords';
+    sit.runs[what] = (sit.runs[what] || 0) + 1;
+    if (rep.clean && rep.valid !== false) {
+      k.extra = k.extra || {};
+      const x = extraKey(r);
+      k.extra[x] = (k.extra[x] || 0) + 1;
+    }
+    Store.save();
+    return { msg: rep.clean ? 'Clean.' : rep.msg || 'Again.', tone: rep.clean ? 'ok' : 'bad', change: null };
+  }
   sit.runs[r.hand] = (sit.runs[r.hand] || 0) + 1;
   if (rep.clean && rep.valid !== false) {
     k.clean[r.hand] = (k.clean[r.hand] || 0) + 1;
@@ -14222,28 +15180,31 @@ const lastSitting = () =>
     .sittings.slice()
     .sort((a, b) => b.at - a.at)[0] || null;
 
-// improvising in a sitting: how long, how many notes, how many in the scale, what the left hand did
+// improvising in a sitting: how long, how many notes, how many in the scale, what each hand did, and the
+// left-hand pattern and right-hand idea last chosen. Counts add up across the sitting.
 function recordImprovising(mood, pc, stats) {
   const s = sitting(mood, pc);
-  const prev = s.imp || {
-    ms: 0,
-    notes: 0,
-    inScale: 0,
-    lh: { n: 0, chords: 0, broken: 0, rootFifth: 0 },
-    pedalMs: 0,
+  const add = (a = {}, b = {}) => {
+    const out = { ...a };
+    for (const [k, v] of Object.entries(b)) out[k] = (out[k] || 0) + v;
+    return out;
   };
+  const prev = s.imp || {};
   s.imp = {
-    ms: prev.ms + stats.ms,
-    notes: prev.notes + stats.notes,
-    inScale: prev.inScale + stats.inScale,
-    pedalMs: prev.pedalMs + stats.pedalMs,
-    lh: {
-      n: prev.lh.n + stats.lh.n,
-      chords: prev.lh.chords + stats.lh.chords,
-      broken: prev.lh.broken + stats.lh.broken,
-      rootFifth: prev.lh.rootFifth + stats.lh.rootFifth,
-    },
+    ...add(
+      { ms: prev.ms, notes: prev.notes, inScale: prev.inScale, pedalMs: prev.pedalMs },
+      {
+        ms: stats.ms,
+        notes: stats.notes,
+        inScale: stats.inScale,
+        pedalMs: stats.pedalMs,
+      },
+    ),
+    lh: add(prev.lh, stats.lh),
+    rh: add(prev.rh, stats.rh),
     pattern: stats.pattern || prev.pattern,
+    tool: stats.tool || prev.tool,
+    patterns: [...new Set([...(prev.patterns || []), stats.pattern].filter(Boolean))],
   };
   Store.save();
 }
@@ -14324,18 +15285,29 @@ function insights() {
     .sort((a, b) => b.at - a.at);
   const withImp = recent.find(s => s.imp && s.imp.notes >= 30);
   if (withImp) {
-    const { lh, notes, inScale, pedalMs, ms } = withImp.imp;
+    const { lh, rh = {}, notes, inScale, pedalMs, ms } = withImp.imp;
+    // a left-hand pattern you have not tried in any sitting
+    const tried = new Set(recent.flatMap(s => (s.imp ? s.imp.patterns || [s.imp.pattern] : [])));
+    const untried = LH_PATTERNS.find(p => !tried.has(p.id));
+    const next = untried ? ` Next time try ${untried.n.toLowerCase()}.` : '';
     if (lh.n < notes * 0.1)
-      out.push({
-        text: 'Your right hand did nearly all the playing. Give the left hand a pattern next time.',
-      });
+      out.push({ text: `Your right hand did nearly all the playing. Give the left hand a pattern.${next}` });
     else if (lh.rootFifth > lh.n * 0.7)
       out.push({
-        text: 'Your left hand stayed on roots and fifths. Next time try the broken chord pattern.',
+        text: `Your left hand stayed on roots and fifths.${next || ' Try breaking the chord up.'}`,
       });
     else if (lh.chords > lh.n * 0.6)
+      out.push({ text: `Your left hand mostly played block chords.${next || ' Try breaking them up.'}` });
+    const W = MOOD_BY[withImp.mood];
+    if (rh.color === 0 && notes >= 60)
       out.push({
-        text: 'Your left hand mostly played block chords. Try breaking them up: root, fifth, octave, fifth.',
+        text: `You never played ${W.color[1]} of ${W.n.toLowerCase()}: the note that gives it its color. Try the Color note idea.`,
+        mood: withImp.mood,
+        pc: withImp.pc,
+      });
+    else if (rh.strong >= 12 && rh.onChord < rh.strong * 0.5)
+      out.push({
+        text: 'On the strong beats you mostly avoided the chord tones. Landing on them makes a melody fit its chords: try Targets.',
       });
     if (pedalMs > ms * 0.9 && ms > 60000)
       out.push({
@@ -14379,261 +15351,440 @@ function trajectory(weeks = 12) {
 }
 
 // ---- learn/moodplay.js ----
-/* Improvising in a mood: the scale lit on the keyboard, a backing (a drone, or the mood's chords), and a
-   left-hand pattern to try. DaCapo listens: how much you played, how much of it was in the scale, what
-   the left hand did (block chords, broken chords, roots and fifths) and how long the pedal was down. That
-   is saved with the sitting and becomes the suggestions on Home. Nothing here is scored. */
+/* Improvising in a mood: the scale lit on the keyboard, a backing (a held drone, or one of the mood's
+   progressions), an idea for the right hand and a pattern for the left. DaCapo listens and says what it
+   heard: how much was in the scale, whether the color note came and resolved, chord tones on the strong
+   beats, motifs that came back, what the left hand did against its pattern, how long the pedal was down.
+   That is saved with the sitting and becomes the suggestions on Home. Nothing here is scored. */
 
-const TYPE = {
-  maj: [0, 4, 7],
-  min: [0, 3, 7],
-  dim: [0, 3, 6],
-  aug: [0, 4, 8],
-  dom7: [0, 4, 7, 10],
-  dim7: [0, 3, 6, 9],
-};
-const SUFFIX = { maj: '', min: 'm', dim: '°', aug: '+', dom7: '7', dim7: '°7' };
-
-// left-hand patterns: what to play, as chord tones above the root (fifth = 7), with fingers
-const LH_PATTERNS = {
-  fifth: { n: 'Root and fifth', how: 'Root and fifth together on beat 1, held. Simple and strong.' },
-  broken: {
-    n: 'Broken chord',
-    how: 'Root, fifth, octave, fifth, one note per beat: the left hand keeps moving.',
+const SPLIT = 60; // below middle C is the left hand
+const TOGETHER = 50; // ms: notes this close are one gesture (a chord, a dyad)
+const blankStats = () => ({
+  ms: 0,
+  notes: 0,
+  inScale: 0,
+  pedalMs: 0,
+  lh: Object.fromEntries(['n', 'fit', ...LH_KINDS].map(k => [k, 0])),
+  rh: {
+    color: 0,
+    resolved: 0,
+    strong: 0,
+    onChord: 0,
+    sequences: 0,
+    repeats: 0,
+    thirds: 0,
+    sixths: 0,
+    calls: 0,
+    answers: 0,
+    home: 0,
   },
-  block: { n: 'Chord on the beat', how: 'The whole chord on beats 1 and 3. Lift between them.' },
-  oompah: {
-    n: 'Bass and chord',
-    how: 'Root alone on 1, the chord above it on 2, 3 and 4 (or 2 and 3 in a waltz).',
-  },
-};
-const PATTERN_IDS = Object.keys(LH_PATTERNS);
-
-// the notes of a pattern for one chord, low in the left hand: [{m, f}]
-function patternNotes(pattern, root, type) {
-  const r = 40 + ((root - 40 + 120) % 12); // root between E2 and D♯3
-  const t = TYPE[type] || TYPE.maj;
-  const fifth = t[2];
-  if (pattern === 'fifth')
-    return [
-      { m: r, f: 5 },
-      { m: r + fifth, f: 1 },
-    ];
-  if (pattern === 'broken')
-    return [
-      { m: r, f: 5 },
-      { m: r + fifth, f: 2 },
-      { m: r + 12, f: 1 },
-    ];
-  if (pattern === 'block') return t.slice(0, 3).map((s, i) => ({ m: r + s, f: [5, 3, 1][i] }));
-  return [{ m: r - 12, f: 5 }, ...t.slice(0, 3).map((s, i) => ({ m: r + s, f: [4, 2, 1][i] }))];
-}
+});
 
 const MoodPlay = {
   mount(root, { mood, pc }) {
     const M = MOOD_BY[mood];
     const scale = moodScale(mood, pc);
-    const scalePcs = new Set(scale.map(n => ((midiOf(n) % 12) + 12) % 12));
-    const sp = spellerFor(0);
-    const chordName = ([s, type]) => {
-      const n = scale.find(x => (midiOf(x) - midiOf(scale[0]) + 120) % 12 === s);
-      return (n ? nameOf(n, false) : nameOf(sp(midiOf(scale[0]) + s), false)) + SUFFIX[type];
-    };
-    // this sitting's left-hand pattern: a different one each time, unless you choose
+    const tonic = midiOf(scale[0]);
+    const tPc = pc12(tonic);
+    const scalePcs = new Set(scale.map(n => pc12(midiOf(n))));
+    const color = colorNote(mood, pc);
+    // this sitting's left-hand pattern: the next one after last time's, unless you choose
     const sits = Store.s.moods.sittings.filter(x => x.imp && x.imp.pattern);
     const lastPattern = sits.length ? sits[sits.length - 1].imp.pattern : null;
+    const ids = LH_PATTERNS.map(p => p.id);
     const st = {
-      pattern: PATTERN_IDS[(PATTERN_IDS.indexOf(lastPattern) + 1) % PATTERN_IDS.length],
-      backing: 'drone',
+      pattern: ids[(ids.indexOf(lastPattern) + 1) % ids.length],
+      tool: 'free',
+      backing: 'off',
+      prog: 0,
       bpm: 72,
-      chord: 0,
-      timer: 0,
-      tick: 0,
+      bars: [], // the backing's bars as they sound: {t (performance ms), i (chord)}
       nextBar: 0,
       bar: 0,
+      held: [], // the drone's sounding notes
+      call: null, // {until (performance ms), ms: the answer so far}
     };
-    const S = { ms: 0, notes: 0, inScale: 0, pedalMs: 0, lh: { n: 0, chords: 0, broken: 0, rootFifth: 0 } };
-    let saved = JSON.parse(JSON.stringify(S));
+    const S = blankStats();
+    let saved = blankStats();
     let lastNote = 0;
     let lastTick = performance.now();
     let lhGroup = null;
+    let rhGroup = null;
+    const degrees = [];
+    let lastRh = null; // the previous right-hand note, to hear the color note resolve
+    const timers = [];
+
+    const prog = () => M.progs[st.prog].chords;
+    const voiced = () => voiceProgression(mood, pc, prog());
+    const lhVoiced = () => lhVoicing(mood, pc, prog());
+    // the chord sounding at a moment (performance ms): the backing's when it plays, else the home chord
+    const chordAt = t => {
+      if (st.backing !== 'chords' || !st.bars.length) return { i: 0, beat: null };
+      let b = st.bars[0];
+      for (const x of st.bars) if (x.t <= t + 80) b = x;
+      return { i: b.i, beat: (t - b.t) / (60000 / st.bpm) };
+    };
+    const chordOf = i => {
+      const [s, type] = prog()[i];
+      return { rootPc: pc12(tonic + s), type };
+    };
 
     root.innerHTML = `
       <div class="card stack">
         <div class="row between"><h2 class="h2">Improvise</h2><span class="small mono" id="mpTime"></span></div>
-        <p class="small">The lit keys are the scale: play anything with them. Nothing here is scored;
-          DaCapo only listens, to suggest what to try next.</p>
+        <p class="small">The lit keys are the scale. Pick an idea for each hand, or none: DaCapo only listens.
+          Left hand below middle C.</p>
         <div class="stack" style="gap:6px">
           <span class="eyebrow">Backing</span>
-          <div id="mpBack"></div>
-          <div class="improv-chords" id="mpChords">${M.chords.map((c, i) => `<span class="chip" data-c="${i}">${esc(chordName(c))}</span>`).join('')}</div>
+          <div class="row" id="mpBack"></div>
+          <div id="mpProg"></div>
+        </div>
+        <div class="stack" style="gap:6px">
+          <span class="eyebrow">Right hand</span>
+          <div id="mpTool"></div>
+          <p class="small" id="mpToolHow"></p>
+          <p class="small mono" id="mpRh"></p>
         </div>
         <div class="stack" style="gap:6px">
           <span class="eyebrow">Left hand</span>
           <div id="mpPat"></div>
-          <p class="small" id="mpHow"></p>
+          <div class="row"><p class="small grow" id="mpHow"></p>
+            <button class="btn sm ghost" type="button" id="mpHearLh">Hear it</button></div>
+          <p class="small mono" id="mpLh"></p>
         </div>
         <div class="kbwrap scrollx"><div id="mpKb" class="widekb"></div></div>
         <p class="small" id="mpInfo">Start playing whenever you like.</p>
       </div>`;
 
-    const current = () => (st.backing === 'chords' ? M.chords[st.chord] : M.chords[0]);
+    /* ---------- drawing ---------- */
     const paintKb = () => {
-      const [s, type] = current();
+      const { i } = chordAt(performance.now());
+      const { rootPc, type } = chordOf(i);
+      const tones = new Set(CHORD_TONES[type].map(x => pc12(rootPc + x)));
       const marks = {};
-      for (let m = 36; m <= 84; m++) if (scalePcs.has(m % 12)) marks[m] = { cls: 'rh' };
-      patternNotes(st.pattern, midiOf(scale[0]) + s, type).forEach(n => (marks[n.m] = { cls: 'lh', f: n.f }));
+      for (let m = SPLIT; m <= 84; m++) {
+        if (!scalePcs.has(m % 12)) continue;
+        const special =
+          (st.tool === 'color' && m % 12 === color.pc) || (st.tool === 'targets' && tones.has(m % 12));
+        marks[m] = { cls: special ? 'color' : 'rh' };
+      }
+      for (let m = 28; m < SPLIT; m++) if (scalePcs.has(m % 12)) marks[m] = { cls: 'soft' };
+      patternBar(st.pattern, lhVoiced(), i, tPc).forEach(g =>
+        g.ms.forEach((m, k) => (marks[m] = { cls: 'lh', f: g.f[k] })),
+      );
       $('#mpKb', root).innerHTML = kbSVG({ from: 28, to: 84, marks, h: 110, interactive: false });
     };
+    const paintProg = () => {
+      const box = $('#mpProg', root);
+      if (st.backing !== 'chords') {
+        box.innerHTML = '';
+        return;
+      }
+      const V = voiced();
+      const { i } = chordAt(performance.now());
+      box.innerHTML = `
+        ${seg(
+          'mpProgs',
+          M.progs.map((p, k) => [String(k), p.chords.map(([s, type]) => roman(s, type)).join(' – ')]),
+          String(st.prog),
+          'sm wrap',
+        )}
+        <p class="small">${esc(M.progs[st.prog].why)}.</p>
+        <div class="row between">
+          <div class="improv-chords" id="mpChords">${V.map((v, k) => `<span class="chip" aria-pressed="${k === i}">${esc(v.info.name)}</span>`).join('')}</div>
+          <span class="row" style="gap:4px"><span class="small mono">♩ ${st.bpm}</span>
+            <button class="btn sm ghost" type="button" data-mpbpm="-6" aria-label="Slower">−</button>
+            <button class="btn sm ghost" type="button" data-mpbpm="6" aria-label="Faster">+</button></span>
+        </div>`;
+      $$('[data-mpbpm]', box).forEach(b => {
+        b.onclick = () => {
+          st.bpm = Math.max(48, Math.min(132, st.bpm + +b.dataset.mpbpm));
+          restartBacking();
+        };
+      });
+      bindSegs(box, {
+        mpProgs: v => {
+          st.prog = +v;
+          restartBacking();
+        },
+      });
+    };
+    const paintChordChips = () => {
+      const { i } = chordAt(performance.now());
+      $$('#mpChords .chip', root).forEach((el, k) => el.setAttribute('aria-pressed', String(k === i)));
+    };
     const paintControls = () => {
-      $('#mpBack', root).innerHTML = seg(
-        'mpBacking',
-        [
-          ['off', 'Off'],
-          ['drone', 'Drone'],
-          ['chords', `Chords ♩ ${st.bpm}`],
-        ],
-        st.backing,
-        'sm',
+      $('#mpBack', root).innerHTML =
+        seg(
+          'mpBacking',
+          [
+            ['off', 'Off'],
+            ['drone', 'Drone'],
+            ['chords', 'Chords'],
+          ],
+          st.backing,
+          'sm',
+        ) + (Sounds.on() ? '' : '<span class="small">Sound is off in Settings.</span>');
+      $('#mpTool', root).innerHTML = seg(
+        'mpTools',
+        RH_TOOLS.map(t => [t.id, t.n]),
+        st.tool,
+        'sm wrap',
       );
+      $('#mpToolHow', root).innerHTML =
+        esc(toolHow(st.tool, mood, pc)) +
+        (st.tool === 'call' ? ' <button class="btn sm" type="button" id="mpCall">Play a call</button>' : '');
       $('#mpPat', root).innerHTML = seg(
         'mpPattern',
-        PATTERN_IDS.map(id => [id, LH_PATTERNS[id].n]),
+        LH_PATTERNS.map(p => [p.id, p.n]),
         st.pattern,
         'sm wrap',
       );
-      $('#mpHow', root).textContent = LH_PATTERNS[st.pattern].how;
-      $$('#mpChords [data-c]', root).forEach((el, i) =>
-        el.setAttribute('aria-pressed', String(st.backing === 'chords' && i === st.chord)),
-      );
+      $('#mpHow', root).textContent = LH_BY[st.pattern].how;
+      const call = $('#mpCall', root);
+      if (call) call.onclick = playCall;
       bindSegs(root, {
         mpBacking: v => {
           st.backing = v;
           restartBacking();
+        },
+        mpTools: v => {
+          st.tool = v;
+          // landing on chord tones needs chords to land on
+          if (v === 'targets' && st.backing !== 'chords') {
+            st.backing = 'chords';
+            restartBacking();
+          }
           paintControls();
           paintKb();
+          feedback();
         },
         mpPattern: v => {
           st.pattern = v;
           paintControls();
           paintKb();
+          feedback();
         },
       });
+      paintProg();
     };
 
-    /* ---------- the backing ---------- */
-    const tonic = midiOf(scale[0]);
-    const playBar = (t, [s, type]) => {
+    /* ---------- the backing: a pad that holds, a bass that plays ---------- */
+    const stopSound = () => {
+      st.held.forEach(h => Sounds.stop(h));
+      st.held = [];
+      Sounds.stopAll();
+    };
+    const playBar = (t, i) => {
+      const V = voiced();
+      const v = V[i];
       const spb = 60 / st.bpm;
-      const r = 40 + ((tonic + s - 40 + 120) % 12);
-      AudioEngine.note(r - 12, t, spb * 3.8, 0.4);
-      AudioEngine.chord(
-        (TYPE[type] || TYPE.maj).slice(0, 3).map(x => r + 12 + x),
-        t,
-        spb * 3.8,
-        0.22,
-      );
+      v.right.forEach(m => {
+        const h = Sounds.start('pad', m, 0.5, t);
+        if (h) Sounds.stop(h, t + spb * 4 - 0.05);
+      });
+      [0, 2].forEach(b => {
+        const h = Sounds.start('bass', v.root, b ? 0.45 : 0.6, t + b * spb);
+        if (h) Sounds.stop(h, t + (b + 1.7) * spb);
+      });
     };
     const schedule = () => {
-      if (st.backing === 'off') return;
+      if (st.backing !== 'chords') return;
       const now = AudioEngine.now();
-      if (st.backing === 'drone') {
-        // the tonic and fifth, low and quiet, renewed before they fade
-        if (now + 0.3 >= st.nextBar) {
-          const r = 40 + ((tonic - 40 + 120) % 12);
-          AudioEngine.chord([r - 12, r - 5, r], Math.max(now, st.nextBar), 7, 0.28);
-          st.nextBar = Math.max(now, st.nextBar) + 6;
-        }
-        return;
-      }
       const bar = (60 / st.bpm) * 4;
       while (st.nextBar < now + 0.3) {
-        const i = st.bar % M.chords.length;
-        playBar(Math.max(now, st.nextBar), M.chords[i]);
-        const at = st.nextBar;
-        setTimeout(
-          () => {
-            st.chord = i;
-            paintControls();
-            paintKb();
-          },
-          Math.max(0, (at - now) * 1000),
-        );
-        st.nextBar = Math.max(now, st.nextBar) + bar;
+        const at = Math.max(now, st.nextBar);
+        const i = st.bar % prog().length;
+        playBar(at, i);
+        st.bars.push({ t: AudioEngine.toPerf(at), i });
+        if (st.bars.length > 8) st.bars.shift();
+        timers.push(setTimeout(() => (paintChordChips(), paintKb()), Math.max(0, (at - now) * 1000)));
+        st.nextBar = at + bar;
         st.bar++;
       }
     };
     const restartBacking = () => {
-      AudioEngine.stopAll();
-      st.nextBar = AudioEngine.now() + 0.1;
+      stopSound();
+      timers.splice(0).forEach(clearTimeout);
+      st.bars = [];
       st.bar = 0;
-      st.chord = 0;
       if (st.backing !== 'off') AudioEngine.ensure();
+      st.nextBar = AudioEngine.now() + 0.1;
+      if (st.backing === 'drone') {
+        // home and its fifth, held, in the middle of the piano where any speaker can play them
+        const r = 48 + pc12(tPc - 48);
+        st.held = [r, r + 7, r + 12].map(m => Sounds.start('pad', m, 0.55)).filter(Boolean);
+      }
+      paintControls();
+      paintKb();
+    };
+
+    // the left-hand pattern over the progression, once, on the piano voice
+    const hearLh = () => {
+      AudioEngine.ensure();
+      const V = lhVoiced();
+      const spb = 60 / st.bpm;
+      const t0 = AudioEngine.now() + 0.1;
+      V.forEach((_, i) =>
+        patternBar(st.pattern, V, i, tPc).forEach(g =>
+          g.ms.forEach(m => AudioEngine.note(m, t0 + (i * 4 + g.b) * spb, g.d * spb, 0.55)),
+        ),
+      );
+    };
+    $('#mpHearLh', root).onclick = hearLh;
+
+    // call and response: a phrase from DaCapo, then a window as long again for your answer
+    function playCall() {
+      AudioEngine.ensure();
+      const phrase = callPhrase(mood, pc);
+      const spb = 60 / st.bpm;
+      const t0 = AudioEngine.now() + 0.1;
+      phrase.forEach(n => AudioEngine.note(n.m, t0 + n.b * spb, n.d * spb * 0.95, 0.6));
+      const len = (phrase[phrase.length - 1].b + phrase[phrase.length - 1].d) * spb;
+      const start = AudioEngine.toPerf(t0 + len);
+      st.call = { from: start, until: start + (len + 2 * spb) * 1000, ms: [] };
+      S.rh.calls++;
+      $('#mpRh', root).textContent = 'Your turn: answer when the call ends.';
+    }
+    const closeCall = () => {
+      const c = st.call;
+      st.call = null;
+      const a = judgeAnswer(c.ms, M.semis, tPc);
+      if (a.n) S.rh.answers++;
+      if (a.home) S.rh.home++;
+      $('#mpRh', root).textContent = !a.n
+        ? 'No answer heard. Play a call again when you are ready.'
+        : `Answered with ${a.n} note${a.n > 1 ? 's' : ''}${a.home ? ', home at the end. Settled.' : a.inScale ? '; it ended away from home, a question answered with a question. Try ending on the home note.' : '.'}`;
     };
 
     /* ---------- listening ---------- */
+    const countLh = g => {
+      const { i } = chordAt(g.t);
+      const { rootPc, type } = chordOf(i);
+      const kind = lhKind(g.ms, rootPc, type, tPc);
+      S.lh.n++;
+      S.lh[kind]++;
+      const want = new Set(patternBar(st.pattern, lhVoiced(), i, tPc).flatMap(x => x.ms.map(pc12)));
+      if (g.ms.every(m => want.has(pc12(m)))) S.lh.fit++;
+    };
+    const countRh = g => {
+      const d = dyadKind(g.ms);
+      if (d === 'third') S.rh.thirds++;
+      if (d === 'sixth') S.rh.sixths++;
+    };
     const onNote = ev => {
       if (ev.m == null) return;
-      const now = performance.now();
-      lastNote = now;
+      const t = ev.t || performance.now();
+      lastNote = performance.now();
       S.notes++;
-      if (scalePcs.has(ev.m % 12)) S.inScale++;
-      flashKey($('#mpKb svg', root), ev.m, scalePcs.has(ev.m % 12) ? 'down' : 'bad', 260);
-      if (ev.m < 60) {
-        // left-hand notes struck together (within 60 ms) are one chord
-        if (lhGroup && now - lhGroup.t < 60) lhGroup.ms.push(ev.m);
+      const inScale = scalePcs.has(ev.m % 12);
+      if (inScale) S.inScale++;
+      flashKey($('#mpKb svg', root), ev.m, inScale ? 'down' : 'bad', 260);
+      if (ev.m < SPLIT) {
+        if (lhGroup && t - lhGroup.t < TOGETHER) lhGroup.ms.push(ev.m);
         else {
           if (lhGroup) countLh(lhGroup);
-          lhGroup = { t: now, ms: [ev.m] };
+          lhGroup = { t, ms: [ev.m] };
+        }
+        return;
+      }
+      // the right hand
+      if (rhGroup && t - rhGroup.t < TOGETHER) rhGroup.ms.push(ev.m);
+      else {
+        if (rhGroup) countRh(rhGroup);
+        rhGroup = { t, ms: [ev.m] };
+      }
+      if (lastRh != null && pc12(lastRh) === color.pc && Math.abs(ev.m - lastRh) <= 2 && ev.m !== lastRh)
+        S.rh.resolved++;
+      if (pc12(ev.m) === color.pc) S.rh.color++;
+      lastRh = ev.m;
+      const { i, beat } = chordAt(t);
+      if (beat != null) {
+        const off = Math.abs(beat % 2 < 1 ? beat % 2 : (beat % 2) - 2); // distance to beat 1 or 3
+        if (off < 0.25) {
+          S.rh.strong++;
+          const { rootPc, type } = chordOf(i);
+          if (CHORD_TONES[type].some(x => pc12(rootPc + x) === pc12(ev.m))) S.rh.onChord++;
         }
       }
-    };
-    const countLh = g => {
-      const [s, type] = current();
-      const r = (tonic + s) % 12;
-      const tones = new Set((TYPE[type] || TYPE.maj).map(x => (r + x) % 12));
-      S.lh.n++;
-      if (g.ms.length >= 2) S.lh.chords++;
-      else {
-        const p = g.ms[0] % 12;
-        if (p === r || p === (r + (TYPE[type] || TYPE.maj)[2]) % 12) S.lh.rootFifth++;
-        else if (tones.has(p)) S.lh.broken++;
+      const deg = degreeOf(ev.m, M.semis, tPc);
+      if (deg != null) {
+        degrees.push(deg);
+        if (degrees.length > 16) degrees.shift();
+        const echo = motifEcho(degrees);
+        if (echo) {
+          S.rh[echo === 'sequence' ? 'sequences' : 'repeats']++;
+          degrees.splice(0, degrees.length - 3); // count each return once
+        }
       }
+      if (st.call && t >= st.call.from - 150) st.call.ms.push(ev.m);
     };
     const offs = [Input.on(onNote)];
-    const save = () => {
-      if (lhGroup) {
-        countLh(lhGroup);
-        lhGroup = null;
+
+    // what DaCapo heard, for the idea and the pattern you chose
+    const feedback = () => {
+      const r = S.rh;
+      const lh = S.lh;
+      const pct = (a, b) => `${Math.round((a / b) * 100)}%`;
+      if (st.tool !== 'call' || !st.call) {
+        $('#mpRh', root).textContent = {
+          free: '',
+          color: r.color
+            ? `${color.name} ${r.color} time${r.color > 1 ? 's' : ''}, resolved ${r.resolved}`
+            : `${color.name} not played yet`,
+          targets:
+            st.backing !== 'chords'
+              ? 'Needs the chords backing.'
+              : r.strong
+                ? `On beats 1 and 3: ${r.onChord} of ${r.strong} notes were chord tones`
+                : 'Nothing on beats 1 and 3 yet',
+          motif:
+            r.sequences + r.repeats ? `${r.sequences} sequences · ${r.repeats} repeats` : 'No motif back yet',
+          dyads: r.thirds + r.sixths ? `${r.thirds} thirds · ${r.sixths} sixths` : 'No thirds or sixths yet',
+          call: r.calls ? `${r.answers} of ${r.calls} calls answered · ${r.home} ended home` : '',
+        }[st.tool];
       }
+      $('#mpLh', root).textContent = lh.n ? `${pct(lh.fit, lh.n)} on the pattern · ${lhWord(lh)}` : '';
+      $('#mpTime', root).textContent = S.ms > 1000 ? fmtTime(S.ms / 1000) : '';
+      if (S.notes)
+        $('#mpInfo', root).textContent = `${S.notes} notes · ${pct(S.inScale, S.notes)} in the scale`;
+    };
+    const lhWord = lh => {
+      const top = LH_KINDS.reduce((a, k) => (lh[k] > lh[a] ? k : a), LH_KINDS[0]);
+      return lh[top] < lh.n * 0.5
+        ? 'a mix'
+        : {
+            chords: 'mostly chords',
+            octaves: 'mostly octaves',
+            rootFifth: 'mostly roots and fifths',
+            broken: 'moving through the chords',
+            pedal: 'holding home under the chords',
+            passing: 'walking between chord tones',
+          }[top];
+    };
+
+    const flush = () => {
+      if (lhGroup) countLh(lhGroup);
+      if (rhGroup) countRh(rhGroup);
+      lhGroup = rhGroup = null;
+    };
+    const save = () => {
+      flush();
+      const diff = (a, b) => Object.fromEntries(Object.keys(a).map(k => [k, a[k] - b[k]]));
       const d = {
         ms: S.ms - saved.ms,
         notes: S.notes - saved.notes,
         inScale: S.inScale - saved.inScale,
         pedalMs: S.pedalMs - saved.pedalMs,
-        lh: Object.fromEntries(Object.keys(S.lh).map(k => [k, S.lh[k] - saved.lh[k]])),
+        lh: diff(S.lh, saved.lh),
+        rh: diff(S.rh, saved.rh),
         pattern: st.pattern,
+        tool: st.tool,
       };
       if (d.notes > 0) recordImprovising(mood, pc, d);
       saved = JSON.parse(JSON.stringify(S));
     };
-    const info = () => {
-      const lh = S.lh;
-      const lhWord = !lh.n
-        ? 'left hand: not yet'
-        : lh.chords > lh.n * 0.5
-          ? 'left hand: mostly chords'
-          : lh.rootFifth > lh.n * 0.6
-            ? 'left hand: mostly roots and fifths'
-            : lh.broken > lh.n * 0.3
-              ? 'left hand: moving through the chords'
-              : 'left hand: free';
-      $('#mpTime', root).textContent = S.ms > 1000 ? fmtTime(S.ms / 1000) : '';
-      if (S.notes)
-        $('#mpInfo', root).textContent =
-          `${S.notes} notes · ${Math.round((S.inScale / S.notes) * 100)}% in the scale · ${lhWord}`;
-    };
-    st.tick = setInterval(
+    const tick = setInterval(
       Log.guard('moodplay tick', () => {
         const now = performance.now();
         const dt = now - lastTick;
@@ -14643,23 +15794,28 @@ const MoodPlay = {
           S.ms += dt;
           if (Input.pedal) S.pedalMs += dt;
         }
+        // a gesture is over once nothing joins it
+        if (lhGroup && now - lhGroup.t > 200) (countLh(lhGroup), (lhGroup = null));
+        if (rhGroup && now - rhGroup.t > 200) (countRh(rhGroup), (rhGroup = null));
+        if (st.call && now > st.call.until) closeCall();
         schedule();
-        info();
+        feedback();
       }),
       100,
     );
-    st.timer = setInterval(save, 20000);
+    const autosave = setInterval(save, 20000);
     paintControls();
     paintKb();
-    restartBacking();
     Log.ev('moodplay start', { mood, pc, pattern: st.pattern });
     return {
       stats: () => S,
       destroy() {
-        clearInterval(st.tick);
-        clearInterval(st.timer);
+        clearInterval(tick);
+        clearInterval(autosave);
+        timers.forEach(clearTimeout);
         save();
         offs.forEach(f => f());
+        stopSound();
         AudioEngine.stopAll();
         Log.ev('moodplay stop', { mood, pc, ms: Math.round(S.ms), notes: S.notes });
       },
@@ -14668,24 +15824,38 @@ const MoodPlay = {
 };
 
 // ---- views/mood.js ----
-/* A sitting with one mood in one key: hear it, run it with each hand and together, improvise in it.
-   You move between the steps freely. Help is yours to switch: keys lit on the keyboard, finger numbers,
+/* A sitting with one mood in one key: hear it, run the scale (each hand, or together), learn its chords
+   and progressions, its arpeggios, and improvise in it. You move between the steps freely. Help is yours to switch: keys lit on the keyboard, finger numbers,
    and tempo (a metronome, off unless you want it). "Check me" is the one strict moment: both hands, two
    octaves, no help. */
 
 const STEPS = [
   ['listen', 'Listen'],
+  ['scale', 'Scale'],
+  ['chords', 'Chords'],
+  ['arps', 'Arpeggios'],
+  ['play', 'Improvise'],
+];
+const HANDS = [
   ['rh', 'Right'],
   ['lh', 'Left'],
   ['ht', 'Both'],
-  ['play', 'Improvise'],
 ];
 
 const moodView = (page, params) => {
   const mood = MOOD_BY[params.mood] ? params.mood : 'natural';
   const pc = Number.isInteger(+params.pc) ? +params.pc % 12 : 0;
   const M = MOOD_BY[mood];
-  const st = { step: params.step || 'listen', check: false };
+  const chords = moodChords(mood, pc);
+  // (an older link may name a hand as the step)
+  const handStep = ['rh', 'lh', 'ht'].includes(params.step);
+  const st = {
+    step: handStep ? 'scale' : STEPS.some(x => x[0] === params.step) ? params.step : 'listen',
+    hand: handStep ? params.step : 'rh',
+    check: false,
+    prog: 0,
+    arp: chords[0].semis + '.' + chords[0].type,
+  };
   let player = null;
   let play = null;
   const unmount = () => {
@@ -14730,11 +15900,11 @@ const moodView = (page, params) => {
           : `clean runs: right ${n('rh')}/${COMFORT_RUNS}, left ${n('lh')}/${COMFORT_RUNS}`);
   };
 
-  // the help switches: keys lit, finger numbers, tempo; and how many octaves
+  // the help switches (keys lit, finger numbers, tempo), the hand, and the octaves where they apply
   const paintHelp = () => {
     const box = $('#mdHelp', page);
     const p = prefs();
-    if (!['rh', 'lh', 'ht'].includes(st.step)) {
+    if (!['scale', 'chords', 'arps'].includes(st.step)) {
       box.innerHTML = '';
       return;
     }
@@ -14751,20 +15921,25 @@ const moodView = (page, params) => {
     const chip = (id, on, label) =>
       `<button type="button" class="chip" data-help="${id}" aria-pressed="${on}">${label}</button>`;
     box.innerHTML = `<div class="helpbar">
+      ${seg('mdHand', HANDS, st.hand, 'sm')}
       ${chip('keys', p.keys, 'Keys lit')}
       ${chip('fingers', p.fingers, 'Finger numbers')}
       ${chip('tempo', p.tempo, p.tempo ? `Tempo ♩ ${p.bpm}` : 'Tempo')}
       ${p.tempo ? `<span class="row" style="gap:4px"><button class="btn sm ghost" type="button" data-bpm="-5" aria-label="Slower">−</button><button class="btn sm ghost" type="button" data-bpm="5" aria-label="Faster">+</button></span>` : ''}
-      ${seg(
-        'mdOct',
-        [
-          ['1', '1 octave'],
-          ['2', '2 octaves'],
-        ],
-        String(p.octs),
-        'sm',
-      )}
-      <button class="btn sm cover" type="button" id="mdCheck">Check me</button>
+      ${
+        st.step === 'chords'
+          ? ''
+          : seg(
+              'mdOct',
+              [
+                ['1', '1 octave'],
+                ['2', '2 octaves'],
+              ],
+              String(p.octs),
+              'sm',
+            )
+      }
+      ${st.step === 'scale' ? '<button class="btn sm cover" type="button" id="mdCheck">Check me</button>' : ''}
     </div>`;
     $$('[data-help]', box).forEach(b => {
       b.onclick = () => {
@@ -14781,17 +15956,42 @@ const moodView = (page, params) => {
       };
     });
     bindSegs(box, {
+      mdHand: v => {
+        st.hand = v;
+        draw();
+      },
       mdOct: v => {
         p.octs = +v;
         Store.save();
         draw();
       },
     });
-    $('#mdCheck', box).onclick = () => {
-      st.check = true;
-      st.step = 'ht';
-      draw();
-    };
+    const check = $('#mdCheck', box);
+    if (check)
+      check.onclick = () => {
+        st.check = true;
+        draw();
+      };
+  };
+
+  /* ---------- sound ---------- */
+  // chords, voiced so each moves as little as possible from the last, with the root below
+  const hearChords = (list, { bar = 1.8, melody = false } = {}) => {
+    AudioEngine.ensure();
+    AudioEngine.stopAll();
+    const V = voiceProgression(mood, pc, list);
+    const scale = moodScale(mood, pc).map(midiOf);
+    const t0 = AudioEngine.now() + 0.1;
+    V.forEach((v, i) => {
+      const t = t0 + i * bar;
+      AudioEngine.note(v.root, t, bar, 0.45);
+      AudioEngine.chord(v.right, t, bar, 0.28);
+      // a few scale notes above, stepping toward a chord tone
+      if (melody)
+        [0, 1, 2].forEach(j =>
+          AudioEngine.note(scale[(i * 2 + j * 2) % scale.length] + 12, t + j * (bar / 3), bar / 3, 0.4),
+        );
+    });
   };
 
   const listen = body => {
@@ -14808,6 +16008,7 @@ const moodView = (page, params) => {
     const marks = {};
     const fr = moodFingering(mood, pc, 'rh', 1);
     up.forEach((s, i) => (marks[s.midis[0]] = { cls: 'rh', f: fr[i] }));
+    const color = colorNote(mood, pc);
     const owned = moodOwned(mood);
     body.innerHTML = `<div class="card stack">
       <div class="staffwrap"><div style="max-width:520px;margin:0 auto">${staff.svg}</div></div>
@@ -14817,12 +16018,12 @@ const moodView = (page, params) => {
         <button class="btn" type="button" id="mdHearMood">Hear the mood</button>
       </div>
       <p>${esc(M.how)}</p>
+      <p><b>Color note: ${esc(color.name)}</b>, ${esc(color.what)}: ${esc(color.tip)}.</p>
       <p class="small">${blackKey(mood, pc) ? 'A black-key one: the hand sits further in, over the black keys. ' : ''}${
         owned
           ? `${esc(M.n)} is yours: solid in three keys.`
           : `${esc(M.n)} becomes yours when three keys are solid, one of them a black-key one.`
       }</p>
-      <p class="small">Then run it with each hand, together, and improvise in it: the steps above, in any order.</p>
     </div>`;
     $('#mdHearScale', body).onclick = () => {
       AudioEngine.ensure();
@@ -14833,40 +16034,94 @@ const moodView = (page, params) => {
         0.55,
       );
     };
-    $('#mdHearMood', body).onclick = () => hearMood();
+    $('#mdHearMood', body).onclick = () => hearChords(M.progs[0].chords, { bar: 2.2, melody: true });
   };
 
-  // the mood's chords, with the scale drifting over them
-  const hearMood = () => {
-    AudioEngine.ensure();
-    AudioEngine.stopAll();
-    const tonic = midiOf(moodScale(mood, pc)[0]);
-    const T = {
-      maj: [0, 4, 7],
-      min: [0, 3, 7],
-      dim: [0, 3, 6],
-      aug: [0, 4, 8],
-      dom7: [0, 4, 7, 10],
-      dim7: [0, 3, 6, 9],
-    };
-    const scale = moodScale(mood, pc).map(midiOf);
-    const t0 = AudioEngine.now() + 0.1;
-    const bar = 2.2;
-    M.chords.forEach(([s, type], i) => {
-      const r = 40 + ((tonic + s - 40 + 120) % 12);
-      AudioEngine.note(r - 12, t0 + i * bar, bar, 0.45);
-      AudioEngine.chord(
-        T[type].slice(0, 3).map(x => r + 12 + x),
-        t0 + i * bar,
-        bar,
-        0.25,
-      );
-      // a few scale notes above, stepping toward a chord tone
-      [0, 1, 2].forEach(j => {
-        const m = scale[(i * 2 + j * 2) % scale.length] + 12;
-        AudioEngine.note(m, t0 + i * bar + j * (bar / 3), bar / 3, 0.4);
-      });
+  const mountDrill = (host, id) => {
+    player = Player.mount(host, {
+      id,
+      source: moodSource({ onAbout: () => aboutMood(mood) }),
+      onEvent: ev => {
+        if (ev.type === 'rep') status();
+      },
     });
+  };
+
+  // the chords the scale makes, and the progressions that make the mood
+  const chordsStep = body => {
+    const P = M.parent ? MOOD_BY[M.parent] : null;
+    const row = (c, k) => `<tr class="${c.signature ? 'sig' : ''}">
+        <td class="mono">${esc(c.num)}</td>
+        <td><b>${esc(c.name)}</b>${c.signature ? ' <span class="pill brass">signature</span>' : ''}
+          <span class="small">${esc(c.word)}</span></td>
+        <td class="small">${c.notes.map(noteLabel).join(' ')}</td>
+        <td class="small">${c.seventh ? esc(c.seventh.name) : ''}</td>
+        <td><button class="btn sm ghost" type="button" data-hearc="${k}" aria-label="Hear ${esc(c.name)}">Hear</button></td>
+      </tr>`;
+    const progs = M.progs.map((p, k) => {
+      const V = voiceProgression(mood, pc, p.chords);
+      return `<div class="progrow ${k === st.prog ? 'on' : ''}">
+        <div class="grow"><b>${V.map(v => esc(v.info.name)).join(' – ')}</b>
+          <span class="small mono">${V.map(v => esc(v.info.num)).join(' – ')}</span>
+          <span class="small">${esc(p.why)}</span></div>
+        <button class="btn sm ghost" type="button" data-hearp="${k}">Hear</button>
+        <button class="btn sm ${k === st.prog ? 'cover' : ''}" type="button" data-prog="${k}">Play it</button>
+      </div>`;
+    });
+    body.innerHTML = `<div class="card stack">
+        <h2 class="h2">Chords of ${esc(moodName(mood, pc))}</h2>
+        ${P ? `<p class="small">These are the chords of ${esc(P.n.toLowerCase())}, the scale ${esc(M.n.toLowerCase())} comes from: every note of the pentatonic sounds good over all of them.</p>` : ''}
+        <div class="scrollx"><table class="chordtable"><thead><tr><th></th><th>Chord</th><th>Notes</th><th>With 7th</th><th></th></tr></thead><tbody>${chords.map(row).join('')}</tbody></table></div>
+        <h3 class="h3">Progressions</h3>
+        <div class="stack" style="gap:6px">${progs.join('')}</div>
+        <p class="small">Chords move by their nearest shape: the right hand barely moves, and the left plays the roots.</p>
+      </div>
+      <div id="mdDrill"></div>`;
+    $$('[data-hearc]', body).forEach(b => {
+      b.onclick = () => {
+        const c = chords[+b.dataset.hearc];
+        hearChords([[c.semis, c.type]], { bar: 1.6 });
+      };
+    });
+    $$('[data-hearp]', body).forEach(b => {
+      b.onclick = () => hearChords(M.progs[+b.dataset.hearp].chords);
+    });
+    $$('[data-prog]', body).forEach(b => {
+      b.onclick = () => {
+        st.prog = +b.dataset.prog;
+        draw();
+      };
+    });
+    mountDrill($('#mdDrill', body), runId(mood, pc, st.hand, 1, `prog${st.prog}`));
+  };
+
+  // arpeggios: the home chord, the signature chord, any chord of the scale
+  const arpsStep = body => {
+    const chip = c => {
+      const v = `${c.semis}.${c.type}`;
+      const tag = c === chords[0] ? 'home' : c.signature ? 'signature' : '';
+      return `<button type="button" class="chip" data-arp="${v}" aria-pressed="${v === st.arp}">${esc(c.name)}${tag ? ` · ${tag}` : ''}</button>`;
+    };
+    const lead = chords.filter((c, k) => k === 0 || c.signature);
+    body.innerHTML = `<div class="card stack">
+        <div class="row" style="gap:6px;flex-wrap:wrap">${lead.map(chip).join('')}
+          <details class="morechords"><summary class="small">Every chord</summary>
+            <div class="row" style="gap:6px;flex-wrap:wrap">${chords
+              .filter(c => !lead.includes(c))
+              .map(chip)
+              .join('')}</div>
+          </details></div>
+        <p class="small">The chord's notes one at a time, up and back. The same shape your left hand breaks
+          when it accompanies, and your right hand's fastest way across the keys.</p>
+      </div>
+      <div id="mdDrill"></div>`;
+    $$('[data-arp]', body).forEach(b => {
+      b.onclick = () => {
+        st.arp = b.dataset.arp;
+        draw();
+      };
+    });
+    mountDrill($('#mdDrill', body), runId(mood, pc, st.hand, prefs().octs, `arp${st.arp}`));
   };
 
   const draw = () => {
@@ -14883,21 +16138,18 @@ const moodView = (page, params) => {
     paintHelp();
     const body = $('#mdBody', page);
     if (st.step === 'listen') return listen(body);
+    if (st.step === 'chords') return chordsStep(body);
+    if (st.step === 'arps') return arpsStep(body);
     if (st.step === 'play') {
       play = MoodPlay.mount(body, { mood, pc });
       return;
     }
-    const octs = st.check ? 2 : prefs().octs;
-    player = Player.mount(body, {
-      id: runId(mood, pc, st.step, octs, st.check),
-      source: moodSource({ onAbout: () => aboutMood(mood) }),
-      onEvent: ev => {
-        if (ev.type === 'rep') status();
-      },
-    });
+    mountDrill(body, st.check ? runId(mood, pc, 'ht', 2, 'check') : runId(mood, pc, st.hand, prefs().octs));
   };
   draw();
 };
+
+const noteLabel = n => esc('CDEFGAB'[n.l] + (n.a > 0 ? '♯'.repeat(n.a) : n.a < 0 ? '♭'.repeat(-n.a) : ''));
 
 // the mood, explained: what it is, what it sounds like, where you know it from
 function aboutMood(mood) {
@@ -15285,6 +16537,74 @@ function trajectoryCard() {
   </button>`;
 }
 
+/* ---------- ear: which mood? ---------- */
+function earCard() {
+  const e = Store.s.moods.ear;
+  return `<section class="card pathcard">
+    <div class="grow"><b>Which mood?</b>
+      <span class="small">${e.n ? `${e.right} of ${e.n} right. ` : ''}Hear a phrase, name its mood: the ear half of knowing a scale.</span></div>
+    <button class="btn sm" type="button" id="mhEar">Listen</button>
+  </section>`;
+}
+
+function earSheet() {
+  const e = Store.s.moods.ear;
+  let round = null;
+  let answered = false;
+  const play = () => {
+    AudioEngine.ensure();
+    AudioEngine.stopAll();
+    const t0 = AudioEngine.now() + 0.1;
+    earPhrase(round.mood, round.pc).forEach(n => AudioEngine.note(n.m, t0 + n.t, n.d, n.v));
+  };
+  const next = () => {
+    round = earRound(e.by);
+    answered = false;
+    paint();
+    play();
+  };
+  const paint = () => {
+    const body = $('#earBody');
+    if (!body) return;
+    body.innerHTML = `
+      <div class="row"><button class="btn" type="button" id="earAgain">Hear it again</button>
+        <span class="small">${e.n ? `${e.right} of ${e.n} right` : ''}</span></div>
+      <div class="earopts">${round.options
+        .map(id => `<button class="btn" type="button" data-ear="${id}">${esc(MOOD_BY[id].n)}</button>`)
+        .join('')}</div>
+      <p id="earSay" class="small"></p>`;
+    $('#earAgain', body).onclick = play;
+    body.querySelectorAll('[data-ear]').forEach(b => {
+      b.onclick = () => {
+        if (answered) return;
+        answered = true;
+        const right = b.dataset.ear === round.mood;
+        const R = MOOD_BY[round.mood];
+        const c = colorNote(round.mood, round.pc);
+        e.n++;
+        if (right) e.right++;
+        const by = e.by[round.mood] || [0, 0];
+        e.by[round.mood] = [by[0] + 1, by[1] + (right ? 1 : 0)];
+        Store.save();
+        b.classList.add(right ? 'ok' : 'bad');
+        body.querySelector(`[data-ear="${round.mood}"]`).classList.add('ok');
+        $('#earSay', body).innerHTML =
+          `${right ? 'Yes' : 'No'}: ${esc(moodName(round.mood, round.pc))}, ${esc(R.feel)}.
+          The giveaway is ${esc(c.what)} (${esc(c.name)}), held near the end.
+          <button class="btn sm cover" type="button" id="earNext">Next</button>`;
+        $('#earNext', body).onclick = next;
+      };
+    });
+  };
+  openSheet(
+    `<div class="sheethead"><h2 class="h2">Which mood?</h2>${closeBtn}</div>
+     <p class="small">The mood's chords with its scale rising over them, then its color note and home.</p>
+     <div id="earBody" class="stack"></div>`,
+    next,
+    { label: 'Which mood?' },
+  );
+}
+
 function courseCard() {
   return `<section class="card pathcard">
     <div class="grow"><b>Also in DaCapo: the full course</b>
@@ -15300,7 +16620,7 @@ function moodsHome(page, head) {
     ${head}
     <div class="homegrid">
       <div class="stack" style="gap:16px">${pickupCard()}${insightsCard()}${trajectoryCard()}</div>
-      <div class="stack" style="gap:16px">${mapCard(next.mood)}${courseCard()}</div>
+      <div class="stack" style="gap:16px">${mapCard(next.mood)}${earCard()}${courseCard()}</div>
     </div></div>`;
   // (the listener goes on this render's own root, so it is never added twice)
   const root = $('#mhRoot', page);
@@ -15337,6 +16657,7 @@ function moodsHome(page, head) {
   bindPicker();
   const traj = $('#mhTraj', page);
   if (traj) traj.onclick = progressSheet;
+  $('#mhEar', page).onclick = earSheet;
   $('#mhCourse', page).onclick = () => {
     Store.s.path = 'course';
     Store.save();

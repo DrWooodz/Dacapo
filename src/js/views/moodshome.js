@@ -3,7 +3,8 @@
    Tapping a key opens a sitting with it. */
 import { $, esc, todayKey } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { bindSegs, go, seg } from '../core/ui.js';
+import { AudioEngine } from '../core/audio.js';
+import { bindSegs, closeBtn, go, openSheet, seg } from '../core/ui.js';
 import { midiOf } from '../music/theory.js';
 import {
   CIRCLE,
@@ -16,6 +17,7 @@ import {
   PCS,
   tonicName,
 } from '../music/moods.js';
+import { colorNote, earPhrase, earRound } from '../music/moodtools.js';
 import { addDays } from '../learn/curriculum.js';
 import {
   insights,
@@ -203,6 +205,74 @@ function trajectoryCard() {
   </button>`;
 }
 
+/* ---------- ear: which mood? ---------- */
+function earCard() {
+  const e = Store.s.moods.ear;
+  return `<section class="card pathcard">
+    <div class="grow"><b>Which mood?</b>
+      <span class="small">${e.n ? `${e.right} of ${e.n} right. ` : ''}Hear a phrase, name its mood: the ear half of knowing a scale.</span></div>
+    <button class="btn sm" type="button" id="mhEar">Listen</button>
+  </section>`;
+}
+
+function earSheet() {
+  const e = Store.s.moods.ear;
+  let round = null;
+  let answered = false;
+  const play = () => {
+    AudioEngine.ensure();
+    AudioEngine.stopAll();
+    const t0 = AudioEngine.now() + 0.1;
+    earPhrase(round.mood, round.pc).forEach(n => AudioEngine.note(n.m, t0 + n.t, n.d, n.v));
+  };
+  const next = () => {
+    round = earRound(e.by);
+    answered = false;
+    paint();
+    play();
+  };
+  const paint = () => {
+    const body = $('#earBody');
+    if (!body) return;
+    body.innerHTML = `
+      <div class="row"><button class="btn" type="button" id="earAgain">Hear it again</button>
+        <span class="small">${e.n ? `${e.right} of ${e.n} right` : ''}</span></div>
+      <div class="earopts">${round.options
+        .map(id => `<button class="btn" type="button" data-ear="${id}">${esc(MOOD_BY[id].n)}</button>`)
+        .join('')}</div>
+      <p id="earSay" class="small"></p>`;
+    $('#earAgain', body).onclick = play;
+    body.querySelectorAll('[data-ear]').forEach(b => {
+      b.onclick = () => {
+        if (answered) return;
+        answered = true;
+        const right = b.dataset.ear === round.mood;
+        const R = MOOD_BY[round.mood];
+        const c = colorNote(round.mood, round.pc);
+        e.n++;
+        if (right) e.right++;
+        const by = e.by[round.mood] || [0, 0];
+        e.by[round.mood] = [by[0] + 1, by[1] + (right ? 1 : 0)];
+        Store.save();
+        b.classList.add(right ? 'ok' : 'bad');
+        body.querySelector(`[data-ear="${round.mood}"]`).classList.add('ok');
+        $('#earSay', body).innerHTML =
+          `${right ? 'Yes' : 'No'}: ${esc(moodName(round.mood, round.pc))}, ${esc(R.feel)}.
+          The giveaway is ${esc(c.what)} (${esc(c.name)}), held near the end.
+          <button class="btn sm cover" type="button" id="earNext">Next</button>`;
+        $('#earNext', body).onclick = next;
+      };
+    });
+  };
+  openSheet(
+    `<div class="sheethead"><h2 class="h2">Which mood?</h2>${closeBtn}</div>
+     <p class="small">The mood's chords with its scale rising over them, then its color note and home.</p>
+     <div id="earBody" class="stack"></div>`,
+    next,
+    { label: 'Which mood?' },
+  );
+}
+
 function courseCard() {
   return `<section class="card pathcard">
     <div class="grow"><b>Also in DaCapo: the full course</b>
@@ -218,7 +288,7 @@ export function moodsHome(page, head) {
     ${head}
     <div class="homegrid">
       <div class="stack" style="gap:16px">${pickupCard()}${insightsCard()}${trajectoryCard()}</div>
-      <div class="stack" style="gap:16px">${mapCard(next.mood)}${courseCard()}</div>
+      <div class="stack" style="gap:16px">${mapCard(next.mood)}${earCard()}${courseCard()}</div>
     </div></div>`;
   // (the listener goes on this render's own root, so it is never added twice)
   const root = $('#mhRoot', page);
@@ -255,6 +325,7 @@ export function moodsHome(page, head) {
   bindPicker();
   const traj = $('#mhTraj', page);
   if (traj) traj.onclick = progressSheet;
+  $('#mhEar', page).onclick = earSheet;
   $('#mhCourse', page).onclick = () => {
     Store.s.path = 'course';
     Store.save();

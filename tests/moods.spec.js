@@ -2,17 +2,31 @@
 // when you ask, and suggestions from what you actually played.
 import { test, expect } from './fixtures.js';
 import {
+  arpeggioRun,
+  CHORD_TONES,
   CIRCLE,
   handShapes,
   MOOD_BY,
+  moodChords,
   moodFingering,
   moodName,
   moodRun,
   moodScale,
   MOODS,
   PCS,
+  progressionRun,
   scaleMidis,
+  voiceProgression,
 } from '../src/js/music/moods.js';
+import {
+  callPhrase,
+  earRound,
+  LH_PATTERNS,
+  lhKind,
+  lhVoicing,
+  motifEcho,
+  patternBar,
+} from '../src/js/music/moodtools.js';
 import { midiOf, scaleFingers } from '../src/js/music/theory.js';
 
 const MAJ = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -107,6 +121,110 @@ test('a run for both hands: the same notes an octave apart, up and back down', (
   expect(MOOD_BY.dorian.hear).toMatch(/Scarborough Fair/);
 });
 
+test('the chords of a scale: numerals from the major scale, the signature chord, parents and blues', () => {
+  const am = moodChords('natural', 9);
+  expect(am.map(c => c.name)).toEqual(['Am', 'B°', 'C', 'Dm', 'Em', 'F', 'G']);
+  expect(am.map(c => c.num)).toEqual(['i', 'ii°', '♭III', 'iv', 'v', '♭VI', '♭VII']);
+  expect(am.filter(c => c.signature).map(c => c.name)).toEqual(['F']);
+  const ch = moodChords('harmonic', 0);
+  expect(ch[4]).toMatchObject({ name: 'G', num: 'V' });
+  expect(ch[4].seventh.name).toBe('G7');
+  expect(ch[0].notes.map(n => 'CDEFGAB'[n.l] + (n.a < 0 ? '♭' : ''))).toEqual(['C', 'E♭', 'G']);
+  // a pentatonic uses the chords of the scale it comes from; the blues, its three 7ths
+  expect(moodChords('minpent', 9).map(c => c.name)).toEqual(am.map(c => c.name));
+  expect(moodChords('blues', 0).map(c => c.name)).toEqual(['C7', 'F7', 'G7']);
+  // every chord of every mood lies in its scale (the blues's 7ths are the exception: that is the blues)
+  for (const M of MOODS.filter(x => x.id !== 'blues' && !x.parent))
+    for (const c of moodChords(M.id, 0))
+      CHORD_TONES[c.type].forEach(x => expect(M.semis, `${M.id} ${c.name}`).toContain((c.semis + x) % 12));
+});
+
+test('progressions move by the nearest shape; left-hand patterns play their chord, voiced the same way', () => {
+  const bad = [];
+  for (const M of MOODS)
+    for (const pc of PCS)
+      M.progs.forEach((p, k) => {
+        const V = voiceProgression(M.id, pc, p.chords);
+        for (let i = 1; i < V.length; i++)
+          if (V[i].right.some((m, j) => Math.abs(m - V[i - 1].right[j]) > 5)) bad.push(`${M.id} ${pc} leap`);
+        if (progressionRun(M.id, pc, k, 'ht').steps.length !== p.chords.length) bad.push(`${M.id} steps`);
+        const L = lhVoicing(M.id, pc, p.chords);
+        const tonic = midiOf(moodScale(M.id, pc)[0]);
+        L.forEach((v, i) => {
+          const tones = CHORD_TONES[v.info.type].map(x => (tonic + v.info.semis + x) % 12);
+          for (const pat of LH_PATTERNS) {
+            const bar = patternBar(pat.id, L, i, tonic);
+            const where = `${M.id} ${pc} ${pat.id}`;
+            if (bar.some(g => g.ms.length !== g.f.length || g.b + g.d > 4.001)) bad.push(where + ' shape');
+            if (bar.some(g => g.ms.some(m => m < 28 || m >= 72))) bad.push(where + ' range');
+            // the chord's own notes, apart from the walking bass's approach and the pedal's home note
+            if (
+              pat.id !== 'walking' &&
+              pat.id !== 'pedal' &&
+              bar.some(g => g.ms.some(m => !tones.includes(pc12(m))))
+            )
+              bad.push(where + ' tones');
+          }
+        });
+      });
+  expect(bad).toEqual([]);
+  // what the left hand did
+  expect(lhKind([45, 52], 9, 'min', 9)).toBe('rootFifth');
+  expect(lhKind([45, 57], 9, 'min', 9)).toBe('octaves');
+  expect(lhKind([45, 48, 52], 9, 'min', 9)).toBe('chords');
+  expect(lhKind([48], 9, 'min', 9)).toBe('broken');
+  expect(lhKind([45], 5, 'maj', 9)).toBe('pedal');
+  expect(lhKind([44], 9, 'min', 9)).toBe('passing');
+});
+
+test('arpeggios: the standard fingering for white-key triads, a playable one for every chord', () => {
+  const c = arpeggioRun('major', 0, [0, 'maj'], 'rh', 2).steps.map(s => s.notes[0].f);
+  expect(c).toEqual([1, 2, 3, 1, 2, 3, 5, 3, 2, 1, 3, 2, 1]);
+  expect(
+    arpeggioRun('major', 0, [0, 'maj'], 'lh', 2)
+      .steps.map(s => s.notes[0].f)
+      .slice(0, 7),
+  ).toEqual([5, 4, 2, 1, 4, 2, 1]);
+  const bad = [];
+  for (const M of MOODS)
+    for (const pc of PCS)
+      for (const ch of moodChords(M.id, pc))
+        for (const hand of ['rh', 'lh']) {
+          const st = arpeggioRun(M.id, pc, [ch.semis, ch.type], hand, 2).steps;
+          const f = st.map(s => s.notes[0].f);
+          const ms = st.map(s => s.midis[0]);
+          const half = (ms.length - 1) / 2;
+          // fingers 1 to 5, never one twice in a row; the notes rise, then fall
+          if (
+            f.some((x, i) => !(x >= 1 && x <= 5) || (i && x === f[i - 1])) ||
+            ms.slice(1, half + 1).some((m, i) => m <= ms[i])
+          )
+            bad.push(`${M.id} ${ch.name} ${hand}`);
+        }
+  expect(bad).toEqual([]);
+});
+
+test('right-hand ideas: a call stays in the right hand and asks for an answer; motifs come back', () => {
+  for (const M of MOODS)
+    for (let k = 0; k < 30; k++) {
+      const pc = k % 12;
+      const call = callPhrase(M.id, pc);
+      const tonic = midiOf(moodScale(M.id, pc)[0]);
+      expect(Math.min(...call.map(n => n.m))).toBeGreaterThanOrEqual(60);
+      expect(pc12(call[call.length - 1].m - tonic)).not.toBe(0);
+    }
+  expect(motifEcho([0, 1, 2, 5, 1, 2, 3])).toBe('sequence');
+  expect(motifEcho([0, 1, 2, 0, 1, 2])).toBe('repeat');
+  expect(motifEcho([0, 1, 2, 9, 9, 9])).toBeNull();
+  // an ear round: four different moods including the answer, from more than one family
+  for (let k = 0; k < 50; k++) {
+    const r = earRound({});
+    expect(new Set(r.options).size).toBe(4);
+    expect(r.options).toContain(r.mood);
+    expect(new Set(r.options.map(id => MOOD_BY[id].fam)).size).toBeGreaterThan(1);
+  }
+});
+
 test.describe('in the app', () => {
   test.beforeEach(async ({ app }) => {
     await app.connectPiano();
@@ -120,8 +238,9 @@ test.describe('in the app', () => {
     await expect(page.locator('.pickup h2')).toHaveText('A natural minor');
     await page.locator('.pickup button.big').click();
     await expect(page.locator('#page h1')).toHaveText('A natural minor');
+    await page.locator('[data-seg="mdStep"] [data-v="scale"]').click();
     for (const hand of ['rh', 'lh']) {
-      await page.locator(`[data-seg="mdStep"] [data-v="${hand}"]`).click();
+      await page.locator(`[data-seg="mdHand"] [data-v="${hand}"]`).click();
       for (let k = 0; k < 3; k++) await app.waitRep({ gap: 40 });
     }
     expect(await app.message()).toMatch(/A natural minor is comfortable/);
@@ -194,20 +313,75 @@ test.describe('in the app', () => {
       const T = window.__t;
       for (let i = 0; i < 20; i++) {
         T.noteOn([45, 52][i % 2]);
-        await T.sleep(30);
+        await T.sleep(40);
         T.noteOff([45, 52][i % 2]);
         T.noteOn([69, 71, 72, 74, 76][i % 5]);
-        await T.sleep(30);
+        await T.sleep(40);
         T.noteOff([69, 71, 72, 74, 76][i % 5]);
       }
     });
     await expect(page.locator('#mpInfo')).toContainText('100% in the scale');
-    await expect(page.locator('#mpInfo')).toContainText('mostly roots and fifths');
+    await expect(page.locator('#mpLh')).toContainText('100% on the pattern · mostly roots and fifths');
     await page.locator('#mdBack').click();
-    await expect(page.locator('.insight').first()).toContainText('try the broken chord');
+    await expect(page.locator('.insight').first()).toContainText(
+      'stayed on roots and fifths. Next time try octaves',
+    );
     // the next sitting's pattern is a different one
     await app.eval(() => window.DaCapo.go('mood', { mood: 'natural', pc: 9, step: 'play' }));
-    await expect(page.locator('[data-seg="mpPattern"] [aria-pressed="true"]')).toHaveText('Broken chord');
+    await expect(page.locator('[data-seg="mpPattern"] [aria-pressed="true"]')).toHaveText('Octaves');
+  });
+
+  test('backing: the drone holds until you change it; the chords follow the progression you pick', async ({
+    app,
+    page,
+  }) => {
+    await app.eval(() => window.DaCapo.go('mood', { mood: 'harmonic', pc: 0, step: 'play' }));
+    const sounding = () => app.eval(() => window.DaCapo.Sounds.active.filter(v => v.end === Infinity).length);
+    expect(await sounding()).toBe(0); // nothing until you ask
+    await page.locator('[data-seg="mpBacking"] [data-v="drone"]').click();
+    expect(await sounding()).toBe(3); // home, its fifth and the octave, held
+    await page.locator('[data-seg="mpBacking"] [data-v="chords"]').click();
+    expect(await sounding()).toBe(0);
+    await expect(page.locator('#mpChords .chip')).toHaveText(['Cm', 'Fm', 'G', 'Cm']);
+    await page.locator('[data-seg="mpProgs"] [data-v="1"]').click();
+    await expect(page.locator('[data-seg="mpProgs"] [aria-pressed="true"]')).toHaveText('i – ♭VI – V – i');
+    await expect(page.locator('#mpChords .chip')).toHaveText(['Cm', 'A♭', 'G', 'Cm']);
+    // Targets marks the chord tones on the keyboard
+    await page.locator('[data-seg="mpTools"] [data-v="targets"]').click();
+    await expect(page.locator('#mpKb rect.color[data-m="72"]')).toHaveCount(1);
+  });
+
+  test('chords and arpeggios: the table, a progression to play, an arpeggio counted apart from the scale', async ({
+    app,
+    page,
+  }) => {
+    await app.eval(() => window.DaCapo.go('mood', { mood: 'natural', pc: 9, step: 'chords' }));
+    await expect(page.locator('.chordtable tbody tr')).toHaveCount(7);
+    await expect(page.locator('.chordtable tr.sig')).toContainText('F');
+    await page.locator('[data-prog="1"]').click();
+    expect((await app.eval(() => window.__t.steps())).length).toBe(4);
+    await app.waitRep({ gap: 40 });
+    await page.locator('[data-seg="mdStep"] [data-v="arps"]').click();
+    expect((await app.eval(() => window.__t.steps())).length).toBe(7); // A C E A, up and back
+    await app.waitRep({ gap: 40 });
+    const k = await app.eval(() => window.DaCapo.Store.s.moods.keys['natural:9']);
+    expect(k.extra).toEqual({ 'prog1:rh': 1, 'arp0.min:rh': 1 });
+    expect(k.clean.rh).toBe(0);
+  });
+
+  test('which mood: a phrase, four choices, and the color note that gives it away', async ({ app, page }) => {
+    await page.locator('#mhEar').click();
+    const mood = await app.eval(() => {
+      const opts = [...document.querySelectorAll('[data-ear]')].map(b => b.dataset.ear);
+      return opts.length === 4 ? opts : null;
+    });
+    expect(mood).toHaveLength(4);
+    await page.locator('[data-ear]').first().click();
+    await expect(page.locator('#earSay')).toContainText('The giveaway is');
+    await expect(page.locator('[data-ear].ok')).toHaveCount(1);
+    expect(await app.eval(() => window.DaCapo.Store.s.moods.ear.n)).toBe(1);
+    await page.locator('#earNext').click();
+    await expect(page.locator('#earSay')).toBeEmpty();
   });
 
   test('browsing by hand shape and by neighbor; switching to the full course and back', async ({
