@@ -5,7 +5,6 @@ import { closeBtn, openSheet } from '../core/ui.js';
 import { COMPOSERS, Library, listenUrl, scoreUrl } from '../music/library.js';
 import { criterion, itemState, STAGE_TXT } from '../learn/curriculum.js';
 import { itemDef } from '../learn/areas.js';
-import { musicSheet, sectionChords } from './musicinfo.js';
 import { guideSheet, hasGuide } from './guide.js';
 
 export function shortTitle(d) {
@@ -81,14 +80,6 @@ export function aboutDrill(id) {
          The notation here is simplified: spacing shows timing, open note heads are half and whole notes.
          <a href="${scoreUrl(piece)}" target="_blank" rel="noopener">Full score</a>
          · <a href="${listenUrl(piece)}" target="_blank" rel="noopener">Listen</a></p>`;
-  const chords =
-    piece && d.kind === 'section'
-      ? `<div class="stack" style="gap:4px">
-           <span class="eyebrow">Its chords</span>${sectionChords(d.pid, d.k)}
-           <button class="btn sm ghost" type="button" id="adMusic" style="align-self:flex-start">
-             About the music</button>
-         </div>`
-      : '';
   const dayRow = h => `<div class="row between small">
     <span>${esc(h.d)}</span>
     <span>${h.reps} reps · ${h.clean} ${d.kind === 'theory' ? 'right' : 'clean'}${h.bpm ? ' · best ♩ ' + h.bpm : ''}</span>
@@ -99,7 +90,6 @@ export function aboutDrill(id) {
      ${d.use ? `<p class="small"><b>Where it helps:</b> ${esc(d.use)}</p>` : ''}
      ${DRILL_NOTES[d.kind] ? `<p class="small">${DRILL_NOTES[d.kind]}</p>` : ''}
      ${edition}
-     ${chords}
      <div class="stack" style="gap:4px">
        <span class="eyebrow">Where it stands</span>
        <p><b>${esc(STAGE_TXT[it ? it.stage : ''] || 'Not started')}</b> · ${esc(criterion(id))}</p>
@@ -119,8 +109,6 @@ export function aboutDrill(id) {
       $('#adHow', sheet).onclick = howSheet;
       const guide = $('#adGuide', sheet);
       if (guide) guide.onclick = () => guideSheet(guideId, d.title);
-      const music = $('#adMusic', sheet);
-      if (music) music.onclick = () => musicSheet(d.pid, { back: () => aboutDrill(id) });
     },
     { label: 'About this drill' },
   );

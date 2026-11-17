@@ -9,13 +9,12 @@ import { itemState, STAGE_TXT } from '../learn/curriculum.js';
 import { MAX_PIECES, pieceSession, setPieceDaily, stopPiece, workOnPiece } from '../learn/sessions.js';
 import { sectionOriginal, workingPieces } from '../learn/areas.js';
 import { skillStatus } from '../learn/status.js';
-import { musicSheet } from './musicinfo.js';
-import { arrangeSheet, rearrange } from './arrange.js';
 
 export const libraryView = (page, params = {}) => {
   const fav = Store.s.profile.favorites || [];
   const all = Library.all();
-  const shelves = Object.keys(COMPOSERS).filter(c => c === 'mine' || all.some(p => p.c === c));
+  // (Your files appears only for pieces imported in earlier versions)
+  const shelves = Object.keys(COMPOSERS).filter(c => all.some(p => p.c === c));
   // one shelf at a time: the last one you looked at, else your favorite composer
   const shelf = shelves.includes(UI.shelf) ? UI.shelf : shelves.find(c => fav.includes(c)) || shelves[0];
   const shelfName = c => (c === 'mine' ? 'Your files' : COMPOSERS[c].short);
@@ -54,8 +53,6 @@ export const libraryView = (page, params = {}) => {
   });
   const ps = $('#lbSession', page);
   if (ps) ps.onclick = pieceSessionSheet;
-  const imp = $('#lbImport', page);
-  if (imp) imp.onchange = () => importFile(imp.files[0]);
   if (params.pieceSession && workingPieces().length) pieceSessionSheet();
 };
 
@@ -130,11 +127,7 @@ function shelfBody(c, all) {
   const list = all.filter(p => p.c === c).sort((a, b) => a.lvl - b.lvl || a.t.localeCompare(b.t));
   const head =
     c === 'mine'
-      ? `<p class="small">Import a MIDI file: a piano piece, or music for several instruments (game and band
-           music too), which DaCapo arranges for piano. Use only files you have the right to use; they
-           stay on this device.</p>
-         <label class="btn sm cover" style="cursor:pointer;align-self:flex-start">Import a MIDI file<input
-           type="file" id="lbImport" accept=".mid,.midi,audio/midi,audio/x-midi" hidden></label>`
+      ? '<p class="small">Pieces you imported from MIDI files in earlier versions of DaCapo.</p>'
       : `<p class="small">${esc(COMPOSERS[c].n)} · ${esc(COMPOSERS[c].life)}</p>`;
   return `${head}<div class="stack" style="gap:0">${list.map(pieceRow).join('')}</div>`;
 }
@@ -208,7 +201,6 @@ export function pieceSheet(pid) {
      ${started ? sectionMap(pid) : ''}
      <div class="row">
        <button class="btn" type="button" id="psHear">Hear the opening</button>
-       <button class="btn ghost" type="button" id="psMusic">About the music</button>
        ${links}
      </div>
      ${action}
@@ -217,7 +209,6 @@ export function pieceSheet(pid) {
      ${
        mine
          ? `<div class="row">
-              ${p.orig ? '<button class="btn sm ghost" type="button" id="psArr">Change the arrangement</button>' : ''}
               <button class="btn sm ghost" type="button" id="psDel">Remove this file</button>
             </div>`
          : ''
@@ -248,16 +239,6 @@ export function pieceSheet(pid) {
         };
       const del = $('#psDel', sheet);
       if (del) del.onclick = () => removeImport(pid);
-      $('#psMusic', sheet).onclick = () => musicSheet(pid, { back: () => pieceSheet(pid) });
-      const arr = $('#psArr', sheet);
-      if (arr)
-        arr.onclick = () =>
-          rearrange(p, () => {
-            clearProgress(pid);
-            go('library');
-            pieceSheet(pid);
-            toast('New arrangement saved. Its sections start over.');
-          });
       return () => AudioEngine.stopAll();
     },
     { label: p.t },
@@ -291,21 +272,4 @@ function removeImport(pid) {
   closeSheet();
   go('library');
   toast('Removed');
-}
-
-// a MIDI file chosen from the device
-function importFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () =>
-    arrangeSheet({
-      buf: reader.result,
-      fileName: file.name,
-      onSaved: piece => {
-        go('library');
-        pieceSheet(piece.id);
-      },
-    });
-  reader.onerror = () => toast('Could not read that file.');
-  reader.readAsArrayBuffer(file);
 }

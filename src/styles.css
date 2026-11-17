@@ -1867,40 +1867,9 @@ svg.layer-roll .barline {
   outline: none;
 }
 
-/* Importing a MIDI file: one row per instrument */
-.partrow {
-  border-top: 1px solid var(--line);
-  padding-top: 8px;
-}
 .seg.sm button {
   padding: 5px 9px;
   font-size: 12px;
-}
-
-/* The chords of a section: a cell per bar, numeral over chord name */
-.chordrow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.chordbar {
-  display: inline-flex;
-  gap: 8px;
-  min-width: 48px;
-  padding: 4px 8px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--card);
-}
-.chordbar b {
-  font-family: var(--f-display);
-  font-size: 16px;
-  display: block;
-}
-.chordbar small {
-  color: var(--muted);
-  font-size: 11px;
-  display: block;
 }
 
 /* Page titles: one line, so the content starts high */
@@ -2142,4 +2111,158 @@ button.focusline {
 }
 .linkrow .ttl {
   font-weight: 600;
+}
+
+/* ---------- Moods ---------- */
+/* a key of a mood: its tonic in a small round button, filled as you get to know it */
+.keydots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.keydot {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+}
+.keydot.met {
+  border-color: var(--cover);
+  color: var(--cover);
+}
+.keydot.comfortable {
+  background: var(--brass-soft);
+  border-color: var(--brass);
+  color: var(--ink);
+}
+.keydot.solid {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+.keydot:hover {
+  border-color: var(--ink);
+}
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.legend .keydot {
+  display: inline-block;
+  min-width: 12px;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  margin-left: 6px;
+  cursor: default;
+}
+.family {
+  border-top: 1px solid var(--line);
+  padding: 8px 0;
+}
+.family summary {
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.moodrow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0 4px;
+}
+.moodname {
+  padding: 0;
+  font-size: 15px;
+}
+.shape {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.circle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 6px;
+}
+.cstep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+}
+.pickup .h2 {
+  font-size: 24px;
+}
+.lastline {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: var(--sunk);
+  border: 0;
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.insight {
+  padding-left: 12px;
+  border-left: 3px solid var(--brass);
+}
+.trajcard {
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.minibars.wide {
+  height: 42px;
+  gap: 6px;
+}
+.minibars.wide i {
+  flex: 1;
+  width: auto;
+}
+.pathcard {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pathcard .grow {
+  flex: 1;
+  min-width: 14em;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.helpbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.helpbar #mdCheck {
+  margin-left: auto;
+}
+
+/* a four-octave keyboard stays readable on a phone: it scrolls sideways instead of shrinking */
+.widekb {
+  min-width: 760px;
 }

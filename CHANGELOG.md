@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0
+
+- Moods, a second way to use DaCapo, made for short sittings: 16 scales by the sound they make (dark, bittersweet, exotic, strange, bright), each in all 12 keys, with fingering for both hands. A sitting has five steps in any order (listen, right hand, left hand, both hands, improvise); help (keys lit, finger numbers, metronome) is switchable; checks are strict and happen only when asked.
+- Home is built around the chosen path (Moods or the full course), switchable there. On Moods it shows where you left off, the next sitting, insights from your playing (left-hand patterns, pedal), every mood and key (by mood, by hand shape, around the circle of fifths), and your trajectory.
+- The welcome screen offers the two paths.
+- Recorder: a take played with the sustain pedal held down now shows every note (key presses as solid bars, the pedal's ringing as a faint tail); the pedal share no longer exceeds 100%.
+- Removed: MIDI file import and arranging, and "About the music". Pieces imported earlier stay playable under Your files.
+- The installed app opens on Home (it opened straight into the course's practice session).
+
 ## 1.3.1
 
 - The service worker now deletes only DaCapo's own old caches. Other apps on drwooodz.github.io (Katalog) keep their offline files when DaCapo updates.

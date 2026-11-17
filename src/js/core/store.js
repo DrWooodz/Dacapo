@@ -43,6 +43,12 @@ export const DEFAULT_STATE = () => ({
   lessonsSeen: {}, // kind of drill -> the day its body-and-hands note was last shown
   skillHist: {}, // 'YYYY-MM-DD' -> {skill: level}, for trends
   games: {}, // Free play games: best levels and scores
+  path: 'moods', // what Home is built around: 'moods' (scales to improvise in) or 'course' (the daily plan)
+  moods: {
+    keys: {}, // 'mood:pc' -> {met, clean: {rh, lh, ht}, checks: [days], last}
+    sittings: [], // recent sittings: {d, at, mood, pc, runs, clean, imp}
+    prefs: { keys: true, fingers: true, tempo: false, bpm: 60, octs: 1, browse: 'mood', mood: null },
+  },
   legacy: null, // set when the state came from version 1 or 2
 });
 

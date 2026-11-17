@@ -5,6 +5,7 @@ import { Input } from '../core/input.js';
 import { midiName } from '../music/theory.js';
 import { isBlack } from '../music/render.js';
 import { dynName, groupSteps } from '../music/analysis.js';
+import { readTake } from '../music/takeread.js';
 
 /* ---------- takes: record what you play (any input), see it as a piano roll, play it back ---------- */
 const Takes = {
@@ -56,61 +57,7 @@ const Takes = {
     this.saveList(l);
     return take;
   },
-  // pair note-ons with offs; the sustain pedal extends notes until it lifts
-  notes(take) {
-    const out = [],
-      open = new Map();
-    let pedal = false;
-    const held = new Set();
-    const pedalSpans = [];
-    let pStart = 0;
-    const end = take.ev.length ? take.ev[take.ev.length - 1][0] + 400 : 0;
-    take.ev.forEach(([t, k, m, v]) => {
-      if (k === 'n') {
-        if (open.has(m)) {
-          const o = open.get(m);
-          o.dur = t - o.t;
-          out.push(o);
-        }
-        open.set(m, { t, m, vel: v / 127, dur: 0 });
-        held.add(m);
-      } else if (k === 'f') {
-        held.delete(m);
-        if (!pedal && open.has(m)) {
-          const o = open.get(m);
-          o.dur = t - o.t;
-          out.push(o);
-          open.delete(m);
-        }
-      } else if (k === 'p') {
-        if (m) {
-          pedal = true;
-          pStart = t;
-        } else {
-          pedal = false;
-          pedalSpans.push([pStart, t]);
-          open.forEach((o, mm) => {
-            if (!held.has(mm)) {
-              o.dur = t - o.t;
-              out.push(o);
-              open.delete(mm);
-            }
-          });
-        }
-      }
-    });
-    if (pedal) pedalSpans.push([pStart, end]);
-    open.forEach(o => {
-      o.dur = Math.max(300, end - o.t);
-      out.push(o);
-    });
-    out.forEach(o => (o.dur = Math.max(60, o.dur)));
-    return {
-      notes: out.sort((a, b) => a.t - b.t),
-      pedal: pedalSpans,
-      dur: Math.max(end, ...out.map(o => o.t + o.dur)),
-    };
-  },
+  notes: take => readTake(take.ev),
   play(take, onEnd) {
     this.stop();
     const { notes, dur } = this.notes(take);
@@ -157,7 +104,7 @@ const Takes = {
       lo,
       hi,
       gap,
-      pedalPct: dur ? ped / dur : 0,
+      pedalPct: dur ? Math.min(1, ped / dur) : 0,
     };
   },
   roll(take, w = 640) {
@@ -185,9 +132,13 @@ const Takes = {
     notes.forEach(n => {
       const y = (hi - n.m) * rh;
       const x = (30 + n.t * sx).toFixed(1);
-      const width = Math.max(2, n.dur * sx).toFixed(1);
-      const opacity = (0.25 + n.vel * 0.75).toFixed(2); // louder notes are darker
-      s += `<rect x="${x}" y="${y + 0.5}" width="${width}" height="${rh - 1}" rx="1.5" fill="var(--rh)" fill-opacity="${opacity}"/>`;
+      const keyW = Math.max(2, n.key * sx);
+      const ringW = Math.max(0, (n.dur - n.key) * sx);
+      const opacity = (0.35 + n.vel * 0.65).toFixed(2); // louder notes are darker
+      // the pedal's ringing: a thin faint tail after the key comes up
+      if (ringW > 1)
+        s += `<rect class="ring" x="${(+x + keyW).toFixed(1)}" y="${y + rh / 2 - 1}" width="${ringW.toFixed(1)}" height="2" fill="var(--rh)" fill-opacity="0.25"/>`;
+      s += `<rect class="key" x="${x}" y="${y + 0.5}" width="${keyW.toFixed(1)}" height="${rh - 1}" rx="1.5" fill="var(--rh)" fill-opacity="${opacity}"/>`;
     });
     pedal.forEach(([a, b]) => {
       const width = Math.max(2, (b - a) * sx);

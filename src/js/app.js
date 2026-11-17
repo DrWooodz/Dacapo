@@ -28,6 +28,7 @@ import { libraryView, pieceSheet } from './views/library.js';
 import { reportSheet } from './views/report.js';
 import { homeView } from './views/home.js';
 import { practiceView } from './views/practice.js';
+import { moodView } from './views/mood.js';
 import { freeView } from './views/free.js';
 import { assessView } from './views/assess.js';
 import { settingsSheet } from './views/settings.js';
@@ -85,6 +86,7 @@ function boot() {
     registerViews({
       home: homeView,
       practice: practiceView,
+      mood: moodView,
       library: libraryView,
       free: freeView,
       assess: assessView,

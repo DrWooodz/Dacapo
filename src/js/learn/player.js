@@ -18,11 +18,11 @@ import { criterion, handWord, itemState, planFor, recordRep, STAGE_TXT } from '.
 import { buildDrill } from './drill.js';
 import { Improv } from './improv.js';
 import { itemDef } from './areas.js';
+import { recordTiming } from './skills.js';
 import { Quiz } from './quiz.js';
 import { LESSON_BY, lessonFor } from './lessons.js';
-import { recordTiming } from './skills.js';
-import { lessonSheet } from '../views/guides.js';
 import { aboutDrill } from '../views/drillinfo.js';
+import { lessonSheet } from '../views/guides.js';
 
 const CUES = {
   scale: [
@@ -93,14 +93,35 @@ function waitModeSlips(wrong, hinted) {
 const octaves = semis =>
   `${Math.abs(semis) === 12 ? 'an octave' : 'two octaves'} ${semis > 0 ? 'higher' : 'lower'}`;
 
+/* Where a drill comes from and where its reps go. The curriculum is the default; Moods supplies its own
+   (a scale you practice freely, with checks only when you ask). */
+const CURRICULUM = {
+  def: id => itemDef(id),
+  plan: id => planFor(id),
+  record: (id, r) => recordRep(id, r),
+  state: id => itemState(id),
+  stage: (id, role, plan) => {
+    const it = itemState(id) || {};
+    const cold = plan && plan.cold;
+    return {
+      text: cold ? 'Cold check' : role === 'review' ? 'Review' : STAGE_TXT[it.stage] || '',
+      cls: it.stage === 'done' ? 'ok' : cold || it.stage === 'check' ? 'brass' : '',
+    };
+  },
+  criterion: id => criterion(id),
+  timing: (kind, sd, bpm) => recordTiming(kind, sd, bpm),
+  about: id => aboutDrill(id),
+};
+
 export const Player = {
-  mount(root, { id, role = 'focus', onEvent = () => {} }) {
-    if ((itemDef(id) || {}).kind === 'theory') return Quiz.mount(root, { id, role, onEvent });
+  mount(root, { id, role = 'focus', onEvent = () => {}, source = CURRICULUM }) {
+    const src = source;
+    if ((src.def(id) || {}).kind === 'theory') return Quiz.mount(root, { id, role, onEvent });
     const P = {
       id,
       role,
       root,
-      def: itemDef(id),
+      def: src.def(id),
       plan: null,
       drill: null,
       phase: 'idle',
@@ -249,7 +270,11 @@ export const Player = {
         const items = d.steps.map((s, i) => ({
           notes: s.notes.map(x => ({
             ...x,
-            f: (P.plan.mode === 'wait' && P.plan.hints) || k === 'scale' || k === 'arp' ? x.f : '',
+            f:
+              P.plan.fingers !== false &&
+              ((P.plan.mode === 'wait' && P.plan.hints) || k === 'scale' || k === 'arp')
+                ? x.f
+                : '',
             cls: hl.bad.has(i) ? 'bad' : hl.ok.has(i) ? 'ok' : hl.cur === i ? 'cur' : '',
           })),
           fstack: s.fstack,
@@ -291,7 +316,7 @@ export const Player = {
         s.notes.forEach((x, j) => {
           const m = midiOf(x.n);
           marks[m] = { cls: x.fcls || 'rh', f: x.f || x.kf || (s.fstack ? s.fstack[j] : '') };
-          if (!marks[m].f) delete marks[m].f;
+          if (!marks[m].f || P.plan.fingers === false) delete marks[m].f;
         });
       kb.innerHTML = kbSVG({ ...r, marks, h: 104 });
       if (s && showHint) {
@@ -305,7 +330,6 @@ export const Player = {
       }
     }
     function paintHead() {
-      const it = itemState(id) || {};
       const d = P.def;
       $p('#plTitle').textContent = d.title;
       $p('#plSub').textContent =
@@ -314,10 +338,11 @@ export const Player = {
           ? ' · ' + handWord(P.plan.hand)
           : '');
       const st = $p('#plStage');
-      const cold = P.plan && P.plan.cold;
-      st.textContent = cold ? 'Cold check' : role === 'review' ? 'Review' : STAGE_TXT[it.stage] || '';
-      st.className = 'pill ' + (it.stage === 'done' ? 'ok' : cold || it.stage === 'check' ? 'brass' : '');
-      $p('#plCrit').textContent = criterion(id);
+      const stage = src.stage(id, role, P.plan);
+      st.textContent = stage.text;
+      st.className = 'pill ' + stage.cls;
+      st.hidden = !stage.text;
+      $p('#plCrit').textContent = src.criterion(id);
       paintCue();
     }
     // the line under the staff: technique advice when a habit shows up, a note on body and hands once a
@@ -325,7 +350,7 @@ export const Player = {
     function paintCue() {
       const cue = $p('#plCue');
       if (!cue || !P.plan) return;
-      const advice = techniqueAdvice((itemState(id) || {}).tech);
+      const advice = techniqueAdvice((src.state(id) || {}).tech);
       const seen = (Store.s.lessonsSeen = Store.s.lessonsSeen || {});
       const lesson =
         !advice &&
@@ -371,7 +396,7 @@ export const Player = {
     function replan(reason) {
       const prevHand = P.plan && P.plan.hand,
         prevMode = P.plan && P.plan.mode;
-      P.plan = planFor(id);
+      P.plan = src.plan(id);
       if (!P.plan) return;
       if (P.plan.mode === 'improv') {
         P.drill = { steps: [], beats: 0 };
@@ -482,7 +507,7 @@ export const Player = {
           // playing the first note again starts the next rep at once, if it is the same drill
           if (!P.sameNext || !d.steps[0].midis.some(fits)) return;
           cancel();
-          P.plan = planFor(id);
+          P.plan = src.plan(id);
           paintHead();
           W.reset();
           hl = { cur: 0, ok: new Set(), bad: new Set() };
@@ -554,6 +579,12 @@ export const Player = {
         // long pauses are noted, but wait mode is for taking your time: they never make a run unclean
         const hes = gaps.filter(g => g > Math.max(P.def.kind === 'read' ? 4000 : 3000, med * 3)).length;
         const hinted = P.plan.hints ? 0 : this.hinted.size;
+        // how even the run was at your own pace: the spread of the gaps between notes (0 = perfectly even)
+        const mean = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
+        const cv =
+          gaps.length >= 3
+            ? Math.sqrt(gaps.reduce((a, g) => a + (g - mean) ** 2, 0) / gaps.length) / mean
+            : null;
         const wrongSteps = this.err.filter(e => e).length;
         const clean = wrongSteps === 0 && hinted === 0;
         const srcs = Input.mode;
@@ -572,6 +603,7 @@ export const Player = {
           hes,
           hinted,
           pace,
+          cv,
           valid,
           weak,
           src: srcs,
@@ -797,7 +829,7 @@ export const Player = {
           return;
         }
         if (!d.any && an.accuracy >= 0.85 && an.matched >= 6)
-          recordTiming(P.def.kind, d.even ? an.sdGap : an.sdBeat, P.plan.bpm);
+          if (src.timing) src.timing(P.def.kind, d.even ? an.sdGap : an.sdBeat, P.plan.bpm);
         const valid = d.any
           ? true
           : Input.live && Input.mode !== 'touch' && !P.lenient && !rel.some(o => o.src === 'touch');
@@ -934,9 +966,9 @@ export const Player = {
     /* ---------- after every rep ---------- */
     function report(r) {
       P.repN++;
-      const before = itemState(id) ? itemState(id).stage : null;
-      const out = recordRep(id, r);
-      const next = planFor(id);
+      const before = src.state(id) ? src.state(id).stage : null;
+      const out = src.record(id, r);
+      const next = src.plan(id);
       P.sameNext = !!next && next.mode === P.plan.mode && next.hand === P.plan.hand && !P.drill.fresh;
       log('rep', {
         mode: r.mode,
@@ -1052,7 +1084,7 @@ export const Player = {
         ),
       );
     });
-    $p('#plAbout').onclick = () => aboutDrill(id);
+    $p('#plAbout').onclick = () => src.about(id);
     // leaving the app (screen off, another app) stops the metronome; any key or Start resumes
     const onVis = () => {
       if (
@@ -1073,7 +1105,7 @@ export const Player = {
     Player.debug = { P, W, T }; // for automated tests
     replan('init');
     if (P.plan && P.plan.mode !== 'improv') startRep();
-    log('mounted', { role, stage: (itemState(id) || {}).stage });
+    log('mounted', { role, stage: (src.state(id) || {}).stage });
     return {
       get phase() {
         return P.phase;

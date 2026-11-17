@@ -3,7 +3,7 @@
   "short_name": "DaCapo",
   "description": "Piano practice that listens over MIDI: daily sessions for reading, technique, theory, pieces and improvisation.",
   "id": "/Dacapo/",
-  "start_url": "./#practice",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

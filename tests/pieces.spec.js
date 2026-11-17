@@ -1,7 +1,5 @@
 // Pieces: the "working on" list, daily practice, piece sessions, sections, and your own MIDI files.
-import path from 'node:path';
 import { test, expect } from './fixtures.js';
-import { gameSong } from './songs.js';
 
 test.beforeEach(async ({ app }) => {
   await app.connectPiano();
@@ -120,69 +118,4 @@ test('a long piece is drawn a few bars at a time and follows the playing', async
   await page.locator('#plGo').click();
   expect(await app.phase()).toBe('stopped');
   expect(await app.message()).toMatch(/^Stopped\./);
-});
-
-test('a MIDI file can be imported and practiced', async ({ app, page }) => {
-  await app.eval(() => window.DaCapo.go('library'));
-  await page.locator('[data-seg="lbShelf"] [data-v="mine"]').click();
-  await page.setInputFiles('#lbImport', path.join(import.meta.dirname, 'fixtures', 'waltz.mid'));
-  const sheet = page.locator('.sheet');
-  await expect(sheet).toContainText('Import waltz.mid');
-  await expect(sheet).toContainText('right / left hand');
-  await page.locator('#imSave').click();
-  const piece = await app.eval(() => {
-    const p = window.DaCapo.Library.imports()[0];
-    return {
-      id: p.id,
-      notes: window.DaCapo.Library.notes(p.id).length,
-      sections: window.DaCapo.Library.sections(p.id).length,
-    };
-  });
-  expect(piece).toMatchObject({ notes: 16, sections: 1 });
-  await app.eval(() => window.DaCapo.closeSheet());
-  await app.practice(`p:${piece.id}:0`);
-  expect(await app.plan()).toMatchObject({ kind: 'section', hand: 'rh', mode: 'wait' });
-  expect(await app.waitRep()).toBe('Clean. Once more, without the key hints.');
-});
-
-test('a file for several instruments becomes a piano piece, with its music explained', async ({
-  app,
-  page,
-}) => {
-  await app.eval(() => window.DaCapo.go('library'));
-  await page.locator('[data-seg="lbShelf"] [data-v="mine"]').click();
-  const { bytes } = gameSong();
-  await page.setInputFiles('#lbImport', {
-    name: 'harbour.mid',
-    mimeType: 'audio/midi',
-    buffer: Buffer.from(bytes),
-  });
-  const sheet = page.locator('.sheet');
-  await expect(sheet).toContainText('Import harbour.mid');
-  await expect(sheet).toContainText('Flute');
-  await expect(sheet).toContainText('Left out: drums');
-  await expect(page.locator('[data-seg="imStyle"] [aria-pressed="true"]')).toHaveText('Full');
-  // the melody is chosen for you; choose Simple, then save
-  await expect(sheet.locator('.partrow', { hasText: 'Flute' }).locator('[aria-pressed="true"]')).toHaveText(
-    'Melody',
-  );
-  await page.locator('[data-seg="imStyle"] [data-v="simple"]').click();
-  await expect(sheet.locator('.stat').first()).toHaveText(/^32\s*notes$/);
-  await page.locator('#imSave').click();
-  await expect(sheet).toContainText('melody and bass');
-  // about the music
-  await page.locator('#psMusic').click();
-  await expect(sheet).toContainText('A Mixolydian');
-  await expect(sheet.locator('.chordrow').first()).toContainText('♭VII');
-  await expect(sheet).toContainText('Flute, String ensemble 1');
-  await page.locator('[data-hear="0"]').click();
-  await page.locator('#muBack').click();
-  // a new arrangement from the same file
-  await page.locator('#psArr').click();
-  await expect(page.locator('[data-seg="imStyle"] [aria-pressed="true"]')).toHaveText('Simple');
-  await page.locator('[data-seg="imStyle"] [data-v="full"]').click();
-  await page.locator('#imSave').click();
-  await expect(sheet).toContainText('melody, harmony and bass');
-  const pieces = await app.eval(() => window.DaCapo.Library.imports().map(p => [p.t, p.arr.style]));
-  expect(pieces).toEqual([['harbour', 'full']]);
 });

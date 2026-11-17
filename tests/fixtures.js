@@ -105,9 +105,11 @@ export class App {
     });
   }
   // the welcome screen: optionally what matters most, a first piece, then skip the placement check
-  async onboard(piece = 'satie-gym-1', { matters = [] } = {}) {
+  // the welcome screen: the full course (most tests) or Moods
+  async onboard(piece = 'satie-gym-1', { matters = [], path = 'course' } = {}) {
+    await this.page.locator(`[data-path="${path}"]`).click();
     for (const a of matters) await this.page.locator(`[data-matter="${a}"]`).click();
-    if (piece) await this.page.locator(`[data-pick="${piece}"]`).click();
+    if (piece && path === 'course') await this.page.locator(`[data-pick="${piece}"]`).click();
     await this.page.locator('#wcStart').click();
     await this.page.waitForTimeout(300);
   }

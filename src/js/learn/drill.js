@@ -16,6 +16,7 @@ import {
 import { Library } from '../music/library.js';
 
 export function buildDrill(def, plan) {
+  if (def.build) return def.build(plan); // a drill that brings its own notes (Moods)
   const k = def.kind;
   const hand = plan.hand || 'ht';
   if (k === 'scale') {

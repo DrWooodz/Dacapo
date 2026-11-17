@@ -5,7 +5,6 @@
 import { LIBRARY_DATA } from '../data.js';
 import { Log } from '../core/log.js';
 import { spellAcc } from './theory.js';
-import { describeMusic } from './harmony.js';
 
 export const COMPOSERS = {
   satie: { n: 'Erik Satie', short: 'Satie', life: '1866–1925' },
@@ -83,7 +82,7 @@ export const Library = {
   },
   // forget everything decoded for a piece (after it is removed or replaced)
   forget(id) {
-    ['', 'bars:', 'secs:', 'music:'].forEach(k => this.cache.delete(k + id));
+    ['', 'bars:', 'secs:'].forEach(k => this.cache.delete(k + id));
   },
   all() {
     return (typeof LIBRARY_DATA !== 'undefined' ? LIBRARY_DATA : []).concat(this.imports());
@@ -171,21 +170,6 @@ export const Library = {
       same,
       n: this.range(id, a, z).length,
     }));
-    this.cache.set(key, out);
-    return out;
-  },
-  // the harmony of a piece: its mode and home note, and the chords of each section (see describeMusic)
-  music(id) {
-    const key = 'music:' + id;
-    if (this.cache.has(key)) return this.cache.get(key);
-    const p = this.get(id);
-    if (!p) return null;
-    const out = describeMusic(
-      this.notes(id),
-      this.bars(id),
-      this.keyAt(id, 0),
-      this.sections(id).map(s => [s.a, s.z]),
-    );
     this.cache.set(key, out);
     return out;
   },

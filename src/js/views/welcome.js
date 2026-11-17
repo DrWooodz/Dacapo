@@ -1,4 +1,5 @@
-/* The first open: what DaCapo does, what matters to you, composers you love, and a first piece. */
+/* The first open: the two ways to use DaCapo (Moods, or the full course), and for the course what matters
+   to you, composers you love, and a first piece. */
 import { Log } from '../core/log.js';
 import { $, esc } from '../core/util.js';
 import { Store } from '../core/store.js';
@@ -17,6 +18,7 @@ export function drawWelcome(page) {
       .map(([a]) => a),
   );
   let pick = null;
+  let path = Store.s.path === 'course' ? 'course' : 'moods';
   const suggestions = () =>
     Library.all()
       .filter(p => p.c !== 'mine' && (fav.size ? fav.has(p.c) : true) && p.lvl <= 2)
@@ -29,20 +31,25 @@ export function drawWelcome(page) {
       <span>${esc(COMPOSERS[p.c].short)}${p.sub ? ' · ' + esc(p.sub) : ''} · ${LEVEL_NAMES[p.lvl]}</span>
     </button>`;
   const paint = () => {
+    const way = (id, title, text) => `
+      <button type="button" class="pickcard pathpick" data-path="${id}" aria-pressed="${path === id}">
+        <b>${title}</b><span>${text}</span></button>`;
     page.innerHTML = `
       <div class="card welcome">
         <span class="eyebrow">Welcome to DaCapo</span>
         <h1 class="h1">Open it, and <em>play</em>.</h1>
-        <ol class="small">
-          <li>Each day DaCapo prepares a short session around one focus for the week, with a few minutes
-            of upkeep for everything else.</li>
-          <li>Each drill carries over from day to day until it is truly learned: right on the first try of
-            the day, on two different days.</li>
-          <li>It listens over MIDI and moves on by itself. You keep your hands on the keys.</li>
-        </ol>
+        <p class="small">DaCapo listens to your piano over MIDI. Two ways to use it; you can switch on Home
+          at any time.</p>
+        <div class="pickgrid">
+          ${way('moods', 'Moods', 'Scales by the sound they make (dark, dreamy, exotic, bright) in every key, with their fingering, and improvising in them. Made for short sittings whenever you have them.')}
+          ${way('course', 'The full course', 'A short session every day around one focus for the week: note reading, sight-reading, technique, theory, pieces and improvising, with spaced reviews.')}
+        </div>
       </div>
       ${connectNotice(true)}
-      <div class="card">
+      ${
+        path === 'moods'
+          ? '<button class="btn cover big" type="button" id="wcStart">Start</button>'
+          : `<div class="card">
         <div class="cardhead">
           <h2 class="h2">What matters most to you?</h2>
           <span class="small">Choose any; it shapes the suggestions</span>
@@ -59,7 +66,14 @@ export function drawWelcome(page) {
         <div class="pickgrid">${suggestions().map(pieceCard).join('')}</div>
       </div>
       <button class="btn cover big" type="button" id="wcCheck">Start with an 8-minute check</button>
-      <button class="btn big ghost" type="button" id="wcStart">Skip it and start practicing</button>`;
+      <button class="btn big ghost" type="button" id="wcStart">Skip it and start practicing</button>`
+      }`;
+    page.querySelectorAll('[data-path]').forEach(b => {
+      b.onclick = () => {
+        path = b.dataset.path;
+        paint();
+      };
+    });
     bindConnect();
     const toggle = (attr, set) =>
       page.querySelectorAll(`[data-${attr}]`).forEach(b => {
@@ -82,6 +96,7 @@ export function drawWelcome(page) {
       P.favorites = [...fav];
       P.weights = Object.fromEntries(AREAS.map(a => [a.id, matters.has(a.id) ? 1.3 : 1]));
       P.onboarded = true;
+      Store.s.path = path;
       if (pick) workOnPiece(pick, { daily: true });
       Store.s.session = null;
       Store.s.focus = null;
@@ -89,8 +104,9 @@ export function drawWelcome(page) {
       Log.ev('onboarded', { matters: [...matters], fav: P.favorites, piece: pick });
       go(to);
     };
-    $('#wcCheck', page).onclick = () => finish('assess');
-    $('#wcStart', page).onclick = () => finish('practice');
+    const check = $('#wcCheck', page);
+    if (check) check.onclick = () => finish('assess');
+    $('#wcStart', page).onclick = () => finish(path === 'moods' ? 'home' : 'practice');
   };
   paint();
 }

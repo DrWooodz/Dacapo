@@ -1,4 +1,5 @@
-/* Home: where the day starts. Three things, each in one place:
+/* Home: where the day starts, built around the path you chose. On the Moods path it is moodshome.js. On the
+   full course, three things, each in one place:
      Today          this week's focus and today's session, step by step; start it, or start at any step
      Where you are  each skill's level and what comes next in it; tap one to see all of it
      Your week      minutes and days played; tap for the full history
@@ -21,6 +22,7 @@ import { AREA_BY, itemDef, workingPieces } from '../learn/areas.js';
 import { areaOn, skillStatus } from '../learn/status.js';
 import { drawWelcome } from './welcome.js';
 import { bindConnect, connectNotice } from './practice.js';
+import { moodsHome } from './moodshome.js';
 import { shortTitle } from './drillinfo.js';
 import { focusSheet, milestoneRow, progressSheet, skillSheet } from './skills.js';
 import { settingsSheet } from './settings.js';
@@ -29,20 +31,37 @@ const ROLE = { check: 'Cold check', review: 'Review', warm: 'Upkeep', daily: 'Da
 
 export const homeView = page => {
   if (!Store.s.profile.onboarded) return drawWelcome(page);
-  const s = currentSession();
-  page.innerHTML = `
+  const head = `
     <div class="homehead">
       <span class="eyebrow">${esc(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))}</span>
       <h1 class="h1">${greeting()}</h1>
     </div>
-    ${connectNotice()}
+    ${connectNotice()}`;
+  if (Store.s.path !== 'course') {
+    moodsHome(page, head);
+    bindConnect();
+    return;
+  }
+  const s = currentSession();
+  page.innerHTML = `
+    ${head}
     <div class="homegrid">
       <div class="stack" style="gap:16px">${todayCard(s)}${weekCard()}</div>
-      ${standingCard()}
+      <div class="stack" style="gap:16px">${standingCard()}${movesCard()}</div>
     </div>`;
   bindConnect();
   bind(page, s);
 };
+
+// the other path: Moods
+function movesCard() {
+  return `<section class="card pathcard">
+    <div class="grow"><b>Also in DaCapo: Moods</b>
+      <span class="small">Scales to improvise in, by the sound they make, at your own pace. Made for
+        short sittings whenever you have them.</span></div>
+    <button class="btn sm" type="button" data-act="moods">Switch to Moods</button>
+  </section>`;
+}
 
 function greeting() {
   const h = new Date().getHours();
@@ -215,6 +234,11 @@ function bind(page, s) {
       go('home');
     },
     progress: progressSheet,
+    moods: () => {
+      Store.s.path = 'moods';
+      Store.save();
+      go('home');
+    },
   };
   $$('[data-act]', page).forEach(b => (b.onclick = () => act[b.dataset.act]()));
   $$('[data-start]', page).forEach(b => {
