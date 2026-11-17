@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.1
+
+An audit of the theory and the code.
+
+- Chord numerals count letters from home, the same in every key: Locrian's chord on the low 5th is ♭V (it said ♯IV); pentatonic progressions are spelled from their parent scale.
+- Harmonic and melodic minor take their natural minor's name and key signature: G♯ harmonic minor (not A♭), C melodic minor with three flats. On a tie between two names, the usual key name (E♭ minor, F♯ major).
+- Arpeggios on black-key roots use the published fingerings (D♭ major: 4 1 2 4 right hand, 2 1 4 2 left), at one octave too. The course's arpeggios now show fingering for black-key roots, from the same engine.
+- Color notes: minor pentatonic's tip named a note outside the scale; diminished's named no note. Both fixed.
+- Improvising: a plain scale run no longer counts as a motif and sequence.
+- Chord readout: the inversion follows the chord tone in the bass (an add9 chord over its 9th was called "2nd inversion"), and the bass is spelled from the root (C7/B♭, not C7/A♯).
+
 ## 1.5.0
 
 - A Moods sitting has five steps: Listen, Scale (right, left or both hands inside it), Chords, Arpeggios, Improvise.

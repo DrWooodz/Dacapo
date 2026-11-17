@@ -9,7 +9,7 @@ test.beforeEach(async ({ app }) => {
 test('steady rhythm is clean; badly uneven rhythm is not', async ({ app }) => {
   await app.practice('r:ry2');
   expect((await app.tempoRep({ jitter: 10 })).message).toBe('Clean at ♩ 60. One more moves the tempo up.');
-  const sloppy = await app.tempoRep({ jitter: 260 });
+  const sloppy = await app.tempoRep({ offsets: [0, 260, -200, 240] }); // (set, so the test cannot pass by luck)
   expect(sloppy.message).not.toMatch(/^Clean|Two clean/);
 });
 

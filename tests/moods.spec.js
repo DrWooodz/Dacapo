@@ -130,6 +130,15 @@ test('the chords of a scale: numerals from the major scale, the signature chord,
   expect(ch[4]).toMatchObject({ name: 'G', num: 'V' });
   expect(ch[4].seventh.name).toBe('G7');
   expect(ch[0].notes.map(n => 'CDEFGAB'[n.l] + (n.a < 0 ? '♭' : ''))).toEqual(['C', 'E♭', 'G']);
+  // numerals count letters from home: Locrian's chord on the low 5th is ♭V, Lydian's raised 4th ♯iv°,
+  // the same in every key
+  for (const pc of PCS) {
+    expect(moodChords('locrian', pc)[4].num).toBe('♭V');
+    expect(moodChords('lydian', pc)[3].num).toBe('♯iv°');
+  }
+  // harmonic and melodic minor: their natural minor's tonic and key signature
+  expect(moodName('harmonic', 8)).toBe('G♯ harmonic minor');
+  expect(moodRun('melodic', 0, 'rh', 1).sig).toBe(-3);
   // a pentatonic uses the chords of the scale it comes from; the blues, its three 7ths
   expect(moodChords('minpent', 9).map(c => c.name)).toEqual(am.map(c => c.name));
   expect(moodChords('blues', 0).map(c => c.name)).toEqual(['C7', 'F7', 'G7']);
@@ -185,6 +194,12 @@ test('arpeggios: the standard fingering for white-key triads, a playable one for
       .steps.map(s => s.notes[0].f)
       .slice(0, 7),
   ).toEqual([5, 4, 2, 1, 4, 2, 1]);
+  // black-key roots take the published patterns: D♭ major 4 1 2 4 (right), 2 1 4 2 (left), one octave too
+  const fOf = (pc, hand, octs) =>
+    arpeggioRun('major', pc, [0, 'maj'], hand, octs).steps.map(s => s.notes[0].f);
+  expect(fOf(1, 'rh', 2).slice(0, 7)).toEqual([4, 1, 2, 4, 1, 2, 4]);
+  expect(fOf(1, 'lh', 2).slice(0, 7)).toEqual([2, 1, 4, 2, 1, 4, 2]);
+  expect(fOf(1, 'rh', 1).slice(0, 4)).toEqual([4, 1, 2, 4]);
   const bad = [];
   for (const M of MOODS)
     for (const pc of PCS)
@@ -213,9 +228,10 @@ test('right-hand ideas: a call stays in the right hand and asks for an answer; m
       expect(Math.min(...call.map(n => n.m))).toBeGreaterThanOrEqual(60);
       expect(pc12(call[call.length - 1].m - tonic)).not.toBe(0);
     }
-  expect(motifEcho([0, 1, 2, 5, 1, 2, 3])).toBe('sequence');
-  expect(motifEcho([0, 1, 2, 0, 1, 2])).toBe('repeat');
+  expect(motifEcho([0, 2, 1, 5, 1, 3, 2])).toBe('sequence');
+  expect(motifEcho([0, 2, 1, 0, 2, 1])).toBe('repeat');
   expect(motifEcho([0, 1, 2, 9, 9, 9])).toBeNull();
+  expect(motifEcho([0, 1, 2, 3, 4, 5, 6])).toBeNull(); // a scale run is not a motif
   // an ear round: four different moods including the answer, from more than one family
   for (let k = 0; k < 50; k++) {
     const r = earRound({});

@@ -1,7 +1,8 @@
 // Theory: questions answered by playing, then speed, then a cold check of five questions.
 import { test, expect } from './fixtures.js';
 import { answersInChords, answerSize, check, THEORY_UNITS, makeQuestion } from '../src/js/learn/theory.js';
-import { midiOf, pcOf } from '../src/js/music/theory.js';
+import { midiOf, pcOf, spellerFor } from '../src/js/music/theory.js';
+import { detectChord } from '../src/js/music/harmony.js';
 import { GUIDES, stepGroups } from '../src/js/learn/guides.js';
 
 test('every unit: the answer the app plays is accepted, and a wrong note is not', () => {
@@ -16,6 +17,17 @@ test('every unit: the answer the app plays is accepted, and a wrong note is not'
       expect(check(q, wrong).ok, `${U.id} accepts a wrong note: ${q.prompt}`).toBe(false);
     }
   }
+});
+
+test('the chord readout names the inversion by the chord tone in the bass', () => {
+  const sp = spellerFor(0);
+  const c = ms => detectChord(ms, sp).long;
+  expect(c([48, 52, 55])).toBe('C major, root position');
+  expect(c([52, 55, 60])).toBe('C major, 1st inversion');
+  expect(c([43, 48, 52])).toBe('C major, 2nd inversion');
+  expect(c([46, 48, 52, 55])).toMatch(/3rd inversion/);
+  expect(detectChord([46, 48, 52, 55], sp).name).toBe('C7/B♭'); // the 7th spelled from the root
+  expect(c([50, 52, 55, 60])).toMatch(/the 9th in the bass/); // Cadd9 over D
 });
 
 test('smooth voice leading: the chords written on the staff are the voicings that are played', () => {

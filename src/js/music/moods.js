@@ -245,7 +245,11 @@ export const MOODS = [
     hear: 'blues and rock guitar solos',
     how: 'Five notes of natural minor, without the 2nd and 6th. No half steps, so no note clashes with another: the easiest scale to improvise in.',
     semis: [0, 3, 5, 7, 10],
-    color: [3, 'the minor 3rd', 'bend toward it from the 2nd below, the way guitarists do'],
+    color: [
+      3,
+      'the minor 3rd',
+      'it makes the scale minor: slide into it from the key just below, as blues players do',
+    ],
     sigChord: 10,
     parent: 'natural',
     progs: [
@@ -424,7 +428,11 @@ export const MOODS = [
     hear: 'suspense and villain cues; jazz over diminished chords',
     how: 'Whole step, half step, over and over: eight notes. It repeats every three half steps, so it sounds the same from four places: tense and circling.',
     semis: [0, 2, 3, 5, 6, 8, 9, 11],
-    color: [3, 'the alternating half steps', 'whole, half, whole, half: play it in pairs of notes'],
+    color: [
+      6,
+      'the low 5th',
+      'the tritone above home makes the home chord diminished: step from it up to the 6th, and the circling starts',
+    ],
     sigChord: 2,
     progs: [
       {
@@ -581,7 +589,7 @@ export const MOODS = [
           [0, 'maj'],
           [7, 'maj'],
         ],
-        why: 'country: every note fits over all three',
+        why: 'country: home, away, home, the pull back',
       },
     ],
   },
@@ -684,10 +692,18 @@ function spellFrom(tonic, mood) {
 }
 
 // the scale of a mood from pitch class pc, one octave up from the tonic (spelled notes, octave 4)
+/* a mood in a key, spelled: of the tonic's two names (C♯ or D♭), the one whose scale needs fewer
+   accidentals; on a tie, the usual key name (E♭ minor, F♯ major). Harmonic and melodic minor take their
+   natural minor's tonic: G♯ harmonic minor (with its F𝄪), not A♭. */
 export function moodScale(moodId, pc) {
   const mood = MOOD_BY[moodId];
+  if (moodId === 'harmonic' || moodId === 'melodic') return spellFrom(moodScale('natural', pc)[0], mood);
+  const usual = (mood.semis.includes(3) && !mood.semis.includes(4) ? MINOR_NAMES : MAJOR_NAMES)[pc];
+  const named = sc => 'CDEFGAB'[sc[0].l] + (sc[0].a > 0 ? '#' : sc[0].a < 0 ? 'b' : '') === usual;
   const options = TONICS[pc].map(t => spellFrom(t, mood));
-  return options.reduce((a, b) => (accidentals(b) < accidentals(a) ? b : a));
+  return options.reduce((a, b) =>
+    accidentals(b) < accidentals(a) || (accidentals(b) === accidentals(a) && named(b)) ? b : a,
+  );
 }
 
 // the key signature that writes a scale with the fewest accidentals in the music
@@ -703,6 +719,10 @@ function sigFor(notes) {
   }
   return best.sig;
 }
+// a mood's key signature: the one that needs the fewest accidentals, except that harmonic and melodic
+// minor are written with their natural minor's signature and the raised notes marked, as in printed music
+const moodSig = (moodId, pc) =>
+  sigFor(moodScale(['harmonic', 'melodic'].includes(moodId) ? 'natural' : moodId, pc));
 
 // the name of a mood in a key: "C♯ Phrygian", "E♭ major" (names of people and places keep their capital)
 export function tonicName(moodId, pc) {
@@ -860,7 +880,7 @@ function fingerOutward(midis, hand = SCALE, { open = false, first = 0, end = 0 }
 function octaveFingers(oneUp, octs, handId, reach = SCALE) {
   const outward = handId === 'rh' ? oneUp : oneUp.slice().reverse();
   const flip = f => (handId === 'rh' ? f : f.slice().reverse());
-  if (octs === 1) return flip(fingerOutward(outward, reach));
+  if (octs === 1 && reach !== ARP) return flip(fingerOutward(outward, reach)); // (arpeggios keep their 2-octave pattern)
   const n = outward.length - 1;
   let cyc = null;
   for (let s = 1; s <= 5; s++) {
@@ -869,13 +889,15 @@ function octaveFingers(oneUp, octs, handId, reach = SCALE) {
   }
   const seq = [];
   for (let o = 0; o < octs; o++) seq.push(...cyc.slice(0, n));
-  // the last note: the next finger up if it reaches, as a run normally ends
+  // the last note: the next finger up if it reaches, as a run normally ends (an arpeggio ending on a
+  // black key keeps its pattern's finger: D♭ major ends on 4 in the right hand, 2 in the left)
   const prev = seq[seq.length - 1];
   const d = Math.abs(outward[n] - outward[n - 1]);
   const black = onBlack(outward[n]);
   let end = cyc[n];
-  for (let f = prev + 1; f <= 5; f++)
-    if (stepCost(d, onBlack(outward[n - 1]), black, prev, f, reach) < Infinity) end = f;
+  if (!(reach === ARP && black))
+    for (let f = prev + 1; f <= 5; f++)
+      if (stepCost(d, onBlack(outward[n - 1]), black, prev, f, reach) < Infinity) end = f;
   seq.push(end);
   return flip(seq);
 }
@@ -920,7 +942,7 @@ export function moodRun(moodId, pc, hand, octs) {
   });
   return {
     steps,
-    sig: sigFor(moodScale(moodId, pc)),
+    sig: moodSig(moodId, pc),
     clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
   };
 }
@@ -1006,13 +1028,25 @@ const NUM_SUFFIX = {
   sus2: 'sus2',
   sus4: 'sus4',
 };
-export function roman(semis, type) {
-  const d = DEGREE[((semis % 12) + 12) % 12];
+/* a chord's numeral counts the letters from home and compares with the major scale: in Locrian the chord
+   on the low 5th is ♭V, in Lydian the raised 4th is ♯iv°. The numerals come from the mood's spelling in C,
+   so they are the same in every key. */
+const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+function roman(moodId, semis, type) {
+  const s = ((semis % 12) + 12) % 12;
+  const scale = moodScale(MOOD_BY[moodId].parent || moodId, 0);
+  const root = scale.find(n => ((midiOf(n) % 12) + 12) % 12 === s);
+  let d = DEGREE[s];
+  if (root) {
+    const off = ((s - MAJOR_STEPS[root.l] + 18) % 12) - 6;
+    if (Math.abs(off) <= 1) d = (off < 0 ? '♭' : off > 0 ? '♯' : '') + NUMERALS[root.l];
+  }
   return (LOWER.has(type) ? d.toLowerCase() : d) + (NUM_SUFFIX[type] || '');
 }
 
 // the notes of a chord, spelled from the scale where they are in it
 function spellMoodChord(moodId, pc, semis, type) {
+  moodId = MOOD_BY[moodId].parent || moodId; // (a pentatonic's chords are spelled from its parent scale)
   const scale = moodScale(moodId, pc);
   const tonic = scale[0];
   const inScale = s => scale.find((n, i) => MOOD_BY[moodId].semis[i] === ((s % 12) + 12) % 12);
@@ -1023,12 +1057,12 @@ function spellMoodChord(moodId, pc, semis, type) {
 const noteName = n => 'CDEFGAB'[n.l] + (n.a > 0 ? '♯'.repeat(n.a) : n.a < 0 ? '♭'.repeat(-n.a) : '');
 
 // a chord of a mood, ready to show: numeral, name ("F♯m"), its notes, and what kind it is
-function chordInfo(moodId, pc, [semis, type]) {
+export function chordInfo(moodId, pc, [semis, type]) {
   const notes = spellMoodChord(moodId, pc, semis, type);
   return {
     semis,
     type,
-    num: roman(semis, type),
+    num: roman(moodId, semis, type),
     name: noteName(notes[0]) + SUFFIX[type],
     notes,
     word: TYPE_WORD[type],
@@ -1122,7 +1156,7 @@ export function voiceProgression(moodId, pc, chords, { lo = 55, hi = 66 } = {}) 
 // the progression, one chord a step: the right hand's voiced chord, the left hand's root, or both
 export function progressionRun(moodId, pc, prog, hand) {
   const V = voiceProgression(moodId, pc, MOOD_BY[moodId].progs[prog].chords);
-  const sp = spellerFor(sigFor(moodScale(moodId, pc)));
+  const sp = spellerFor(moodSig(moodId, pc));
   const steps = V.map((v, i) => {
     const notes = [];
     if (hand !== 'lh') v.right.forEach(m => notes.push({ n: sp(m), st: 't', fcls: 'rh' }));
@@ -1132,7 +1166,7 @@ export function progressionRun(moodId, pc, prog, hand) {
   });
   return {
     steps,
-    sig: sigFor(moodScale(moodId, pc)),
+    sig: moodSig(moodId, pc),
     clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
   };
 }
@@ -1170,7 +1204,7 @@ export function arpeggioRun(moodId, pc, chord, hand, octs) {
   });
   return {
     steps,
-    sig: sigFor(moodScale(moodId, pc)),
+    sig: moodSig(moodId, pc),
     clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
     info,
   };

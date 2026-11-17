@@ -359,7 +359,9 @@ export function insights() {
     // a left-hand pattern you have not tried in any sitting
     const tried = new Set(recent.flatMap(s => (s.imp ? s.imp.patterns || [s.imp.pattern] : [])));
     const untried = LH_PATTERNS.find(p => !tried.has(p.id));
-    const next = untried ? ` Next time try ${untried.n.toLowerCase()}.` : '';
+    const next = untried
+      ? ` Next time try ${untried.id === 'alberti' ? untried.n : untried.n.toLowerCase()}.`
+      : '';
     if (lh.n < notes * 0.1)
       out.push({ text: `Your right hand did nearly all the playing. Give the left hand a pattern.${next}` });
     else if (lh.rootFifth > lh.n * 0.7)

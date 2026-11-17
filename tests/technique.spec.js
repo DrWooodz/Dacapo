@@ -45,7 +45,7 @@ test('wrong notes lower the tempo; uneven timing alone does not', async ({ app }
   const skip = [3, 5, 7, 9, 11, 13];
   expect((await app.tempoRep({ jitter: 8, skip })).message).toMatch(/Down to ♩ 47/);
   expect(await app.item(ID)).toMatchObject({ bpm: 47, mess: 1 });
-  const uneven = await app.tempoRep({ jitter: 220 });
+  const uneven = await app.tempoRep({ offsets: [0, 220, -180, 200] });
   expect(uneven.message).toMatch(/^Right notes; the timing was uneven\./);
   expect(await app.item(ID)).toMatchObject({ bpm: 47, mess: 0 });
 });

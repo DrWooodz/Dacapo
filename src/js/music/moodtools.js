@@ -173,7 +173,8 @@ export function motifEcho(degrees) {
   if (n < 6) return null;
   const shape = (k, j) => [degrees[k + 1] - degrees[k], degrees[k + 2] - degrees[k + 1], j];
   const [a, b] = shape(n - 3);
-  if (a === 0 && b === 0) return null;
+  // (a plain run up or down the scale is not a motif: every three notes of it have the same shape)
+  if ((a === 0 && b === 0) || (a === b && Math.abs(a) === 1)) return null;
   for (let k = Math.max(0, n - 12); k <= n - 6; k++) {
     const [x, y] = shape(k);
     if (x === a && y === b) return degrees[k] === degrees[n - 3] ? 'repeat' : 'sequence';

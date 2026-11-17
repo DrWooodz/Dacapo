@@ -44,13 +44,19 @@ const PAGE_HELPERS = () => {
         for (const m of s.midis) send(0x80, m, 0);
       }
     },
-    // metronome mode: play each step at its beat, with random timing error (ms), skipped steps, a wrong
-    // note, or everything shifted by some semitones (an octave too high: shift 12)
-    async playTempo(steps, msBeat, t0, { jitter = 0, skip = [], wrong = false, shift = 0 } = {}) {
+    // metronome mode: play each step at its beat, with random timing error (ms) or set offsets (ms, one per
+    // step, repeating), skipped steps, a wrong note, or everything shifted by some semitones (shift 12)
+    async playTempo(
+      steps,
+      msBeat,
+      t0,
+      { jitter = 0, offsets = null, skip = [], wrong = false, shift = 0 } = {},
+    ) {
       const evs = [];
       steps.forEach((s, i) => {
         if (skip.includes(i)) return;
-        const t = t0 + s.beat * msBeat + (Math.random() * 2 - 1) * jitter;
+        const t =
+          t0 + s.beat * msBeat + (offsets ? offsets[i % offsets.length] : (Math.random() * 2 - 1) * jitter);
         (s.midis.length ? s.midis : [60]).forEach((m, j) => evs.push([t + j * 6, m + shift]));
       });
       if (wrong) evs.push([t0 + steps[2].beat * msBeat + 30, 30]);

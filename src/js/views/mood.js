@@ -278,7 +278,7 @@ export const moodView = (page, params) => {
     });
     body.innerHTML = `<div class="card stack">
         <h2 class="h2">Chords of ${esc(moodName(mood, pc))}</h2>
-        ${P ? `<p class="small">These are the chords of ${esc(P.n.toLowerCase())}, the scale ${esc(M.n.toLowerCase())} comes from: every note of the pentatonic sounds good over all of them.</p>` : ''}
+        ${P ? `<p class="small">These are the chords of ${esc(P.n.toLowerCase())}, the scale ${esc(M.n.toLowerCase())} comes from: the pentatonic leaves out the notes most likely to clash, so it fits over nearly all of them.</p>` : ''}
         <div class="scrollx"><table class="chordtable"><thead><tr><th></th><th>Chord</th><th>Notes</th><th>With 7th</th><th></th></tr></thead><tbody>${chords.map(row).join('')}</tbody></table></div>
         <h3 class="h3">Progressions</h3>
         <div class="stack" style="gap:6px">${progs.join('')}</div>

@@ -16,6 +16,7 @@ import {
   tonicOct,
 } from './theory.js';
 import { COMPOSERS, Library } from './library.js';
+import { arpeggioRun } from './moods.js';
 
 /* ---------- drill material ----------
    A step is one moment where keys go down together: {midis, notes:[{n, st, f, fcls}], beat}
@@ -64,14 +65,18 @@ export function arpSteps(fam, key, hand, npb = 2) {
     up.push(N(root.l, root.a, root.o + 2));
     return up.concat(up.slice(0, -1).reverse());
   };
-  // standard fingering for root-position arpeggios starting on a white key (the left hand takes 3 on the
-  // major third of D, A, E and B major, which lies on a black key); black-key roots: thumb on the first
-  // white key, shown without numbers
-  const white = t.a === 0;
-  const wideLeft = fam === 'major' && ['D', 'A', 'E', 'B'].includes(key);
-  const fR = [1, 2, 3, 1, 2, 3, 5],
-    fL = wideLeft ? [5, 3, 2, 1, 3, 2, 1] : [5, 4, 2, 1, 4, 2, 1];
-  const fing = (h, i, len) => (white ? (h === 'lh' ? fL : fR)[i < 7 ? i : len - 1 - i] : '');
+  // the fingering of each hand: standard for white-key roots, and the published patterns for black-key
+  // ones (D♭ major: 4 1 2 4 in the right hand, 2 1 4 2 in the left), worked out with the Moods engine
+  const fingers = h =>
+    arpeggioRun(
+      fam === 'major' ? 'major' : 'natural',
+      pc,
+      [0, fam === 'major' ? 'maj' : 'min'],
+      h,
+      2,
+    ).steps.map(s => s.notes[0].f);
+  const F = { rh: fingers('rh'), lh: fingers('lh') };
+  const fing = (h, i) => F[h][i];
   const R = mk('rh'),
     L = mk('lh');
   const steps =
@@ -79,14 +84,14 @@ export function arpSteps(fam, key, hand, npb = 2) {
       ? R.map((n, i) =>
           stepOf(
             [
-              { n, st: 't', f: fing('rh', i, R.length), fcls: 'rh' },
-              { n: L[i], st: 'b', f: fing('lh', i, L.length), fcls: 'lh' },
+              { n, st: 't', f: fing('rh', i), fcls: 'rh' },
+              { n: L[i], st: 'b', f: fing('lh', i), fcls: 'lh' },
             ],
             i / npb,
           ),
         )
-      : (hand === 'lh' ? L : R).map((n, i, a) =>
-          stepOf([{ n, st: hand === 'rh' ? 't' : 'b', f: fing(hand, i, a.length), fcls: hand }], i / npb),
+      : (hand === 'lh' ? L : R).map((n, i) =>
+          stepOf([{ n, st: hand === 'rh' ? 't' : 'b', f: fing(hand, i), fcls: hand }], i / npb),
         );
   return { steps, sig: ki.sig, clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass' };
 }

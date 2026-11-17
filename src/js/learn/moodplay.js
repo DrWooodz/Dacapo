@@ -28,7 +28,7 @@ import {
   RH_TOOLS,
   toolHow,
 } from '../music/moodtools.js';
-import { CHORD_TONES, MOOD_BY, moodScale, roman, voiceProgression } from '../music/moods.js';
+import { CHORD_TONES, chordInfo, MOOD_BY, moodScale, voiceProgression } from '../music/moods.js';
 import { Sounds } from '../music/sounds.js';
 import { recordImprovising } from './moods.js';
 
@@ -160,7 +160,7 @@ export const MoodPlay = {
       box.innerHTML = `
         ${seg(
           'mpProgs',
-          M.progs.map((p, k) => [String(k), p.chords.map(([s, type]) => roman(s, type)).join(' – ')]),
+          M.progs.map((p, k) => [String(k), p.chords.map(c => chordInfo(mood, pc, c).num).join(' – ')]),
           String(st.prog),
           'sm wrap',
         )}

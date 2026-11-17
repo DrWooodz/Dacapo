@@ -1,6 +1,6 @@
 /* Harmony: which key a set of notes is in, and which chord they make (Free play's readout). */
 import { meanOf } from '../core/util.js';
-import { CHORDS, INTERVALS, MAJOR_KEYS, MINOR_KEYS, nameOf, pcOfName } from './theory.js';
+import { CHORDS, INTERVALS, MAJOR_KEYS, MINOR_KEYS, nameOf, pcOfName, spellAbove } from './theory.js';
 
 const KK_MAJ = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
 
@@ -44,6 +44,14 @@ const CHORD_T = [
   { k: 'dom9', s: [0, 2, 4, 7, 10], sym: '9', n: 'Dominant 9th' },
 ];
 
+// a chord tone spelled from the root, as the chord spells it: C7's 7th is B♭, never A♯
+const LETTERS_UP = [0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6];
+function bassName(root, semis, type) {
+  const letters =
+    semis === 8 && type.startsWith('aug') ? 4 : semis === 9 && type === 'dim7' ? 6 : LETTERS_UP[semis];
+  return nameOf(spellAbove(root, letters, semis), false);
+}
+
 export function detectChord(midis, spell) {
   const ms = [...new Set(midis)].sort((a, b) => a - b);
   if (!ms.length) return null;
@@ -74,14 +82,20 @@ export function detectChord(midis, spell) {
   if (!best) return { name: ms.map(nm).join(' '), long: 'Cluster or unusual voicing' };
   const rootM = ms.find(m => m % 12 === best.r);
   const rootName = nm(rootM);
-  const bi = best.T.s.indexOf((bass - best.r + 12) % 12);
+  // the inversion goes by which chord tone is lowest: the 3rd, the 5th, the 7th (else name the tone)
+  const low = (bass - best.r + 12) % 12;
   const inv =
-    bass === best.r
+    low === 0
       ? 'root position'
-      : ['root position', '1st inversion', '2nd inversion', '3rd inversion', '4th inversion'][bi] ||
-        'inverted';
+      : low === 3 || low === 4
+        ? '1st inversion'
+        : low >= 6 && low <= 8
+          ? '2nd inversion'
+          : low === 10 || low === 11 || (low === 9 && best.T.k === 'dim7')
+            ? '3rd inversion'
+            : `${{ 2: 'the 9th', 5: 'the 4th', 9: 'the 6th' }[low] || 'another note'} in the bass`;
   return {
-    name: rootName + best.T.sym + (bass !== best.r ? '/' + nm(ms[0]) : ''),
+    name: rootName + best.T.sym + (bass !== best.r ? '/' + bassName(spell(rootM), low, best.T.k) : ''),
     long: `${rootName} ${best.T.n.toLowerCase()}, ${inv}`,
     root: best.r,
     type: best.T.k,
