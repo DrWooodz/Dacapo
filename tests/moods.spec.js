@@ -5,7 +5,10 @@ import {
   arpeggioRun,
   CHORD_TONES,
   CIRCLE,
-  handShapes,
+  circleRun,
+  inversionRun,
+  moodNeighbors,
+  moodRelatives,
   MOOD_BY,
   moodChords,
   moodFingering,
@@ -20,6 +23,7 @@ import {
 } from '../src/js/music/moods.js';
 import {
   callPhrase,
+  lhPatternRun,
   earRound,
   LH_PATTERNS,
   lhKind,
@@ -96,13 +100,7 @@ test('names: proper names keep their capital, the tonic takes the spelling with 
   ]);
 });
 
-test('grouping keys: hand shapes cover all twelve; neighbors around the circle differ by one note', () => {
-  for (const M of MOODS)
-    expect(
-      handShapes(M.id)
-        .flatMap(g => g.pcs)
-        .sort((a, b) => a - b),
-    ).toEqual(PCS);
+test('around the circle of fifths, each key is one note different from the last', () => {
   for (const id of ['major', 'natural', 'dorian', 'phrygian', 'lydian', 'mixolydian']) {
     const set = pc => new Set(moodScale(id, pc).map(n => pc12(midiOf(n))));
     for (let i = 1; i < 12; i++) {
@@ -241,179 +239,72 @@ test('right-hand ideas: a call stays in the right hand and asks for an answer; m
   }
 });
 
-test.describe('in the app', () => {
-  test.beforeEach(async ({ app }) => {
-    await app.connectPiano();
-    await app.onboard(null, { path: 'moods' });
-  });
+test('inversions: root position, 1st, 2nd and back, each fingered by its shape', () => {
+  const r = inversionRun('major', 0, [0, 'maj'], 'rh');
+  expect(r.steps.map(s => s.midis)).toEqual([
+    [60, 64, 67],
+    [64, 67, 72],
+    [67, 72, 76],
+    [72, 76, 79],
+    [67, 72, 76],
+    [64, 67, 72],
+    [60, 64, 67],
+  ]);
+  expect(r.steps.slice(0, 3).map(s => s.notes.map(n => n.f).join(''))).toEqual(['135', '125', '135']);
+  const l = inversionRun('major', 0, [0, 'maj'], 'lh');
+  expect(l.steps.slice(0, 3).map(s => s.notes.map(n => n.f).join(''))).toEqual(['531', '531', '521']);
+  // a minor chord's inversions are its own notes, in every key
+  for (const pc of PCS)
+    for (const st of inversionRun('natural', pc, [0, 'min'], 'ht').steps)
+      expect(new Set(st.midis.map(pc12))).toEqual(new Set([pc, (pc + 3) % 12, (pc + 7) % 12]));
+});
 
-  test('Home suggests the plainest key to start; three clean runs a hand make it comfortable', async ({
-    app,
-    page,
-  }) => {
-    await expect(page.locator('.pickup h2')).toHaveText('A natural minor');
-    await page.locator('.pickup button.big').click();
-    await expect(page.locator('#page h1')).toHaveText('A natural minor');
-    await page.locator('[data-seg="mdStep"] [data-v="scale"]').click();
-    for (const hand of ['rh', 'lh']) {
-      await page.locator(`[data-seg="mdHand"] [data-v="${hand}"]`).click();
-      for (let k = 0; k < 3; k++) await app.waitRep({ gap: 40 });
-    }
-    expect(await app.message()).toMatch(/A natural minor is comfortable/);
-    await expect(page.locator('#mdStatus')).toContainText('comfortable');
-    // Home: picks up there next time
-    await page.locator('#mdBack').click();
-    await expect(page.locator('.lastline')).toContainText('A natural minor');
-    await expect(page.locator('button.keydot.comfortable')).toHaveCount(1);
+test('the circle of fifths drill: every major key once, a fifth apart, each chord near the last', () => {
+  const r = circleRun('ht');
+  expect(r.steps.map(s => s.chord)).toEqual([
+    'C',
+    'G',
+    'D',
+    'A',
+    'E',
+    'B',
+    'F♯',
+    'D♭',
+    'A♭',
+    'E♭',
+    'B♭',
+    'F',
+    'C',
+  ]);
+  r.steps.forEach((st, i) => {
+    const root = st.midis[st.midis.length - 1];
+    expect(pc12(root)).toBe(CIRCLE[i % 12]);
+    if (i)
+      st.midis
+        .slice(0, 3)
+        .forEach((m, j) => expect(Math.abs(m - r.steps[i - 1].midis[j])).toBeLessThanOrEqual(5));
   });
+  // each chord spelled in its own key: D♭ major is D♭ F A♭, not C♯ E♯ G♯
+  expect(r.steps[7].notes.map(n => n.n.a)).toEqual([-1, -1, 0, -1].slice(0, r.steps[7].notes.length));
+});
 
-  test('help is yours to switch; nothing moves on by itself', async ({ app, page }) => {
-    await app.eval(() => window.DaCapo.go('mood', { mood: 'dorian', pc: 2, step: 'rh' }));
-    expect(await app.plan()).toMatchObject({ mode: 'wait', hints: true, fingers: true, hand: 'rh' });
-    await page.locator('[data-help="keys"]').click();
-    await page.locator('[data-help="fingers"]').click();
-    expect(await app.plan()).toMatchObject({ hints: false, fingers: false });
-    await expect(page.locator('#plStaff .fn')).toHaveCount(0);
-    await page.locator('[data-help="tempo"]').click();
-    expect(await app.plan()).toMatchObject({ mode: 'tempo', bpm: 60 });
-    await page.locator('[data-bpm="5"]').click();
-    expect(await app.plan()).toMatchObject({ bpm: 65 });
-    await page.locator('[data-seg="mdOct"] [data-v="2"]').click();
-    expect((await app.eval(() => window.__t.steps())).length).toBe(29);
-  });
+test('a left-hand pattern as a drill: a bar per chord of the progression, in the left hand', () => {
+  const r = lhPatternRun('natural', 9, 'broken', 0);
+  expect(r.clef).toBe('bass');
+  expect(r.steps).toHaveLength(MOOD_BY.natural.progs[0].chords.length * 4);
+  expect(r.steps.slice(0, 4).map(s => s.midis[0])).toEqual([45, 52, 57, 52]);
+  expect(r.steps.slice(0, 4).map(s => s.notes[0].f)).toEqual([5, 2, 1, 2]);
+});
 
-  test('a check is strict: both hands, two octaves, no help; two days make a key solid', async ({
-    app,
-    page,
-  }) => {
-    await app.eval(() => window.DaCapo.go('mood', { mood: 'dorian', pc: 2, step: 'rh' }));
-    await page.locator('#mdCheck').click();
-    expect(await app.plan()).toMatchObject({ mode: 'wait', hand: 'ht', hints: false, fingers: false });
-    expect((await app.eval(() => window.__t.steps())).length).toBe(29);
-    expect(await app.waitRep({ wrongAt: 5, gap: 40 })).toMatch(/Not this time/);
-    expect(await app.waitRep({ gap: 40 })).toMatch(/One more on another day makes it solid/);
-    // a check passed on an earlier day too: solid
-    await app.eval(() => {
-      const k = window.DaCapo.Store.s.moods.keys['dorian:2'];
-      k.checks.unshift(window.DaCapo.addDays(window.DaCapo.todayKey(), -2));
-    });
-    await page.locator('#mdCancel').click();
-    await expect(page.locator('#mdStatus')).toContainText('solid');
-  });
-
-  test('a mood becomes yours with three solid keys, one of them black-key', async ({ app, page }) => {
-    await app.eval(() => {
-      const D = window.DaCapo;
-      const days = [D.addDays(D.todayKey(), -3), D.addDays(D.todayKey(), -1)];
-      for (const pc of [2, 9, 6])
-        D.Store.s.moods.keys[`dorian:${pc}`] = {
-          met: days[0],
-          clean: { rh: 3, lh: 3, ht: 1 },
-          checks: days,
-          last: days[1],
-        };
-      D.go('home');
-    });
-    await expect(page.locator('.moodrow', { hasText: 'Dorian' }).locator('.pill')).toHaveText('yours');
-    await expect(page.locator('.trajcard')).toContainText('1moods yours');
-  });
-
-  test('improvising: DaCapo notices what the left hand did, and Home suggests something else', async ({
-    app,
-    page,
-  }) => {
-    await app.eval(() => window.DaCapo.go('mood', { mood: 'natural', pc: 9, step: 'play' }));
-    await expect(page.locator('[data-seg="mpPattern"] [aria-pressed="true"]')).toHaveText('Root and fifth');
-    // forty notes: the right hand in the scale, the left hand only on A and E
-    await app.eval(async () => {
-      const T = window.__t;
-      for (let i = 0; i < 20; i++) {
-        T.noteOn([45, 52][i % 2]);
-        await T.sleep(40);
-        T.noteOff([45, 52][i % 2]);
-        T.noteOn([69, 71, 72, 74, 76][i % 5]);
-        await T.sleep(40);
-        T.noteOff([69, 71, 72, 74, 76][i % 5]);
-      }
-    });
-    await expect(page.locator('#mpInfo')).toContainText('100% in the scale');
-    await expect(page.locator('#mpLh')).toContainText('100% on the pattern · mostly roots and fifths');
-    await page.locator('#mdBack').click();
-    await expect(page.locator('.insight').first()).toContainText(
-      'stayed on roots and fifths. Next time try octaves',
-    );
-    // the next sitting's pattern is a different one
-    await app.eval(() => window.DaCapo.go('mood', { mood: 'natural', pc: 9, step: 'play' }));
-    await expect(page.locator('[data-seg="mpPattern"] [aria-pressed="true"]')).toHaveText('Octaves');
-  });
-
-  test('backing: the drone holds until you change it; the chords follow the progression you pick', async ({
-    app,
-    page,
-  }) => {
-    await app.eval(() => window.DaCapo.go('mood', { mood: 'harmonic', pc: 0, step: 'play' }));
-    const sounding = () => app.eval(() => window.DaCapo.Sounds.active.filter(v => v.end === Infinity).length);
-    expect(await sounding()).toBe(0); // nothing until you ask
-    await page.locator('[data-seg="mpBacking"] [data-v="drone"]').click();
-    expect(await sounding()).toBe(3); // home, its fifth and the octave, held
-    await page.locator('[data-seg="mpBacking"] [data-v="chords"]').click();
-    expect(await sounding()).toBe(0);
-    await expect(page.locator('#mpChords .chip')).toHaveText(['Cm', 'Fm', 'G', 'Cm']);
-    await page.locator('[data-seg="mpProgs"] [data-v="1"]').click();
-    await expect(page.locator('[data-seg="mpProgs"] [aria-pressed="true"]')).toHaveText('i – ♭VI – V – i');
-    await expect(page.locator('#mpChords .chip')).toHaveText(['Cm', 'A♭', 'G', 'Cm']);
-    // Targets marks the chord tones on the keyboard
-    await page.locator('[data-seg="mpTools"] [data-v="targets"]').click();
-    await expect(page.locator('#mpKb rect.color[data-m="72"]')).toHaveCount(1);
-  });
-
-  test('chords and arpeggios: the table, a progression to play, an arpeggio counted apart from the scale', async ({
-    app,
-    page,
-  }) => {
-    await app.eval(() => window.DaCapo.go('mood', { mood: 'natural', pc: 9, step: 'chords' }));
-    await expect(page.locator('.chordtable tbody tr')).toHaveCount(7);
-    await expect(page.locator('.chordtable tr.sig')).toContainText('F');
-    await page.locator('[data-prog="1"]').click();
-    expect((await app.eval(() => window.__t.steps())).length).toBe(4);
-    await app.waitRep({ gap: 40 });
-    await page.locator('[data-seg="mdStep"] [data-v="arps"]').click();
-    expect((await app.eval(() => window.__t.steps())).length).toBe(7); // A C E A, up and back
-    await app.waitRep({ gap: 40 });
-    const k = await app.eval(() => window.DaCapo.Store.s.moods.keys['natural:9']);
-    expect(k.extra).toEqual({ 'prog1:rh': 1, 'arp0.min:rh': 1 });
-    expect(k.clean.rh).toBe(0);
-  });
-
-  test('which mood: a phrase, four choices, and the color note that gives it away', async ({ app, page }) => {
-    await page.locator('#mhEar').click();
-    const mood = await app.eval(() => {
-      const opts = [...document.querySelectorAll('[data-ear]')].map(b => b.dataset.ear);
-      return opts.length === 4 ? opts : null;
-    });
-    expect(mood).toHaveLength(4);
-    await page.locator('[data-ear]').first().click();
-    await expect(page.locator('#earSay')).toContainText('The giveaway is');
-    await expect(page.locator('[data-ear].ok')).toHaveCount(1);
-    expect(await app.eval(() => window.DaCapo.Store.s.moods.ear.n)).toBe(1);
-    await page.locator('#earNext').click();
-    await expect(page.locator('#earSay')).toBeEmpty();
-  });
-
-  test('browsing by hand shape and by neighbor; switching to the full course and back', async ({
-    app,
-    page,
-  }) => {
-    await page.locator('[data-seg="mhWay"] [data-v="shape"]').click();
-    await page.locator('#mhMood').selectOption('major');
-    await expect(page.locator('.shape').first()).toContainText('Right hand 1 2 3 1 2 3 4 5');
-    await expect(page.locator('.shape').first().locator('.keydot')).toHaveCount(6);
-    await page.locator('[data-seg="mhWay"] [data-v="neighbor"]').click();
-    await expect(page.locator('.cstep').nth(1)).toContainText('+F♯');
-    await page.locator('#mhCourse').click();
-    await expect(page.locator('.card.today')).toBeVisible();
-    await page.locator('[data-act="moods"]').click();
-    await expect(page.locator('.pickup')).toBeVisible();
-    expect(await app.eval(() => window.DaCapo.Store.s.path)).toBe('moods');
-  });
+test('neighbors: one note different with the same home; relatives: the same notes from another home', () => {
+  expect(moodNeighbors('natural')).toEqual([
+    { id: 'harmonic', change: 'raise the 7th' },
+    { id: 'phrygian', change: 'lower the 2nd' },
+    { id: 'dorian', change: 'raise the 6th' },
+  ]);
+  expect(moodNeighbors('lydian')).toEqual([{ id: 'major', change: 'lower the 4th' }]);
+  expect(moodNeighbors('locrian')).toEqual([{ id: 'phrygian', change: 'raise the 5th' }]);
+  expect(moodNeighbors('blues')).toEqual([{ id: 'minpent', change: 'leave out the low 5th' }]);
+  expect(moodRelatives('natural')).toContainEqual({ id: 'major', semis: 3 });
+  expect(moodRelatives('minpent')).toEqual([{ id: 'majpent', semis: 3 }]);
 });

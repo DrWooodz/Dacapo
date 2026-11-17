@@ -137,8 +137,15 @@ export function staffSVG({
     const accOrder = sorted.filter(needAcc).reverse();
     const accX = new Map();
     accOrder.forEach((nn, k) => accX.set(nn, ix - 12 - (k % 2) * 9));
+    // fingers for a chord in one hand are stacked beside it (low to high), not one per note head
+    const stOf = nn => nn.st || (diaOf(nn.n) >= 28 && clef !== 'bass' ? 't' : clef === 'treble' ? 't' : 'b');
+    const handOf = (nn, st) => nn.fcls || (st === 'b' ? 'lh' : 'rh');
+    const fingered = sorted.filter(nn => nn.f);
+    const stacked = new Set(
+      ['rh', 'lh'].filter(h => fingered.filter(nn => handOf(nn, stOf(nn)) === h).length > 1),
+    );
     sorted.forEach(nn => {
-      const st = nn.st || (diaOf(nn.n) >= 28 && clef !== 'bass' ? 't' : clef === 'treble' ? 't' : 'b');
+      const st = stOf(nn);
       const d = diaOf(nn.n);
       const y = g.y(d, st);
       const shift = d - prevD === 1 && !prevShift;
@@ -152,7 +159,7 @@ export function staffSVG({
       }
       const head = it.dur === 'w' ? 'nhW' : it.dur === 'h' ? 'nhH' : 'nhB';
       body += glyph(head, hx, y, 'note ' + (nn.cls || ''));
-      if (nn.f) {
+      if (nn.f && !stacked.has(handOf(nn, st))) {
         const isL = (nn.fcls || '') === 'lh' || (nn.fcls == null && st === 'b');
         const fy = isL
           ? Math.max(y + 18, (st === 'b' ? g.yB(18) : g.yT(30)) + 14)
@@ -160,6 +167,19 @@ export function staffSVG({
         body += `<text class="fing ${nn.fcls || (isL ? 'lh' : 'rh')}" x="${ix + 6}" y="${fy}">${nn.f}</text>`;
       }
       if (labels && nn.lbl) body += `<text class="lbl" x="${ix + 6}" y="${g.h - 8}">${esc(nn.lbl)}</text>`;
+    });
+    stacked.forEach(h => {
+      const ns = fingered.filter(nn => handOf(nn, stOf(nn)) === h);
+      const st = stOf(ns[0]);
+      const ys = ns.map(nn => g.y(diaOf(nn.n), st));
+      ns.forEach((nn, k) => {
+        const fy =
+          h === 'lh'
+            ? Math.max(Math.max(...ys) + 18, (st === 'b' ? g.yB(18) : g.yT(30)) + 14) +
+              (ns.length - 1 - k) * 10
+            : Math.min(Math.min(...ys) - 12, (st === 'b' ? g.yB(26) : g.yT(38)) - 8) - k * 10;
+        body += `<text class="fing ${h}" x="${ix + 6}" y="${fy}">${nn.f}</text>`;
+      });
     });
     if (it.fstack && sorted.length) {
       // chord fingering, low→high, stacked
@@ -197,64 +217,6 @@ export function staffSVG({
     g,
     xs,
   };
-}
-
-/* ---------- rhythm notation on a single line ---------- */
-// events: [{d: beats, rest:bool}] ; timing in quarter-beats
-export function rhythmSVG(events, { beats = 4, marks = [], width = 420, cur = -1, total = 0 } = {}) {
-  const H = 90,
-    y = 52,
-    x0 = 46,
-    x1 = width - 16;
-  const span = x1 - x0;
-  const len = total || events.reduce((a, e) => a + e.d, 0) || beats; // time on the line, in beats
-  let s = `<line class="ln" x1="8" x2="${width - 6}" y1="${y}" y2="${y}"/>`;
-  s += `<line class="ln" x1="8" x2="8" y1="${y - 20}" y2="${y + 20}"/>`;
-  s += `<line class="ln" x1="${width - 6}" x2="${width - 6}" y1="${y - 20}" y2="${y + 20}"/>`;
-  s += glyph('t' + beats, 14, y - 10) + glyph('t4', 14, y + 10);
-  let t = 0;
-  const pos = [];
-  events.forEach((e, i) => {
-    pos.push({ x: x0 + 6 + (t / len) * span, t, e, i });
-    t += e.d;
-  });
-  // beaming: consecutive eighths within same beat
-  pos.forEach((p, k) => {
-    const e = p.e;
-    const cls = marks[k] || (k === cur ? 'cur' : '');
-    if (e.rest) {
-      const name = e.d >= 4 ? 'rW' : e.d >= 2 ? 'rH' : e.d >= 1 ? 'rQ' : 'r8';
-      const ry = name === 'rW' ? y - 10 : name === 'rH' ? y : name === 'rQ' ? y : y;
-      s += glyph(name, p.x, ry, 'note ' + cls);
-      if (e.dot) s += glyph('dot', p.x + 14, y - 5, 'note ' + cls);
-      return;
-    }
-    const head = e.d >= 4 ? 'nhW' : e.d >= 2 ? 'nhH' : 'nhB';
-    s += glyph(head, p.x, y, 'note ' + cls);
-    if (e.dot) s += glyph('dot', p.x + 16, y - 3, 'note ' + cls);
-    if (e.d < 4)
-      s += `<line class="stem" x1="${p.x + 11.3}" x2="${p.x + 11.3}" y1="${y - 1}" y2="${y - 32}"/>`;
-    if (e.d <= 0.5 && !e.beam) s += glyph('flag8', p.x + 10.6, y - 32, 'gl');
-  });
-  // beams: a group runs from 'start' to 'end'; b2 marks notes that also take a second (16th) beam
-  pos.forEach((p, k) => {
-    if (p.e.beam !== 'start') return;
-    let z = k;
-    while (pos[z + 1] && pos[z].e.beam !== 'end') z++;
-    const q = pos[z];
-    s += `<rect x="${p.x + 10.6}" y="${y - 34}" width="${q.x - p.x + 0.8}" height="4.5" class="gl"/>`;
-    for (let j = k; j < z; j++)
-      if (pos[j].e.b2 && pos[j + 1].e.b2)
-        s += `<rect x="${pos[j].x + 10.6}" y="${y - 27}" width="${pos[j + 1].x - pos[j].x + 0.8}" height="4" class="gl"/>`;
-    if (p.e.tup)
-      s += `<text x="${(p.x + q.x) / 2 + 11}" y="${y - 40}" text-anchor="middle" font-size="11" font-style="italic" font-weight="700" fill="var(--ink)">${p.e.tup}</text>`;
-  });
-  for (let b = 1; b < len; b++) {
-    const bx = x0 + (b / len) * span;
-    if (b % beats === 0) s += `<line x1="${bx}" x2="${bx}" y1="${y - 20}" y2="${y + 20}" class="ln"/>`;
-    else s += `<line x1="${bx + 6}" x2="${bx + 6}" y1="${y + 26}" y2="${y + 30}" class="ln"/>`;
-  }
-  return `<svg class="staff" viewBox="0 0 ${width} ${H}" role="img" aria-label="Rhythm">${s}</svg>`;
 }
 
 /* ---------- keyboard ---------- */

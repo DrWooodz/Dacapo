@@ -20,9 +20,7 @@ export const diaOf = n => n.o * 7 + n.l;
 
 export const nameOf = (n, oct = true) => LETTERS[n.l] + ACC_TXT[n.a] + (oct ? n.o : '');
 
-export const fromDia = (d, a = 0) => N(((d % 7) + 7) % 7, a, Math.floor(d / 7));
-
-export function parseNote(s) {
+function parseNote(s) {
   // "C#4", "Eb3", "F4"
   const m = /^([A-G])(bb|b|#|x|##)?(-?\d)?$/.exec(s);
   if (!m) throw new Error('bad note ' + s);
@@ -59,13 +57,7 @@ export function spellAbove(n, letters, semis) {
   return N(L, midiOf(n) + semis - (12 * (o + 1) + LPC[L]), o);
 }
 
-// a scale from interval steps in semitones, one letter per degree (for 7-note scales)
-export function spellScale(tonic, semis) {
-  let total = 0;
-  return [tonic].concat(semis.map((s, i) => spellAbove(tonic, i + 1, (total += s))));
-}
-
-export function buildScale(tonic, type, octaves = 1, descend = true) {
+function buildScale(tonic, type, octaves = 1, descend = true) {
   const steps = SCALE_STEPS[type];
   const out = [tonic];
   let cur = tonic;
@@ -212,27 +204,7 @@ export const CHORDS = {
   dim7: { n: 'Diminished 7th', s: [0, 3, 6, 9], sym: '°7' },
 };
 
-// spell chord tones by stacking thirds from a spelled root
-export function spellChord(root, type) {
-  const st = CHORDS[type].s;
-  return st.map((semi, i) => {
-    const l = (root.l + 2 * i) % 7,
-      o = root.o + Math.floor((root.l + 2 * i) / 7);
-    const nat = 12 * (o + 1) + LPC[l];
-    return N(l, midiOf(root) + semi - nat, o);
-  });
-}
-
-export function keyInfo(type, k) {
-  const list = type === 'major' ? MAJOR_KEYS : MINOR_KEYS;
-  return list.find(x => x.k === k) || list[0];
-}
-
-export function tonicOct(hand, pc, octs) {
-  return hand === 'lh' ? (octs === 1 && pc <= 4 ? 3 : 2) : octs === 2 && pc >= 8 ? 3 : 4;
-}
-
-export const pcOf = n => (((LPC[n.l] + n.a) % 12) + 12) % 12;
+const pcOf = n => (((LPC[n.l] + n.a) % 12) + 12) % 12;
 
 export const pcOfName = t => pcOf(parseNote(t + '4'));
 

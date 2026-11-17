@@ -35,7 +35,7 @@ export function onUnmount(fn) {
 }
 
 export function go(view, params = {}) {
-  if (!views[view]) view = 'home';
+  if (!views[view]) view = 'play';
   UI.cleanup.forEach(f => {
     try {
       f();
@@ -48,15 +48,7 @@ export function go(view, params = {}) {
   Log.ev('view ' + view, Object.keys(params).length ? params : undefined);
   UI.view = view;
   UI.params = params;
-  // practicing belongs to Home (it starts there), unless it was opened from the Library
-  const tab =
-    view === 'practice'
-      ? params.from === 'library' || params.session === 'pieces'
-        ? 'library'
-        : 'home'
-      : view === 'assess'
-        ? 'home'
-        : view;
+  const tab = view;
   $$('#tabs [data-view]').forEach(b =>
     b.setAttribute('aria-current', b.dataset.view === tab ? 'page' : 'false'),
   );
@@ -95,10 +87,10 @@ function showViewError(page) {
     <h2 class="h2">This screen hit a problem</h2>
     <p class="small">It was logged. You can report it now, then try again.</p>
     <div class="row">
-    <button class="btn" type="button" data-act="home">Back to Home</button>
+    <button class="btn" type="button" data-act="home">Back to Play</button>
     <button class="btn" type="button" data-act="report">Report
     it</button></div></div>`;
-  $('[data-act="home"]', page).onclick = () => go('home');
+  $('[data-act="home"]', page).onclick = () => go('play');
   $('[data-act="report"]', page).onclick = () => Log.ctx.openReport && Log.ctx.openReport();
 }
 

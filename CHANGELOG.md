@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.0
+
+DaCapo is now a companion for playing, not a course. Four tabs:
+
+- **Play** is the landing page: chords named as you play (with numerals once a mood is chosen), the key it hears (one tap takes it), the scale lit across the whole keyboard, a backing, notes outside the scale and whether they resolved (instead of "% in the scale"), and *Try something*: one idea for each hand at a time. Recordings and a metronome are at the bottom.
+- **Explore**, with nothing recorded: moods by the feel you are after (type or tap words like brooding, tragic, dreamy), a page per mood (sound, scale, color note, chords, progressions, neighbors one note away, relatives with the same notes), the circle of fifths, the ear games, and a map of what there is to learn.
+- **Practice**: the core first (major and minor in every key, the circle of fifths), everything else when you like. New: inversions, left-hand patterns over a progression, and a drill around the circle. A note counts in any octave unless you ask for the exact one. A key is known after one passed check; the met / comfortable / solid / yours ladder is gone.
+- **Songs**: the pieces, each with its sections on one page; tap any section.
+
+Removed: the daily course (sessions, weekly focus, spaced reviews, cold checks, skill levels, the placement check), note reading and rhythm drills, the 20 theory units and their walkthroughs, the course's technique and style studies (Practice and Play cover them), the loop station, and the Free play tab. Course progress is kept in the saved data's archive; pieces and moods carry on.
+
+Also: chord fingers in one hand are stacked beside the chord on the staff; inversions and progressions are fingered by the chord's shape (1 2 5 for a first inversion); your piano through this device is in Settings.
+
 ## 1.5.1
 
 An audit of the theory and the code.

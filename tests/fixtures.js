@@ -68,26 +68,6 @@ const PAGE_HELPERS = () => {
         setTimeout(() => send(0x80, m, 0), 60);
       }
     },
-    // theory: answer the current question by playing it (chords together), or a wrong note
-    async answerQuiz({ right = true, invert = false } = {}) {
-      const t = performance.now();
-      while (window.DaCapo.Quiz.debug.phase !== 'ask' && performance.now() - t < 8000) await sleep(40);
-      const q = window.DaCapo.Quiz.debug.q;
-      const chords = q.kind === 'chord' || q.kind === 'chords';
-      let groups = chords ? q.play : q.play.map(m => [m]);
-      // a chord in its first inversion: the bottom note moves up an octave
-      if (invert) groups = groups.map(([low, ...rest]) => [...rest, low + 12]);
-      if (!right) groups = [[groups[0][0] + 1]];
-      for (const g of groups) {
-        g.forEach(m => send(0x90, m, 80));
-        await sleep(chords ? 120 : 60);
-        g.forEach(m => send(0x80, m, 0));
-        await sleep(chords ? 400 : 100);
-      }
-      const t1 = performance.now();
-      while (window.DaCapo.Quiz.debug.phase !== 'shown' && performance.now() - t1 < 4000) await sleep(40);
-      return document.querySelector('#plMsg').textContent;
-    },
   };
 };
 
@@ -110,20 +90,11 @@ export class App {
       AudioEngine.ensure();
     });
   }
-  // the welcome screen: optionally what matters most, a first piece, then skip the placement check
-  // the welcome screen: the full course (most tests) or Moods
-  async onboard(piece = 'satie-gym-1', { matters = [], path = 'course' } = {}) {
-    await this.page.locator(`[data-path="${path}"]`).click();
-    for (const a of matters) await this.page.locator(`[data-matter="${a}"]`).click();
-    if (piece && path === 'course') await this.page.locator(`[data-pick="${piece}"]`).click();
-    await this.page.locator('#wcStart').click();
-    await this.page.waitForTimeout(300);
+  // the first open: the welcome note on Play, dismissed
+  async onboard() {
+    await this.page.locator('#plyHi').click();
   }
-  // today's session as "role id" lines
-  session() {
-    return this.eval(() => window.DaCapo.Store.s.session.list.map(e => `${e.role} ${e.id}`));
-  }
-  // change an item's saved state (creating it if needed), then open it as extra practice
+  // change a piece section's saved state (creating it if needed), then open it
   async setItem(id, fields, open = true) {
     await this.eval(
       ([id, fields]) => {
@@ -134,10 +105,11 @@ export class App {
       },
       [id, fields],
     );
-    if (open) await this.practice(id);
+    if (open) await this.song(id);
   }
-  async practice(item) {
-    await this.eval(id => window.DaCapo.go('practice', id ? { item: id } : {}), item);
+  // a piece's page, playing one of its sections (p:<piece>:<section>)
+  async song(item) {
+    await this.eval(id => window.DaCapo.go('songs', { pid: id.split(':')[1], item: id }), item);
     await this.page.waitForTimeout(300);
   }
   item(id) {
@@ -181,12 +153,9 @@ export class App {
       return { t0: T.t0, ms: T.msBeat, steps: window.__t.steps(), bpm: P.plan.bpm, hand: P.plan.hand };
     });
     await this.eval(([i, o]) => window.__t.playTempo(i.steps, i.ms, i.t0, o), [info, opts]);
-    expect(await this.eval(() => window.__t.waitPhaseNot('tempo'))).toBe(true);
+    // (a run with notes missing ends at its time-out, after the last beat)
+    expect(await this.eval(() => window.__t.waitPhaseNot('tempo', 40000))).toBe(true);
     return { bpm: info.bpm, hand: info.hand, message: await this.message() };
-  }
-  // theory: answer the current question by playing ({right, invert}); returns the feedback
-  answerQuiz(opts = {}) {
-    return this.eval(o => window.__t.answerQuiz(o), opts);
   }
   // errors the app logged while the test ran (see allowErrors)
   async loggedErrors() {

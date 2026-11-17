@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>DaCapo Piano Coach</title>
+    <title>DaCapo</title>
     <meta
       name="description"
-      content="Piano practice that listens over MIDI: daily sessions for reading, technique, theory, pieces and improvisation."
+      content="A piano companion that listens over MIDI: play, explore moods and keys, practice scales and chords, learn pieces."
     />
     <!-- site-only:start (installable app; left out of the Claude artifact) -->
     <link rel="manifest" href="manifest.webmanifest" />
@@ -40,27 +40,30 @@
         </button>
       </header>
       <nav class="tabs" id="tabs" aria-label="Sections">
-        <button type="button" data-view="home">
+        <button type="button" data-view="play">
           <svg viewBox="0 0 24 24">
-            <path d="M4 11l8-7 8 7" />
-            <path d="M6 9.5V20h12V9.5" />
-            <path d="M10 20v-5h4v5" /></svg
-          >Home
+            <rect x="3" y="6" width="18" height="12" rx="1.5" />
+            <path d="M7.5 6v7M12 6v7M16.5 6v7" /></svg
+          >Play
         </button>
-        <button type="button" data-view="library">
+        <button type="button" data-view="explore">
           <svg viewBox="0 0 24 24">
-            <path d="M6 3h9l4 4v14H6z" />
-            <path d="M15 3v4h4" />
-            <ellipse cx="10" cy="16" rx="2.2" ry="1.7" />
-            <path d="M12.2 16V9l3 1" /></svg
-          >Library
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M15.5 8.5l-2 5-5 2 2-5z" /></svg
+          >Explore
         </button>
-        <button type="button" data-view="free">
+        <button type="button" data-view="practice">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 18l4-5 4 3 4-6 4 4" />
+            <path d="M4 21h16" /></svg
+          >Practice
+        </button>
+        <button type="button" data-view="songs">
           <svg viewBox="0 0 24 24">
             <path d="M9 18V6l10-2v12" />
             <circle cx="6.5" cy="18" r="2.5" />
             <circle cx="16.5" cy="16" r="2.5" /></svg
-          >Free play
+          >Songs
         </button>
       </nav>
       <main id="main"><div class="page" id="page"></div></main>

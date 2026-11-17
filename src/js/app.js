@@ -8,29 +8,15 @@ import { Input, MidiOut } from './core/input.js';
 import { closeSheet, go, hasView, registerViews, UI } from './core/ui.js';
 import { startLive } from './music/analysis.js';
 import { Library } from './music/library.js';
-import { Transport } from './music/transport.js';
+import { Thru } from './music/thru.js';
 import { Sounds } from './music/sounds.js';
-import { addDays, ensureItem, itemState, planFor, refreshItems } from './learn/curriculum.js';
 import { Player } from './learn/player.js';
-import { chooseFocus, currentFocus, rankAreas, skillLevel, snapshotSkills } from './learn/skills.js';
-import { Quiz } from './learn/quiz.js';
-import { itemDef } from './learn/areas.js';
-import { skillStatus } from './learn/status.js';
-import {
-  currentSession,
-  pieceSession,
-  rebuildSession,
-  setPieceDaily,
-  workOnPiece,
-} from './learn/sessions.js';
-import { applyPlacement } from './learn/assess.js';
-import { libraryView, pieceSheet } from './views/library.js';
+import { addDays, ensureItem, itemDef, itemState, planFor, refreshItems } from './learn/pieces.js';
 import { reportSheet } from './views/report.js';
-import { homeView } from './views/home.js';
+import { playView } from './views/play.js';
+import { exploreView } from './views/explore.js';
 import { practiceView } from './views/practice.js';
-import { moodView } from './views/mood.js';
-import { freeView } from './views/free.js';
-import { assessView } from './views/assess.js';
+import { songsView } from './views/songs.js';
 import { settingsSheet } from './views/settings.js';
 
 /* ---------- boot ---------- */
@@ -64,17 +50,15 @@ function describeLearning() {
     [
       `${id} ${it.stage}${it.phase ? '/' + it.phase : ''}`,
       `bpm${it.bpm || '-'}${it.target ? '→' + it.target : ''}`,
-      `pass${(it.passes || []).length}`,
       `last${it.last || '-'}`,
     ].join(' '),
   );
   return {
     v: s.v,
     savedAt: s.savedAt,
-    session: s.session,
     pieces: s.piece && s.piece.working,
-    focus: s.focus,
-    prefs: s.profile,
+    moods: Object.keys(s.moods.keys).length,
+    prefs: s.moods.prefs,
     items: items.slice(0, 80),
     days: Object.keys(s.days || {}).length,
   };
@@ -83,15 +67,9 @@ function describeLearning() {
 function boot() {
   try {
     Log.setContext({ env: describeApp, state: describeLearning, openReport: () => reportSheet() });
-    registerViews({
-      home: homeView,
-      practice: practiceView,
-      mood: moodView,
-      library: libraryView,
-      free: freeView,
-      assess: assessView,
-    });
+    registerViews({ play: playView, explore: exploreView, practice: practiceView, songs: songsView });
     startLive();
+    Thru.listen(); // your piano through this device, when it is switched on in Settings
     Store.loadLocal();
     refreshItems();
     Log.ev('boot', {
@@ -111,11 +89,10 @@ function boot() {
       Input.live = false;
     }
     Input.paint();
-    snapshotSkills();
-    // a reload comes back to the same screen; a fresh start (or a session in progress) to Home
-    let start = 'home';
+    // a reload comes back to the same screen; a fresh start to Play
+    let start = 'play';
     try {
-      start = sessionStorage.getItem('dacapo.view') || 'home';
+      start = sessionStorage.getItem('dacapo.view') || 'play';
     } catch (e) {}
     const hv = (location.hash || '').slice(1);
     if (hasView(hv)) start = hv;
@@ -128,13 +105,6 @@ function boot() {
       go(UI.view, UI.params);
     });
     Store.connect();
-    // coming back to the app on a new day: note where the skills stand, and rebuild the session
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState !== 'visible' || !Store.s.session || Store.s.session.day === todayKey())
-        return;
-      snapshotSkills();
-      if (UI.view === 'practice') go('practice');
-    });
   } catch (e) {
     Log.err(e, 'boot');
     const p = document.getElementById('page');
@@ -152,8 +122,6 @@ window.DaCapo = {
   Input,
   Library,
   Player,
-  Quiz,
-  Transport,
   Sounds,
   AudioEngine,
   Metro,
@@ -164,26 +132,13 @@ window.DaCapo = {
   closeSheet,
   settingsSheet,
   reportSheet,
-  pieceSheet,
-  // the curriculum
+  // pieces
   todayKey,
   addDays,
   itemDef,
   itemState,
   ensureItem,
   planFor,
-  skillStatus,
-  currentSession,
-  rebuildSession,
-  workOnPiece,
-  setPieceDaily,
-  pieceSession,
-  // skills and focus
-  skillLevel,
-  rankAreas,
-  currentFocus,
-  chooseFocus,
-  applyPlacement,
 };
 
 boot();

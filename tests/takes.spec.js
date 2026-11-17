@@ -53,7 +53,7 @@ test('in the app: a take with the pedal held shows every note, and the pedal at 
 }) => {
   await app.connectPiano();
   await app.onboard();
-  await app.eval(() => window.DaCapo.go('free', { tab: 'takes' }));
+  await page.locator('#plyTakesBox').evaluate(d => (d.open = true));
   await page.locator('#tkRec').click();
   await app.eval(async () => {
     const T = window.__t;

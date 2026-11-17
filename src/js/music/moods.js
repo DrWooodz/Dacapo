@@ -1,6 +1,7 @@
 /* Moods: the scales to improvise in, by the sound they make. A mood is a scale type (its intervals); it can
    be played from any of the 12 keys. This module is pure: the moods, each one spelled in every key, its
-   fingering, and the ways to group keys (by hand shape, by neighbor). */
+   fingering, its chords and progressions, arpeggios and inversions, the circle of fifths, and how moods
+   relate (one note different, or the same notes from another home). */
 import { midiOf, N, scaleFingers, spellAbove, spellerFor } from './theory.js';
 
 /* ---------- the moods ----------
@@ -21,6 +22,7 @@ export const MOODS = [
     n: 'Natural minor',
     fam: 'dark',
     feel: 'sad, earnest, ballad-like',
+    vibes: ['melancholy', 'wistful', 'brooding', 'nostalgic', 'longing', 'lonely', 'rainy', 'earnest'],
     hear: 'most minor-key pop and rock ballads',
     how: 'The plain minor scale: its 3rd, 6th and 7th are low. Its chords on the low 6th and 7th are major, so i – ♭VI – ♭VII climbs home without a leading note.',
     semis: [0, 2, 3, 5, 7, 8, 10],
@@ -61,6 +63,19 @@ export const MOODS = [
     n: 'Harmonic minor',
     fam: 'dark',
     feel: 'dark, dramatic, a little exotic',
+    vibes: [
+      'tragic',
+      'fateful',
+      'dramatic',
+      'brooding',
+      'tormented',
+      'gothic',
+      'russian',
+      'romantic',
+      'yearning',
+      'intense',
+      'twisting',
+    ],
     hear: 'classical and baroque minor pieces, neoclassical metal',
     how: 'Natural minor with its 7th raised a half step. That leaves a wide gap (a step and a half) between the 6th and 7th, which gives its exotic edge, and makes V a major chord that pulls hard back home.',
     semis: [0, 2, 3, 5, 7, 8, 11],
@@ -105,6 +120,7 @@ export const MOODS = [
     n: 'Phrygian',
     fam: 'dark',
     feel: 'ominous, Spanish',
+    vibes: ['ominous', 'menacing', 'threatening', 'heavy', 'primal', 'spanish', 'brooding'],
     hear: 'flamenco, heavy-metal riffs, menacing film cues',
     how: 'Natural minor with its 2nd lowered a half step. That low 2nd, a half step above home, is its whole flavor: the chord on it (♭II) sliding down to i sounds like a threat.',
     semis: [0, 1, 3, 5, 7, 8, 10],
@@ -136,6 +152,7 @@ export const MOODS = [
     n: 'Locrian',
     fam: 'dark',
     feel: 'unstable, uneasy',
+    vibes: ['unstable', 'uneasy', 'unresolved', 'twisted', 'nightmare', 'horror', 'dissonant'],
     hear: 'horror cues and some heavy metal; rare as a home key',
     how: 'Phrygian with its 5th lowered too. Its home chord is diminished, so it never quite settles: use it for unease, not for rest.',
     semis: [0, 1, 3, 5, 6, 8, 10],
@@ -167,6 +184,7 @@ export const MOODS = [
     n: 'Dorian',
     fam: 'bittersweet',
     feel: 'minor, but hopeful; folk and adventure',
+    vibes: ['hopeful', 'bittersweet', 'wandering', 'cool', 'soulful', 'folk', 'adventurous'],
     hear: '"Scarborough Fair", Santana\'s "Oye Como Va", Miles Davis\'s "So What"',
     how: 'Natural minor with its 6th raised a half step. That one brighter note makes IV a major chord: rocking between i and IV is the Dorian sound.',
     semis: [0, 2, 3, 5, 7, 9, 10],
@@ -207,6 +225,7 @@ export const MOODS = [
     n: 'Melodic minor',
     fam: 'bittersweet',
     feel: 'smooth, sophisticated, jazzy',
+    vibes: ['smooth', 'sophisticated', 'jazzy', 'noir', 'elegant', 'nocturnal', 'yearning'],
     hear: 'jazz (players call it the jazz minor)',
     how: 'A major scale with a lowered 3rd: minor at the bottom, major at the top. Here it is played the same way up and down, as jazz players use it.',
     semis: [0, 2, 3, 5, 7, 9, 11],
@@ -242,6 +261,7 @@ export const MOODS = [
     n: 'Minor pentatonic',
     fam: 'bittersweet',
     feel: 'bluesy, simple, impossible to get wrong',
+    vibes: ['bluesy', 'gritty', 'raw', 'rock', 'soulful', 'simple'],
     hear: 'blues and rock guitar solos',
     how: 'Five notes of natural minor, without the 2nd and 6th. No half steps, so no note clashes with another: the easiest scale to improvise in.',
     semis: [0, 3, 5, 7, 10],
@@ -278,6 +298,7 @@ export const MOODS = [
     n: 'Phrygian dominant',
     fam: 'exotic',
     feel: 'Middle Eastern, Spanish, fiery',
+    vibes: ['fiery', 'passionate', 'exotic', 'intense', 'desert', 'spanish'],
     hear: 'klezmer and Middle Eastern music ("Hava Nagila"), flamenco',
     how: 'Phrygian with a major 3rd: the low 2nd and the wide gap up to the 3rd make it sound unmistakably Middle Eastern. It is harmonic minor started from its 5th note.',
     semis: [0, 1, 4, 5, 7, 8, 10],
@@ -322,6 +343,7 @@ export const MOODS = [
     n: 'Double harmonic',
     fam: 'exotic',
     feel: 'very exotic, snake-charmer',
+    vibes: ['exotic', 'mystical', 'hypnotic', 'ancient', 'desert', 'intense'],
     hear: 'Dick Dale\'s "Misirlou", Arabic and Indian music',
     how: 'Two wide gaps, one in each half: a low 2nd up to a major 3rd, and a low 6th up to a major 7th. Both halves have the same shape.',
     semis: [0, 1, 4, 5, 7, 8, 11],
@@ -357,6 +379,7 @@ export const MOODS = [
     n: 'Hirajoshi',
     fam: 'exotic',
     feel: 'Japanese, haunting, still',
+    vibes: ['haunting', 'still', 'sparse', 'meditative', 'misty', 'ancient', 'japanese'],
     hear: 'Japanese koto music',
     how: 'Five notes with two half steps (2nd to 3rd, 5th to 6th) and two wide gaps. Slow, spacious phrases suit it best.',
     semis: [0, 2, 3, 7, 8],
@@ -388,6 +411,7 @@ export const MOODS = [
     n: 'Whole tone',
     fam: 'strange',
     feel: 'dreamy, floating, weightless',
+    vibes: ['dreamy', 'floating', 'weightless', 'hazy', 'surreal', 'unresolved', 'impressionist'],
     hear: 'Debussy ("Voiles"), dream sequences in film and cartoons',
     how: 'Only whole steps, six notes to the octave. Every note is the same distance from its neighbors, so none feels like home: the music floats.',
     semis: [0, 2, 4, 6, 8, 10],
@@ -425,6 +449,7 @@ export const MOODS = [
     n: 'Diminished',
     fam: 'strange',
     feel: 'suspense, tension, a villain sneaking up',
+    vibes: ['suspense', 'tension', 'sinister', 'creeping', 'anxious', 'twisting', 'villain'],
     hear: 'suspense and villain cues; jazz over diminished chords',
     how: 'Whole step, half step, over and over: eight notes. It repeats every three half steps, so it sounds the same from four places: tense and circling.',
     semis: [0, 2, 3, 5, 6, 8, 9, 11],
@@ -460,6 +485,7 @@ export const MOODS = [
     n: 'Major',
     fam: 'bright',
     feel: 'happy, settled, open',
+    vibes: ['happy', 'settled', 'open', 'triumphant', 'warm', 'hopeful', 'hymn'],
     hear: 'most cheerful pop, folk songs and hymns',
     how: 'The plain major scale: whole, whole, half, whole, whole, whole, half. Home is I; IV and V lead back to it.',
     semis: [0, 2, 4, 5, 7, 9, 11],
@@ -504,6 +530,7 @@ export const MOODS = [
     n: 'Mixolydian',
     fam: 'bright',
     feel: 'folk, Celtic, adventurous',
+    vibes: ['rousing', 'earthy', 'celtic', 'folk', 'adventurous', 'rock'],
     hear: 'The Beatles\' "Norwegian Wood", Celtic folk tunes',
     how: 'Major with its 7th lowered a half step. The chord on that lowered 7th (♭VII) going back to I sounds open rather than final.',
     semis: [0, 2, 4, 5, 7, 9, 10],
@@ -535,6 +562,7 @@ export const MOODS = [
     n: 'Lydian',
     fam: 'bright',
     feel: 'magical, wondrous, film music',
+    vibes: ['wondrous', 'magical', 'floating', 'cinematic', 'awe', 'dreamy'],
     hear: '"The Simpsons" theme, film scores for flying and wonder',
     how: 'Major with its 4th raised a half step. That makes II a major chord: I to II floats upward without ever settling.',
     semis: [0, 2, 4, 6, 7, 9, 11],
@@ -566,6 +594,7 @@ export const MOODS = [
     n: 'Major pentatonic',
     fam: 'bright',
     feel: 'open, simple, folk',
+    vibes: ['pastoral', 'peaceful', 'calm', 'open', 'folk', 'country'],
     hear: 'folk melodies, country, many East Asian folk tunes',
     how: 'Five notes of the major scale, without the 4th and 7th. No half steps, so nothing clashes.',
     semis: [0, 2, 4, 7, 9],
@@ -598,6 +627,7 @@ export const MOODS = [
     n: 'Blues',
     fam: 'bright',
     feel: 'gritty, soulful',
+    vibes: ['gritty', 'soulful', 'swagger', 'smoky', 'raw', 'late-night'],
     hear: 'blues, rock and roll, jazz',
     how: 'Minor pentatonic plus one passing note between the 4th and 5th, the blue note. Slide through it; do not sit on it.',
     semis: [0, 3, 5, 6, 7, 10],
@@ -721,7 +751,7 @@ function sigFor(notes) {
 }
 // a mood's key signature: the one that needs the fewest accidentals, except that harmonic and melodic
 // minor are written with their natural minor's signature and the raised notes marked, as in printed music
-const moodSig = (moodId, pc) =>
+export const moodSig = (moodId, pc) =>
   sigFor(moodScale(['harmonic', 'melodic'].includes(moodId) ? 'natural' : moodId, pc));
 
 // the name of a mood in a key: "C♯ Phrygian", "E♭ major" (names of people and places keep their capital)
@@ -947,22 +977,7 @@ export function moodRun(moodId, pc, hand, octs) {
   };
 }
 
-/* ---------- ways to group the keys ---------- */
-// by hand shape: keys whose scale (right hand, one octave) uses the same fingering pattern
-export function handShapes(moodId) {
-  const groups = new Map();
-  PCS.forEach(pc => {
-    const f = moodFingering(moodId, pc, 'rh', 1).slice(0, MOOD_BY[moodId].semis.length + 1);
-    const key = f.join('');
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(pc);
-  });
-  return [...groups.entries()]
-    .map(([fingers, pcs]) => ({ fingers, pcs }))
-    .sort((a, b) => b.pcs.length - a.pcs.length);
-}
-
-// by neighbor: around the circle of fifths, each key one note different from the last
+// the circle of fifths: each key one note different from the last
 export const CIRCLE = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
 /* ---------- chords ----------
@@ -1154,6 +1169,25 @@ export function voiceProgression(moodId, pc, chords, { lo = 55, hi = 66 } = {}) 
 
 /* ---------- drills: a progression, an arpeggio ---------- */
 // the progression, one chord a step: the right hand's voiced chord, the left hand's root, or both
+/* the fingers for a close triad, by its inversion: root position and 2nd inversion 1 3 5 (left hand 5 3 1
+   and 5 2 1), 1st inversion 1 2 5 (left hand 5 3 1) */
+function triadFingers(ms, hand) {
+  const [a, b, c] = ms;
+  // (the wide gap, a 4th or more, is at the top in 1st inversion and at the bottom in 2nd)
+  const inv = c - b >= 5 && c - b > b - a ? 1 : b - a >= 5 && b - a > c - b ? 2 : 0;
+  return hand === 'rh'
+    ? [
+        [1, 3, 5],
+        [1, 2, 5],
+        [1, 3, 5],
+      ][inv]
+    : [
+        [5, 3, 1],
+        [5, 3, 1],
+        [5, 2, 1],
+      ][inv];
+}
+
 export function progressionRun(moodId, pc, prog, hand) {
   const V = voiceProgression(moodId, pc, MOOD_BY[moodId].progs[prog].chords);
   const sp = spellerFor(moodSig(moodId, pc));
@@ -1161,7 +1195,7 @@ export function progressionRun(moodId, pc, prog, hand) {
     const notes = [];
     if (hand !== 'lh') v.right.forEach(m => notes.push({ n: sp(m), st: 't', fcls: 'rh' }));
     if (hand !== 'rh') notes.push({ n: sp(v.root), st: 'b', fcls: 'lh', f: 5 });
-    if (hand !== 'lh') [1, 3, 5].forEach((f, k) => (notes[k].f = f));
+    if (hand !== 'lh') triadFingers(v.right, 'rh').forEach((f, k) => (notes[k].f = f));
     return { midis: notes.map(x => midiOf(x.n)), notes, beat: i * 2, chord: v.info.name };
   });
   return {
@@ -1208,4 +1242,112 @@ export function arpeggioRun(moodId, pc, chord, hand, octs) {
     clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
     info,
   };
+}
+
+/* a chord's inversions: root position, 1st, 2nd, root position an octave up, and back down. The right hand
+   starts from the root between A3 and G♯4 (C at middle C), the left hand an octave lower */
+export function inversionRun(moodId, pc, [semis, type], hand) {
+  const t = ((midiOf(moodScale(moodId, pc)[0]) % 12) + 12) % 12;
+  const pcs = CHORD_TONES[type].slice(0, 3).map(x => (t + semis + x) % 12);
+  const root = 57 + ((pcs[0] - 57 + 120) % 12);
+  const sp = spellerFor(moodSig(moodId, pc));
+  const shapes = [0, 1, 2, 3].map(inv => {
+    const v = [];
+    for (let k = 0; k < 3; k++) {
+      let m = root + (inv === 3 ? 12 : 0);
+      const p = pcs[((inv % 3) + k) % 3];
+      if (inv < 3) while (((m % 12) + 12) % 12 !== p || (v.length && m <= v[v.length - 1])) m++;
+      else m = root + 12 + CHORD_TONES[type][k];
+      if (inv < 3 && k === 0) while (m - 12 >= root) m -= 12;
+      v.push(m);
+    }
+    return v;
+  });
+  const order = [0, 1, 2, 3, 2, 1, 0];
+  const steps = order.map((inv, i) => {
+    const notes = [];
+    const v = shapes[inv];
+    if (hand !== 'lh') {
+      const f = triadFingers(v, 'rh');
+      v.forEach((m, k) => notes.push({ n: sp(m), st: 't', fcls: 'rh', f: f[k] }));
+    }
+    if (hand !== 'rh') {
+      const f = triadFingers(v, 'lh');
+      v.forEach((m, k) => notes.push({ n: sp(m - 12), st: 'b', fcls: 'lh', f: f[k] }));
+    }
+    return { midis: notes.map(x => midiOf(x.n)), notes, beat: i * 2 };
+  });
+  return {
+    steps,
+    sig: moodSig(moodId, pc),
+    clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass',
+    info: chordInfo(moodId, pc, [semis, type]),
+  };
+}
+
+/* around the circle of fifths: each major key's home chord, C G D … F C, each the nearest shape to the
+   last; the left hand plays the roots. Each chord is spelled in its own key (D♭, not C♯) */
+export function circleRun(hand) {
+  let prev = null;
+  const keys = [...CIRCLE, 0];
+  const steps = keys.map((pc, i) => {
+    const right = nearestVoicing([pc, (pc + 4) % 12, (pc + 7) % 12], prev, 55, 66);
+    prev = right;
+    const sp = spellerFor(moodSig('major', pc));
+    const root = 40 + ((pc - 40 + 120) % 12);
+    const notes = [];
+    if (hand !== 'lh') {
+      const f = triadFingers(right, 'rh');
+      right.forEach((m, k) => notes.push({ n: sp(m), st: 't', fcls: 'rh', f: f[k] }));
+    }
+    if (hand !== 'rh') notes.push({ n: sp(root), st: 'b', fcls: 'lh', f: 5 });
+    return { midis: notes.map(x => midiOf(x.n)), notes, beat: i * 2, chord: tonicName('major', pc) };
+  });
+  return { steps, sig: 0, clef: hand === 'ht' ? 'grand' : hand === 'rh' ? 'treble' : 'bass' };
+}
+
+/* ---------- how moods relate ----------
+   one note different, same home: natural minor → harmonic minor raises the 7th. And the same notes from
+   another home: A natural minor has C major's notes. */
+const DEGREE_NAME = ['home', '2nd', '2nd', '3rd', '3rd', '4th', '', '5th', '6th', '6th', '7th', '7th'];
+// (six half steps up is the raised 4th or the lowered 5th: which one depends on where it moves to)
+const degreeName = (x, toward) => DEGREE_NAME[x] || (toward > x ? '5th' : '4th');
+export function moodNeighbors(id) {
+  const A = MOOD_BY[id].semis;
+  const out = [];
+  for (const B of MOODS) {
+    if (B.id === id) continue;
+    const only = (P, Q) => P.semis.filter(x => !Q.includes(x));
+    const a = A.filter(x => !B.semis.includes(x));
+    const b = only(B, A);
+    if (a.length === 1 && b.length === 1 && Math.abs(a[0] - b[0]) === 1)
+      out.push({ id: B.id, change: `${b[0] > a[0] ? 'raise' : 'lower'} the ${degreeName(a[0], b[0])}` });
+    else if (!a.length && b.length === 1) {
+      const n = midiNameless(b[0]);
+      out.push({ id: B.id, change: `add ${n}` });
+    } else if (a.length === 1 && !b.length) out.push({ id: B.id, change: `leave out ${midiNameless(a[0])}` });
+  }
+  return out;
+}
+// "the low 5th", "the 6th": a note of a scale by its distance from home
+const midiNameless = x =>
+  ({ 1: 'the low 2nd', 3: 'the minor 3rd', 6: 'the low 5th', 8: 'the low 6th', 10: 'the low 7th' })[x] ||
+  `the ${DEGREE_NAME[x]}`;
+
+// the same notes from another home: [{id, semis}] (this mood's notes, played from semis above its home)
+export function moodRelatives(id) {
+  const A = new Set(MOOD_BY[id].semis);
+  const out = [];
+  for (const B of MOODS.filter(x => x.id !== id))
+    for (let o = 1; o < 12; o++)
+      if (B.semis.length === A.size && A.has(o) && B.semis.every(x => A.has((x + o) % 12)))
+        out.push({ id: B.id, semis: o });
+  return out;
+}
+
+// the key of a mood with the fewest black keys (ties: the first around the circle from C): where a mood
+// is easiest to see and to start
+export function plainestKey(mood) {
+  const blacks = pc => MOOD_BY[mood].semis.filter(x => [1, 3, 6, 8, 10].includes((pc + x) % 12)).length;
+  return CIRCLE.reduce((best, pc) => (blacks(pc) < blacks(best) ? pc : best), CIRCLE[0]);
 }

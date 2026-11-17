@@ -3,25 +3,21 @@
      ready -> (first note) -> wait -> review -> ready ...          wait mode
      ready -> countin -> tempo -> review -> countin ...            metronome mode
      paused (nothing played for two reps) -> any key -> countin
-   Every transition is logged. The curriculum decides what the next rep should be. */
+   Every transition is logged. The drill's source (a piece, or a Moods drill) decides what the next rep
+   should be. */
 import { Log } from '../core/log.js';
 import { $$, clamp, esc, median, todayKey } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { AudioEngine, Metro } from '../core/audio.js';
 import { Input, sameNote } from '../core/input.js';
 import { midiOf, nameOf, spellerFor } from '../music/theory.js';
-import { flashKey, kbRange, kbSVG, pieceStaffSVG, rhythmSVG, staffSVG } from '../music/render.js';
+import { flashKey, kbRange, kbSVG, pieceStaffSVG, staffSVG } from '../music/render.js';
 import { analyzeSeq } from '../music/analysis.js';
 import { Library } from '../music/library.js';
 import { techniqueAdvice, techniqueReport } from '../music/technique.js';
-import { criterion, handWord, itemState, planFor, recordRep, STAGE_TXT } from './curriculum.js';
 import { buildDrill } from './drill.js';
-import { Improv } from './improv.js';
-import { itemDef } from './areas.js';
-import { recordTiming } from './skills.js';
-import { Quiz } from './quiz.js';
+import { criterion, handWord, itemDef, itemState, planFor, recordRep, STAGE_TXT } from './pieces.js';
 import { LESSON_BY, lessonFor } from './lessons.js';
-import { aboutDrill } from '../views/drillinfo.js';
 import { lessonSheet } from '../views/guides.js';
 
 const CUES = {
@@ -38,17 +34,6 @@ const CUES = {
     'Thumb passes close to the keys',
     'Same loudness on the top note',
     'Listen for even spacing',
-  ],
-  read: [
-    'Look one note ahead of the one you play',
-    'Name the interval, not the note',
-    'Keep going; do not fix mistakes',
-    'Eyes on the staff, not the keys',
-  ],
-  rhythm: [
-    'Count out loud: 1 and 2 and',
-    'Feel the beat in your body before you tap',
-    'Rests are counted, not skipped',
   ],
   section: [
     'Listen to the top line',
@@ -76,7 +61,7 @@ const sentence = parts => {
 
 // timing scatter limits for a clean run (fraction of a beat or of the note spacing). Up to FAIR times the
 // limit still counts as clean, with a word about it; beyond that it is a slip. Timing alone is never messy.
-const LIMIT = { even: 0.08, evenMic: 0.12, piece: 0.1, read: 0.12, rhythmMax: 0.1 };
+const LIMIT = { even: 0.08, evenMic: 0.12, piece: 0.1 };
 const FAIR = 1.6;
 // the click and you may differ this much before it is mentioned
 const TEMPO_TOLERANCE = 0.12;
@@ -93,33 +78,25 @@ function waitModeSlips(wrong, hinted) {
 const octaves = semis =>
   `${Math.abs(semis) === 12 ? 'an octave' : 'two octaves'} ${semis > 0 ? 'higher' : 'lower'}`;
 
-/* Where a drill comes from and where its reps go. The curriculum is the default; Moods supplies its own
-   (a scale you practice freely, with checks only when you ask). */
-const CURRICULUM = {
+/* Where a drill comes from and where its reps go: a piece's section by default; Moods supplies its own
+   (a scale you practice freely, with checks only when you ask). about(id), if given, opens a panel on it. */
+const PIECES = {
   def: id => itemDef(id),
   plan: id => planFor(id),
   record: (id, r) => recordRep(id, r),
   state: id => itemState(id),
-  stage: (id, role, plan) => {
+  stage: id => {
     const it = itemState(id) || {};
-    const cold = plan && plan.cold;
-    return {
-      text: cold ? 'Cold check' : role === 'review' ? 'Review' : STAGE_TXT[it.stage] || '',
-      cls: it.stage === 'done' ? 'ok' : cold || it.stage === 'check' ? 'brass' : '',
-    };
+    return { text: STAGE_TXT[it.stage] || '', cls: it.stage === 'done' ? 'ok' : '' };
   },
   criterion: id => criterion(id),
-  timing: (kind, sd, bpm) => recordTiming(kind, sd, bpm),
-  about: id => aboutDrill(id),
 };
 
 export const Player = {
-  mount(root, { id, role = 'focus', onEvent = () => {}, source = CURRICULUM }) {
+  mount(root, { id, onEvent = () => {}, source = PIECES, about = null }) {
     const src = source;
-    if ((src.def(id) || {}).kind === 'theory') return Quiz.mount(root, { id, role, onEvent });
     const P = {
       id,
-      role,
       root,
       def: src.def(id),
       plan: null,
@@ -158,16 +135,11 @@ export const Player = {
 
     /* ---------- layout ---------- */
     const k = P.def.kind;
-    // rhythm drills are tapped; everything else shows a keyboard with the key hints
-    const input =
-      k === 'rhythm'
-        ? '<button class="tap" type="button" id="plTap">Tap here, press space, or play any key</button>'
-        : '<div class="kbwrap scrollx" id="plKbWrap"><div id="plKb"></div></div>';
     root.innerHTML = `
       <div class="player card" data-kind="${k}">
         <div class="pl-head">
           <div class="pl-title"><b id="plTitle"></b><span class="small" id="plSub"></span></div>
-          <button class="iconbtn" type="button" id="plAbout" aria-label="About this drill" title="About this drill">
+          <button class="iconbtn" type="button" id="plAbout" aria-label="About this drill" title="About this drill" ${about || src.about ? '' : 'hidden'}>
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
           </button>
         </div>
@@ -182,7 +154,7 @@ export const Player = {
         <div class="beats pl-beats" id="plBeats" hidden></div>
         <div class="feedback pl-msg" id="plMsg" aria-live="polite"></div>
         <div class="cue" id="plCue"></div>
-        ${input}
+        <div class="kbwrap scrollx" id="plKbWrap"><div id="plKb"></div></div>
         <div class="st-bar pl-bar">
           <button class="iconbtn" type="button" id="plHear" aria-label="Hear it" title="Hear it">
             <svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
@@ -208,14 +180,6 @@ export const Player = {
       const wrap = $p('#plStaffWrap');
       const box = $p('#plStaff');
       if (!wrap || !box) return;
-      if (d.kind === 'rhythm') {
-        const marks = d.events.map((e, i) => {
-          const si = d.steps.findIndex(s => s.ev === i);
-          return si < 0 ? '' : hl.bad.has(si) ? 'bad' : hl.ok.has(si) ? 'ok' : '';
-        });
-        box.innerHTML = `<div style="max-width:${200 + d.beats * 70}px;margin:0 auto">${rhythmSVG(d.events, { beats: d.meter[0], marks, width: 100 + d.beats * 64, total: d.beats })}</div>`;
-        return;
-      }
       if (d.piece) {
         // long music (a whole piece) is drawn a window of bars at a time around where you are
         P.win = null;
@@ -284,7 +248,7 @@ export const Player = {
           clef: d.clef,
           sig: d.sig,
           items,
-          spacing: d.spacing || (k === 'read' ? 36 : 28),
+          spacing: d.spacing || 28,
           top: 40,
           bottom: 44,
           barEvery: d.barEvery || 0,
@@ -333,12 +297,9 @@ export const Player = {
       const d = P.def;
       $p('#plTitle').textContent = d.title;
       $p('#plSub').textContent =
-        d.sub +
-        (P.plan && P.plan.hand && d.phases.length > 1 && P.plan.mode !== 'improv'
-          ? ' · ' + handWord(P.plan.hand)
-          : '');
+        d.sub + (P.plan && P.plan.hand && d.phases.length > 1 ? ' · ' + handWord(P.plan.hand) : '');
       const st = $p('#plStage');
-      const stage = src.stage(id, role, P.plan);
+      const stage = src.stage(id, P.plan);
       st.textContent = stage.text;
       st.className = 'pill ' + stage.cls;
       st.hidden = !stage.text;
@@ -373,7 +334,6 @@ export const Player = {
       if (!go) return;
       const info = $p('#plInfo');
       const mode = P.plan && P.plan.mode;
-      if (mode === 'improv') return;
       if (mode === 'tempo') {
         go.hidden = false;
         go.textContent =
@@ -398,12 +358,6 @@ export const Player = {
         prevMode = P.plan && P.plan.mode;
       P.plan = src.plan(id);
       if (!P.plan) return;
-      if (P.plan.mode === 'improv') {
-        P.drill = { steps: [], beats: 0 };
-        paintHead();
-        if (!P.improv) Improv.start(P, root, onEvent);
-        return;
-      }
       const needNew =
         !P.drill ||
         P.drill.fresh ||
@@ -425,7 +379,6 @@ export const Player = {
         hand: P.plan.hand,
         bpm: P.plan.bpm,
         hints: P.plan.hints,
-        cold: P.plan.cold,
         steps: P.drill.steps.length,
         rebuilt: needNew,
       });
@@ -437,13 +390,7 @@ export const Player = {
       hl = { cur: P.plan.mode === 'wait' ? 0 : -1, ok: new Set(), bad: new Set() };
       paintHead();
       paintStaff(0);
-      paintKb(
-        0,
-        P.plan.mode === 'wait'
-          ? P.plan.hints
-          : P.plan.hints ||
-              (P.plan.mode === 'tempo' && !P.plan.cold && P.def.kind !== 'read' && P.def.kind !== 'rhythm'),
-      );
+      paintKb(0, P.plan.hints || P.plan.mode === 'tempo');
     }
     function startRep() {
       // enter the ready state for the current plan
@@ -452,12 +399,7 @@ export const Player = {
       if (P.plan.mode === 'wait') {
         setPhase('ready');
         const s = P.drill.steps[0];
-        msg(
-          (P.drill.src ? P.drill.src + '. ' : '') +
-            (P.plan.hints || P.def.kind !== 'read'
-              ? `Play the first note to begin${P.plan.hints ? ': ' + label(s) : ''}.`
-              : 'Play the first note to begin.'),
-        );
+        msg(`Play the first note to begin${P.plan.hints ? ': ' + label(s) : ''}.`);
       } else if (P.plan.mode === 'tempo') {
         T.countIn();
       }
@@ -488,7 +430,7 @@ export const Player = {
         clearTimeout(this.hintT);
         if (P.plan.hints) return;
         const i = this.i;
-        this.hintT = setTimeout(() => this.showHint(i), P.def.kind === 'read' ? 5000 : 7000);
+        this.hintT = setTimeout(() => this.showHint(i), 7000);
       },
       showHint(i) {
         clearTimeout(this.hintT);
@@ -577,7 +519,7 @@ export const Player = {
         const pace = gaps.length >= 3 ? Math.round(median(gaps)) : null;
         const med = median(gaps) || 600;
         // long pauses are noted, but wait mode is for taking your time: they never make a run unclean
-        const hes = gaps.filter(g => g > Math.max(P.def.kind === 'read' ? 4000 : 3000, med * 3)).length;
+        const hes = gaps.filter(g => g > Math.max(3000, med * 3)).length;
         const hinted = P.plan.hints ? 0 : this.hinted.size;
         // how even the run was at your own pace: the spread of the gaps between notes (0 = perfectly even)
         const mean = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
@@ -662,7 +604,7 @@ export const Player = {
           return;
         }
         paintStaff(0);
-        paintKb(0, P.plan.hints || (!P.plan.cold && P.def.kind !== 'read' && P.def.kind !== 'rhythm'));
+        paintKb(0, true);
         const d = P.drill;
         const bpm = P.plan.bpm;
         this.msBeat = 60000 / bpm; // quarter-note beats
@@ -672,13 +614,9 @@ export const Player = {
         setPhase('countin');
         AudioEngine.ensure();
         const first = Metro.start({ bpm: clickBpm, beats: clicks, sub: 1, countIn: 1 });
-        this.t0 = AudioEngine.toPerf(first) + (d.lead ? 0 : 0);
+        this.t0 = AudioEngine.toPerf(first);
         this.watch(clicks);
-        msg(
-          P.plan.cold
-            ? 'Cold check: count-in, then play it once at the target tempo.'
-            : `Count-in, then play at ♩ ${bpm}. When you start exactly does not matter.`,
-        );
+        msg(`Count-in, then play at ♩ ${bpm}. When you start exactly does not matter.`);
         const totalMs = (d.beats || 8) * this.msBeat;
         later(
           () => this.finish('timeout'),
@@ -754,28 +692,21 @@ export const Player = {
         if (!['countin', 'tempo'].includes(P.phase)) return;
         this.ons.push(ev);
         const d = P.drill;
-        const ok = d.any || d.steps.some(s => s.midis.some(m => sameNote(ev.m, m, ev.src)));
+        const ok = d.steps.some(s => s.midis.some(m => sameNote(ev.m, m, ev.src)));
         flashKey($p('#plKb svg'), ev.m, ok ? 'ok' : 'bad', 180);
-        if (d.any) {
-          const tap = $p('#plTap');
-          if (tap) {
-            tap.classList.add('hit');
-            setTimeout(() => tap.classList.remove('hit'), 90);
-          }
-        }
         // the last note: is the run complete? (also when the whole run is an octave or two off, so it
         // ends at once and can be named, instead of waiting for the time-out)
         const last = d.steps[d.steps.length - 1];
         const lateEnough = last && performance.now() > this.t0 + last.beat * this.msBeat * 0.7 - this.msBeat;
-        const shift = d.any
-          ? 0
-          : [0, 12, -12, 24, -24].find(sh => last && last.midis.some(m => sameNote(ev.m - sh, m, ev.src)));
+        const shift = [0, 12, -12, 24, -24].find(
+          sh => last && last.midis.some(m => sameNote(ev.m - sh, m, ev.src)),
+        );
         if (lateEnough && shift != null) {
           const rel = this.ons
             .filter(o => o.t > this.t0 - this.msBeat * 1.5)
             .map(o => (shift ? { ...o, m: o.m - shift } : o));
           if (rel.length >= Math.max(2, d.steps.length * 0.6)) {
-            const an = analyzeSeq(rel, d.steps, this.msBeat, { any: d.any, one: P.lenient });
+            const an = analyzeSeq(rel, d.steps, this.msBeat, { one: P.lenient });
             // an octave off: only right at the end, and only when nearly every note fits the shift
             const atEnd = performance.now() > this.t0 + (last.beat - 1.5) * this.msBeat;
             if (an.complete && (!shift || (atEnd && an.accuracy >= 0.8)))
@@ -802,7 +733,7 @@ export const Player = {
           return;
         }
         P.idle = 0;
-        const an = analyzeSeq(rel, d.steps, this.msBeat, { any: d.any, one: P.lenient });
+        const an = analyzeSeq(rel, d.steps, this.msBeat, { one: P.lenient });
         an.res.forEach(r => {
           if (r.ok) hl.ok.add(r.i);
           else hl.bad.add(r.i);
@@ -828,11 +759,7 @@ export const Player = {
           }, 3200);
           return;
         }
-        if (!d.any && an.accuracy >= 0.85 && an.matched >= 6)
-          if (src.timing) src.timing(P.def.kind, d.even ? an.sdGap : an.sdBeat, P.plan.bpm);
-        const valid = d.any
-          ? true
-          : Input.live && Input.mode !== 'touch' && !P.lenient && !rel.some(o => o.src === 'touch');
+        const valid = Input.live && Input.mode !== 'touch' && !P.lenient && !rel.some(o => o.src === 'touch');
         const weak = weakHand(
           d,
           an.res.filter(r => !r.ok).map(r => r.i),
@@ -862,11 +789,11 @@ export const Player = {
     // rating: 'clean' | 'slips' | 'messy', with a note; adopt: steady and faster than the click;
     // ignore: the other hand's part was played (does not count)
     function judgeTempoRun(an, d, rel) {
-      const opts = { any: d.any, one: P.lenient };
+      const opts = { one: P.lenient };
       const played = Math.round(P.plan.bpm * an.tempoRatio);
       const mic = Input.mode === 'mic';
       // right notes in the wrong octave, or the other hand's part
-      if (!d.any && an.accuracy < 0.6) {
+      if (an.accuracy < 0.6) {
         for (const sh of [12, -12, 24, -24]) {
           const alt = analyzeSeq(
             rel.map(o => ({ ...o, m: o.m - sh })),
@@ -895,26 +822,11 @@ export const Player = {
             };
         }
       }
-      let timing; // 1 good, 2 fair, 3 uneven
-      if (d.any) {
-        let mg = 4;
-        for (let x = 1; x < d.steps.length; x++) mg = Math.min(mg, d.steps[x].beat - d.steps[x - 1].beat);
-        const lim = Math.min(LIMIT.rhythmMax, 0.2 * mg);
-        timing = an.maxDevBeat < lim ? 1 : an.maxDevBeat < lim * 1.8 ? 2 : 3;
-      } else {
-        let v, lim;
-        if (d.piece) {
-          v = an.sdMs;
-          lim = Math.max(40, LIMIT.piece * T.msBeat * Math.max(an.gapBeats, 0.5));
-        } else if (P.def.kind === 'read') {
-          v = an.sdBeat;
-          lim = LIMIT.read;
-        } else {
-          v = an.sdGap;
-          lim = mic ? LIMIT.evenMic : LIMIT.even;
-        }
-        timing = v < lim ? 1 : v < lim * FAIR ? 2 : 3;
-      }
+      // timing: 1 good, 2 fair, 3 uneven
+      const [v, lim] = d.piece
+        ? [an.sdMs, Math.max(40, LIMIT.piece * T.msBeat * Math.max(an.gapBeats, 0.5))]
+        : [an.sdGap, mic ? LIMIT.evenMic : LIMIT.even];
+      const timing = v < lim ? 1 : v < lim * FAIR ? 2 : 3;
       const notesOk = an.accuracy === 1 && an.wrong <= (mic ? 1 : 0);
       const ratio = an.tempoRatio;
       if (notesOk && timing < 3) {
@@ -928,7 +840,7 @@ export const Player = {
           return {
             rating: 'clean',
             played,
-            adopt: P.plan.mode === 'tempo' && !P.plan.cold,
+            adopt: P.plan.mode === 'tempo',
             note: `Right notes and steady, at ♩ ${played}.`,
           };
         return {
@@ -1020,30 +932,30 @@ export const Player = {
     }
 
     /* ---------- input ---------- */
-    const onNote = Log.guard('player note', ev => {
+    /* any octave (Moods practice, unless you ask for the exact one): a note counts in whatever octave you
+       play it. It is read as the nearest written note with its name: the one you are on, in wait mode */
+    const fold = ev => {
+      const d = P.drill;
+      if (!P.plan.anyOctave || !d || !d.steps.length) return ev;
+      const step = P.plan.mode === 'wait' ? d.steps[P.phase === 'review' ? 0 : W.i] : null;
+      const near = list =>
+        list
+          .filter(m => (((m - ev.m) % 12) + 12) % 12 === 0)
+          .sort((a, b) => Math.abs(a - ev.m) - Math.abs(b - ev.m))[0];
+      const m =
+        (step && near(step.midis.filter(x => !W.got.has(x)))) ??
+        (step && near(step.midis)) ??
+        near(d.steps.flatMap(x => x.midis));
+      return m == null || m === ev.m ? ev : { ...ev, m, played: ev.m };
+    };
+    const onNote = Log.guard('player note', raw => {
       if (P.dead || !P.plan) return;
-      if (P.plan.mode === 'improv') return;
+      const ev = fold(raw);
       if (P.plan.mode === 'wait') {
         if (['ready', 'wait', 'review'].includes(P.phase)) W.note(ev);
       } else T.note(ev);
     });
     P.offs.push(Input.on(onNote));
-    if (k === 'rhythm') {
-      const tap = $p('#plTap');
-      const fire = () => onNote({ m: 60, vel: 0.7, t: performance.now(), src: 'touch-tap' });
-      tap.addEventListener('pointerdown', e => {
-        e.preventDefault();
-        fire();
-      });
-      const kd = e => {
-        if (e.code === 'Space' && !e.repeat && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) {
-          e.preventDefault();
-          fire();
-        }
-      };
-      document.addEventListener('keydown', kd);
-      P.offs.push(() => document.removeEventListener('keydown', kd));
-    }
     $p('#plGo').onclick = Log.guard('player go', () => {
       AudioEngine.ensure();
       if (P.plan.mode === 'wait') {
@@ -1073,18 +985,13 @@ export const Player = {
       const bpm = P.plan.mode === 'tempo' ? P.plan.bpm : Math.min(P.plan.bpm || 60, P.def.target || 60);
       const spb = 60 / bpm;
       const t0 = AudioEngine.now() + 0.1;
-      if (d.any) {
-        for (let b = 0; b < d.beats; b++) AudioEngine.click(t0 + b * spb, b % d.meter[0] === 0, 0.5);
-        d.steps.forEach(s => AudioEngine.note(72, t0 + s.beat * spb, 0.25, 0.6));
-        return;
-      }
       d.steps.forEach(s =>
         s.midis.forEach(m =>
           AudioEngine.note(m, t0 + s.beat * spb, Math.max(0.25, (s.dur || 0.5) * spb * 0.95), 0.55),
         ),
       );
     });
-    $p('#plAbout').onclick = () => src.about(id);
+    $p('#plAbout').onclick = () => (about || src.about)(id);
     // leaving the app (screen off, another app) stops the metronome; any key or Start resumes
     const onVis = () => {
       if (
@@ -1104,8 +1011,8 @@ export const Player = {
 
     Player.debug = { P, W, T }; // for automated tests
     replan('init');
-    if (P.plan && P.plan.mode !== 'improv') startRep();
-    log('mounted', { role, stage: (src.state(id) || {}).stage });
+    if (P.plan) startRep();
+    log('mounted', { stage: (src.state(id) || {}).stage });
     return {
       get phase() {
         return P.phase;
@@ -1124,7 +1031,6 @@ export const Player = {
         clearTimeout(W.hintT);
         T.unwatch();
         Metro.stop();
-        if (P.improv) P.improv.stop();
         P.offs.forEach(f => {
           try {
             f();

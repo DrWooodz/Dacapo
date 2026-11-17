@@ -4,7 +4,7 @@ import { Log } from './log.js';
 import { DAY, todayKey } from './util.js';
 
 /* ---------- state + sync ---------- */
-const STATE_VERSION = 4;
+const STATE_VERSION = 5;
 
 export const DEFAULT_STATE = () => ({
   v: STATE_VERSION,
@@ -20,37 +20,33 @@ export const DEFAULT_STATE = () => ({
     clickOnPiano: false,
     keepAwake: true,
     instrument: 'other', // which guide to show: 'cdp-s360', 'acoustic' or any other digital piano
-    thru: { on: false, split: 0, left: 'bass', right: 'piano' }, // your piano through this device (Jam)
+    thru: { on: false, split: 0, left: 'bass', right: 'piano' }, // your piano played through this device
   },
   profile: {
     favorites: [], // composers you love
-    areas: { reading: true, sight: true, technique: true, theory: true, pieces: true, improv: true },
-    weights: {}, // how much each area matters to you, learned from the focus you choose (1 = neutral)
     onboarded: false,
-    assessed: null, // date of the placement check
-    assessDismissed: null, // date the placement offer was put off
   },
-  items: {}, // item id -> progress (see learn/curriculum.js)
-  piece: { working: [], added: {} }, // pieces you are working on [{pid, daily}], and when each was started
-  focus: null, // this week's focus area (see learn/skills.js)
-  session: null, // today's session: {day, n, list:[{id, role, ...}], idx}
-  pieceSession: null, // a longer sitting with your pieces, when you start one
-  sessions: 0, // sessions started
+  items: {}, // a piece's sections and the whole piece -> progress (see learn/pieces.js)
+  piece: { working: [] }, // the pieces you are learning: [{pid}]
   days: {}, // 'YYYY-MM-DD' -> {min, reps, clean}
-  hist: [], // milestones: {d, id, e, v}
-  timing: [], // timing scatter of recent metronome runs, for the steadiness skill
-  steadyBase: null, // the steady-beat result of the placement check: {d, sd}
+  hist: [], // milestones: {d, id, e}
   lessonsSeen: {}, // kind of drill -> the day its body-and-hands note was last shown
-  skillHist: {}, // 'YYYY-MM-DD' -> {skill: level}, for trends
-  games: {}, // Free play games: best levels and scores
-  path: 'moods', // what Home is built around: 'moods' (scales to improvise in) or 'course' (the daily plan)
+  games: {}, // ear games: best levels
   moods: {
-    keys: {}, // 'mood:pc' -> {met, clean: {rh, lh, ht}, checks: [days], last}
-    sittings: [], // recent sittings: {d, at, mood, pc, runs, clean, imp}
-    prefs: { keys: true, fingers: true, tempo: false, bpm: 60, octs: 1, browse: 'mood', mood: null },
+    keys: {}, // 'mood:pc' -> {checks: [days], extra: {drill: clean runs}, last}
+    prefs: {
+      keys: true,
+      fingers: true,
+      tempo: false,
+      bpm: 60,
+      octs: 1,
+      exactOctave: false,
+      mood: null,
+      pc: null,
+    },
     ear: { n: 0, right: 0, by: {} }, // "which mood?": answers, right ones, and per mood [heard, right]
   },
-  legacy: null, // set when the state came from version 1 or 2
+  archive: null, // what the daily course (until version 1.5) had learned: kept, not shown
 });
 
 export const Store = {
@@ -181,53 +177,45 @@ export const Store = {
   },
 };
 
-// Old saved states are brought up to date one version at a time.
+// Old saved states are brought up to date. Before version 5 (DaCapo 1.x) there was a daily course: its
+// progress is kept in archive, and a piece you were learning carries on.
 export function migrate(o) {
   if (!o || typeof o !== 'object') return DEFAULT_STATE();
   const from = o.v || 1;
-  let s = from < 3 ? fromVersion2(o) : deepMerge(DEFAULT_STATE(), o);
-  if (from < 4) s = toVersion4(s, o);
+  const s = from < 5 ? fromVersion4(o) : deepMerge(DEFAULT_STATE(), o);
   s.v = STATE_VERSION;
   if (from < STATE_VERSION) Log.ev('migrated state', { from, to: STATE_VERSION });
   return s;
 }
 
-// Version 1 or 2: keep settings and practice minutes; the curriculum starts fresh.
-function fromVersion2(o) {
+function fromVersion4(o) {
   const s = DEFAULT_STATE();
-  for (const k of Object.keys(s.settings))
-    if (o.settings && o.settings[k] !== undefined) s.settings[k] = o.settings[k];
+  const set = o.settings || {};
+  for (const k of Object.keys(s.settings)) if (set[k] !== undefined) s.settings[k] = set[k];
+  s.profile.favorites = (o.profile && o.profile.favorites) || [];
+  s.profile.onboarded = !!(o.profile && o.profile.onboarded);
   for (const d in o.days || {}) {
-    const m = +(o.days[d].min || 0);
-    if (m > 0) s.days[d] = { min: Math.round(m * 10) / 10, reps: 0, clean: 0 };
+    const x = o.days[d] || {};
+    if (+x.min > 0) s.days[d] = { min: +x.min, reps: x.reps || 0, clean: x.clean || 0 };
   }
-  s.legacy = { from: o.v || 1 };
+  const items = o.items || {};
+  for (const id in items) if (id.startsWith('p:')) s.items[id] = items[id];
+  s.piece.working = ((o.piece && o.piece.working) || []).map(w => ({ pid: w.pid })).filter(w => w.pid);
+  s.hist = (o.hist || []).filter(h => h && String(h.id || '').startsWith('p:'));
+  s.lessonsSeen = o.lessonsSeen || {};
+  s.games = o.games || {};
+  const m = o.moods || {};
+  for (const [k, v] of Object.entries(m.keys || {}))
+    s.moods.keys[k] = { checks: (v && v.checks) || [], extra: (v && v.extra) || {}, last: v && v.last };
+  if (m.prefs)
+    Object.assign(s.moods.prefs, pickKeys(m.prefs, ['keys', 'fingers', 'tempo', 'bpm', 'octs', 'mood']));
+  if (m.ear) s.moods.ear = m.ear;
+  const course = Object.fromEntries(Object.entries(items).filter(([id]) => !id.startsWith('p:')));
+  if (Object.keys(course).length) s.archive = { from: o.v || 1, items: course, at: todayKey() };
   s.savedAt = o.savedAt || 0;
   return s;
 }
-
-// Version 3 → 4: tracks became areas (theory is new), the one active piece became a list of pieces you
-// work on, and sessions are now built around a weekly focus.
-function toVersion4(s, o) {
-  const tracks = (o.profile && o.profile.tracks) || {};
-  const on = k => tracks[k] !== false;
-  s.profile.areas = {
-    reading: on('reading'),
-    sight: on('reading'),
-    technique: on('technique'),
-    theory: true,
-    pieces: on('piece'),
-    improv: on('improv'),
-  };
-  const active = o.piece && o.piece.active;
-  s.piece.working = active ? [{ pid: active, daily: false }] : [];
-  for (const k of ['tracks', 'note']) delete s.profile[k];
-  delete s.piece.active;
-  delete s.settings.seenVersion;
-  delete s.imports;
-  s.session = null;
-  return s;
-}
+const pickKeys = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 
 // Keep the saved document small enough to sync for years.
 function pruneState(s, hard = false) {
@@ -236,6 +224,7 @@ function pruneState(s, hard = false) {
   };
   cap(s.hist, hard ? 150 : 400);
   Object.values(s.items || {}).forEach(it => cap(it.log, hard ? 12 : 30));
+  if (s.archive && s.archive.items) Object.values(s.archive.items).forEach(it => it && delete it.log);
   const cutoff = todayKey(new Date(Date.now() - (hard ? 200 : 800) * DAY));
   for (const d in s.days) if (d < cutoff) delete s.days[d];
 }

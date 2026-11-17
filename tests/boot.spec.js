@@ -1,23 +1,29 @@
-// The app starts cleanly and every screen opens. Also runs against the unbundled source modules.
+// The app starts cleanly on Play and every screen opens. Also runs against the unbundled source modules.
 import { test, expect } from './fixtures.js';
 
-test('opens on the welcome screen', async ({ app }) => {
+test('opens on Play, with a welcome note the first time', async ({ app }) => {
   const { page } = app;
-  await expect(page.locator('#page')).toContainText('Welcome to DaCapo');
-  await expect(page.locator('.brand')).toContainText('DaCapo');
+  await expect(page.locator('#page h1')).toHaveText('Play');
+  await expect(page.locator('#plyWelcome')).toContainText('Welcome to DaCapo');
+  await app.onboard();
+  await expect(page.locator('#plyWelcome')).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator('#page h1')).toHaveText('Play');
+  await expect(page.locator('#plyWelcome')).toHaveCount(0);
 });
 
-test('every screen opens', async ({ app }) => {
+test('four tabs, every screen opens', async ({ app }) => {
   const { page } = app;
-  // three tabs: Home (the welcome screen until you have started), Library and Free play
-  await expect(page.locator('#tabs [data-view]')).toHaveCount(3);
+  await expect(page.locator('#tabs [data-view]')).toHaveText(['Play', 'Explore', 'Practice', 'Songs']);
   for (const [tab, heading] of [
-    ['library', 'Library'],
-    ['free', 'Free play'],
-    ['home', 'Open it, and play.'],
+    ['explore', 'Explore'],
+    ['practice', 'Practice'],
+    ['songs', 'Songs'],
+    ['play', 'Play'],
   ]) {
     await page.locator(`#tabs [data-view="${tab}"]`).click();
-    await expect(page.locator('#page h1').first()).toContainText(heading);
+    await expect(page.locator('#page h1').first()).toHaveText(heading);
+    await expect(page.locator(`#tabs [data-view="${tab}"]`)).toHaveAttribute('aria-current', 'page');
   }
 });
 

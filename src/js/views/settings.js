@@ -8,16 +8,13 @@ import { Input, MidiOut } from '../core/input.js';
 import { bindSegs, closeBtn, closeSheet, go, openSheet, seg, UI } from '../core/ui.js';
 import { saveFile } from '../core/files.js';
 import { Library } from '../music/library.js';
-import { AREAS } from '../learn/areas.js';
-import { rebuildSession } from '../learn/sessions.js';
+import { SOUNDS } from '../music/instruments.js';
 import { bodySheet, pianoGuideSheet } from './guides.js';
-import { howSheet } from './drillinfo.js';
 import { reportSheet } from './report.js';
-import { Sketches } from './jam.js';
 
 export function settingsSheet() {
   const S = Store.s.settings;
-  const P = Store.s.profile;
+  const T = S.thru;
   const toggle = (id, on, label, hint = '') => `
     <label class="toggle">
       <input type="checkbox" id="${id}" ${on ? 'checked' : ''}>
@@ -50,13 +47,15 @@ export function settingsSheet() {
     <button class="btn sm ghost" type="button" id="sGuide" style="align-self:flex-start">
       Guide to your piano →</button>
     <div class="divider"></div>
-    <h3 class="h3">Areas</h3>
-    <p class="small">Switch off an area you do not want to practice at all. For a lighter touch, choose
-      another focus instead: everything else then gets only a few minutes of upkeep.</p>
-    ${AREAS.map(a => toggle('ar_' + a.id, P.areas[a.id] !== false, a.n, a.d)).join('')}
+    <h3 class="h3">Your piano through this device</h3>
+    ${toggle('sThru', T.on, 'Play my piano through this device', "What you play sounds here too, with another sound. Turn the piano's own volume down to hear only this.")}
+    <div class="row">
+      <label class="field">Sound<select class="input sm" id="sThruR">${SOUNDS.map(x => `<option value="${x.id}" ${x.id === T.right ? 'selected' : ''}>${esc(x.n)}</option>`).join('')}</select></label>
+      <label class="field">Below middle C<select class="input sm" id="sThruL"><option value="">the same</option>${SOUNDS.map(x => `<option value="${x.id}" ${T.split && x.id === T.left ? 'selected' : ''}>${esc(x.n)}</option>`).join('')}</select></label>
+    </div>
     <div class="divider"></div>
     <h3 class="h3">Sound and screen</h3>
-    ${toggle('sSnd', S.sound, 'App sounds', 'Examples, backing tracks and the Jam. The metronome always clicks.')}
+    ${toggle('sSnd', S.sound, 'App sounds', 'Examples and the backing. The metronome always clicks.')}
     <label class="field">Volume<input type="range" id="sVol" min="0" max="1" step="0.05" value="${S.volume}"></label>
     ${toggle('sWake', S.keepAwake, 'Keep the screen on while practicing', 'Releases after 20 minutes without playing.')}
     ${toggle('sOct', S.octaveTolerant, 'Microphone: forgive octave mix-ups', 'Low piano notes are often heard an octave off.')}
@@ -72,7 +71,6 @@ export function settingsSheet() {
     <div class="divider"></div>
     <h3 class="h3">Help</h3>
     <div class="row">
-      <button class="btn sm" type="button" id="sHow">How DaCapo works</button>
       <button class="btn sm" type="button" id="sBody">Body and hands</button>
       <button class="btn sm" type="button" id="sReport">Report a problem</button>
       <button class="btn sm ghost" type="button" id="sAbout">About</button>
@@ -80,8 +78,7 @@ export function settingsSheet() {
     <details>
       <summary>Start over</summary>
       <div class="stack">
-        <p class="small">Erases all progress on this device (save a backup first). Your imported files,
-          recordings and Jam sketches stay.</p>
+        <p class="small">Erases all progress on this device (save a backup first). Your recordings stay.</p>
         <button class="btn sm bad" type="button" id="sReset">Erase my progress</button>
       </div>
     </details>
@@ -134,14 +131,19 @@ export function settingsSheet() {
         if (k === 'input') status();
       });
       $('#sGuide', sheet).onclick = pianoGuideSheet;
-      AREAS.forEach(a => {
-        $('#ar_' + a.id, sheet).onchange = e => {
-          changed = true;
-          P.areas[a.id] = e.target.checked;
-          Log.ev('area ' + a.id + ' ' + e.target.checked);
-          rebuildSession();
-        };
-      });
+      $('#sThru', sheet).onchange = e => {
+        T.on = e.target.checked;
+        Store.save();
+      };
+      $('#sThruR', sheet).onchange = e => {
+        T.right = e.target.value;
+        Store.save();
+      };
+      $('#sThruL', sheet).onchange = e => {
+        T.split = e.target.value ? 60 : 0;
+        if (e.target.value) T.left = e.target.value;
+        Store.save();
+      };
       $('#sSnd', sheet).onchange = e => {
         S.sound = e.target.checked;
         Store.save();
@@ -162,7 +164,6 @@ export function settingsSheet() {
       };
       $('#sBackup', sheet).onclick = saveBackupFile;
       $('#sRestore', sheet).onchange = e => restoreFile(e.target.files[0]);
-      $('#sHow', sheet).onclick = howSheet;
       $('#sBody', sheet).onclick = bodySheet;
       $('#sReport', sheet).onclick = () => reportSheet();
       $('#sAbout', sheet).onclick = aboutSheet;
@@ -175,14 +176,13 @@ export function settingsSheet() {
         Store.save();
         Log.ev('progress erased');
         closeSheet();
-        go('home');
+        go('play');
         toast('Progress erased');
       };
       return () => {
         offS();
-        // what Home and the session show depends on the areas and the input
-        if (changed && (UI.view === 'practice' || UI.view === 'home'))
-          setTimeout(() => go(UI.view, UI.params), 0);
+        // the screen you are on may show a connection notice: redraw it for the new input
+        if (changed) setTimeout(() => go(UI.view, UI.params), 0);
       };
     },
     { label: 'Settings' },
@@ -205,10 +205,9 @@ function confirmTwice(sheet) {
 
 function saveBackupFile() {
   const data = JSON.stringify({
-    dacapo: 4,
+    dacapo: 5,
     state: Store.s,
     imports: Library.imports(),
-    sketches: Sketches.list(),
   });
   saveFile(`dacapo-backup-${todayKey()}.json`, data);
 }
@@ -225,12 +224,11 @@ function restoreFile(file) {
       Store.s.savedAt = Date.now();
       Store.save();
       if (Array.isArray(o.imports)) Library.saveImports(o.imports);
-      Sketches.merge(o.sketches);
       Library.cache.clear();
       Store.emit(); // brings the restored items up to date (see app.js)
       Log.ev('restored backup', { v: st.v });
       closeSheet();
-      go('home');
+      go('play');
       toast('Progress restored');
     } catch (e) {
       Log.warn('restore failed', String(e.message || e));

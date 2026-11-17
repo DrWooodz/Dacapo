@@ -1,4 +1,4 @@
-// Things that go wrong at the piano: errors, the microphone, sound that needs a tap, and Free play.
+// Things that go wrong at the piano: errors, the microphone, sound that needs a tap.
 import { test, expect } from './fixtures.js';
 
 test('an error in a handler is logged and offered for a report, and the app carries on', async ({
@@ -8,6 +8,7 @@ test('an error in a handler is logged and offered for a report, and the app carr
   app.allowErrors(/boom test/);
   await app.connectPiano();
   await app.onboard();
+  await app.song('p:satie-gym-1:0');
   await app.eval(() => {
     const off = window.DaCapo.Input.on(() => {
       throw new Error('boom test');
@@ -18,14 +19,14 @@ test('an error in a handler is logged and offered for a report, and the app carr
   });
   expect(await app.loggedErrors()).toEqual(['note listener: boom test']);
   await expect(page.locator('.toast')).toContainText('Something went wrong. It was logged.');
-  expect(await app.waitRep()).toMatch(/^Clean line \(1 of 3\)/);
+  expect(await app.waitRep()).toBe('Clean. Once more, without the key hints.');
 });
 
 test('with the microphone, chord drills are practice only', async ({ app }) => {
   await app.connectPiano();
   await app.onboard();
   await app.eval(() => (window.DaCapo.Input.mode = 'mic'));
-  await app.practice('p:satie-gym-1:0');
+  await app.song('p:satie-gym-1:0');
   expect(await app.eval(() => window.__t.waitPhase('ready', 6000))).toBe(true);
   await app.eval(async () => {
     for (const s of window.__t.steps()) {
@@ -49,9 +50,9 @@ test('when the browser blocks sound, the metronome waits for one tap', async ({ 
   await app.eval(() => {
     const D = window.DaCapo;
     D.Store.s.profile.onboarded = true;
-    D.ensureItem('t:sc:major:A');
-    Object.assign(D.Store.s.items['t:sc:major:A'], { stage: 'tempo', phase: null });
-    D.go('practice', { item: 't:sc:major:A' });
+    D.ensureItem('p:satie-gym-1:1');
+    Object.assign(D.Store.s.items['p:satie-gym-1:1'], { stage: 'tempo', phase: null });
+    D.go('songs', { pid: 'satie-gym-1', item: 'p:satie-gym-1:1' });
   });
   await expect.poll(() => app.phase()).toBe('needsound');
   expect(await app.message()).toMatch(/^Tap the screen once to switch on the metronome/);
@@ -60,19 +61,6 @@ test('when the browser blocks sound, the metronome waits for one tap', async ({ 
   expect(await app.phase()).toBe('needsound');
   await page.locator('#page').click({ position: { x: 100, y: 40 } });
   await expect.poll(() => app.phase()).toBe('countin');
-});
-
-test('Free play names chords and shows every tab', async ({ app, page }) => {
-  await app.connectPiano();
-  await app.onboard();
-  await app.eval(() => window.DaCapo.go('free', { tab: 'live' }));
-  await app.eval(() => [60, 64, 67].forEach(m => window.__t.noteOn(m)));
-  await expect(page.locator('#lvChord')).toHaveText('C');
-  await app.eval(() => [60, 64, 67].forEach(m => window.__t.noteOff(m)));
-  for (const tab of ['Jam', 'Echo', 'Record', 'Metronome', 'Listen']) {
-    await page.locator('[data-seg="ftab"] button', { hasText: tab }).click();
-    await expect(page.locator('#fBody')).not.toBeEmpty();
-  }
 });
 
 test('with the microphone chosen, notes from a connected keyboard are ignored', async ({ app }) => {

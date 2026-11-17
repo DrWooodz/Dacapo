@@ -25,7 +25,7 @@ const CASIO_GUIDE = [
     t: 'Record yourself with the built-in recorder',
     p: [
       'The piano has a 6-track MIDI recorder (5 songs, about 12,000 notes each). Recording and listening back, away from the keys, is one of the fastest ways to hear what to fix.',
-      "Hands-separate trick: record the left hand on one track, then practice the right hand against it at your working tempo. DaCapo's recorder (Free play → Record) does the same with a piano-roll view.",
+      "Hands-separate trick: record the left hand on one track, then practice the right hand against it at your working tempo. DaCapo's recorder (Play → Recordings) does the same with a piano-roll view.",
       'Recorder songs can be saved to a USB flash drive in the USB-A port.',
     ],
   },
@@ -33,7 +33,7 @@ const CASIO_GUIDE = [
     t: 'Use the pedals properly',
     p: [
       'The included SP-3 is an on/off sustain switch. For Debussy and Chopin, the optional SP-34 three-pedal unit adds soft and sostenuto pedals and half-damper control, which lets you clear the bass without losing all resonance.',
-      'Pedal changes show in Free play (Pedal up / Pedal down) and in your takes as a gold bar under the piano roll, so you can check whether you change with the harmony.',
+      'Pedal changes show on Play (Pedal up / Pedal down) and in your recordings as a gold bar under the piano roll, so you can check whether you change with the harmony.',
     ],
   },
   {
@@ -78,7 +78,7 @@ const GENERIC_GUIDE = [
   {
     t: 'Record and listen back',
     p: [
-      "Use Free play → Record, or your piano's recorder if it has one. Listening away from the keys is one of the fastest ways to hear what to fix.",
+      "Use Play → Recordings, or your piano's recorder if it has one. Listening away from the keys is one of the fastest ways to hear what to fix.",
     ],
   },
 ];

@@ -1,8 +1,8 @@
 /* Tools for improvising in a mood (pure): the left-hand patterns, each written out over a voice-led
    progression with fingers; how to read what the left hand played; and the right hand's ideas (color
    note, targets, motif and sequence, thirds and sixths, call and response) with what each listens for. */
-import { midiOf, nameOf } from './theory.js';
-import { CHORD_TONES, MOOD_BY, moodScale, voiceProgression } from './moods.js';
+import { midiOf, nameOf, spellerFor } from './theory.js';
+import { CHORD_TONES, MOOD_BY, moodScale, moodSig, voiceProgression } from './moods.js';
 
 export const pc12 = m => ((m % 12) + 12) % 12;
 
@@ -278,4 +278,22 @@ export function earRound(by = {}, rnd = Math.random, pool = Object.keys(MOOD_BY)
     [options[i], options[j]] = [options[j], options[i]];
   }
   return { mood, pc: Math.floor(rnd() * 12), options };
+}
+
+// a left-hand pattern as a drill: one bar of it over each chord of one of the mood's progressions
+export function lhPatternRun(mood, pc, id, prog = 0) {
+  const chords = MOOD_BY[mood].progs[prog].chords;
+  const V = lhVoicing(mood, pc, chords);
+  const tonic = midiOf(moodScale(mood, pc)[0]);
+  const sp = spellerFor(moodSig(mood, pc));
+  const steps = V.flatMap((v, i) =>
+    patternBar(id, V, i, tonic).map((g, j) => ({
+      midis: g.ms,
+      notes: g.ms.map((m, k) => ({ n: sp(m), st: 'b', fcls: 'lh', f: g.f[k] ?? undefined })),
+      beat: i * 4 + g.b,
+      dur: g.d,
+      chord: j === 0 ? v.info.name : undefined,
+    })),
+  );
+  return { steps, sig: moodSig(mood, pc), clef: 'bass' };
 }

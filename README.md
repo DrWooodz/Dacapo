@@ -1,39 +1,24 @@
 # DaCapo
 
-A piano practice app that listens to your digital piano over MIDI. Two ways to use it, switchable on Home:
-
-- **Moods:** scales by the sound they make, in every key, with their fingering, and improvising in them. Made for short sittings whenever you have them.
-- **The full course:** a daily plan across reading, technique, theory, pieces and improvising, tracked over months.
+A piano companion that listens to your digital piano over MIDI. Sit down, play, and it keeps up: it names what you play, keeps it correct, and shows you where to go next.
 
 **Open it:** [drwooodz.github.io/Dacapo](https://drwooodz.github.io/Dacapo/) in Chrome or Edge (Android or desktop). To install it, use the browser's menu, then **Add to Home screen**. It works offline.
 
 No account, server or tracking. Progress stays in the browser; Settings has backup and restore.
 
-## Moods
+## Four tabs
 
-- **17 moods in 12 keys.** Dark (natural and harmonic minor, Phrygian, Locrian), bittersweet (Dorian, melodic minor, minor pentatonic), exotic (Phrygian dominant, double harmonic, Hirajoshi), strange (whole tone, diminished) and bright (major, Mixolydian, Lydian, major pentatonic, blues). Each comes with what it sounds like, where you have heard it, and its color note: the one that makes it different.
-- **Fingering for every scale.** Major and minor scales use the published fingerings; modes use their parent scale's (D Dorian is fingered like C major). The rest are worked out from the rules pianists use: thumb off black keys, crossings after 3 or 4, no overstretching.
-- **A sitting** has five steps, in any order: listen; the scale (right, left or both hands); its chords and progressions; arpeggios of its chords; improvise. Help is yours to switch: keys lit, finger numbers, a metronome.
-- **Chords:** the chords the scale makes, with numerals, notes and the signature chord marked, and two or three progressions that carry the mood, voiced so the hand barely moves. Hear any of them, or play them.
-- **Progress:** a key is *comfortable* after three clean runs with each hand, and *solid* after a check passed on two different days (both hands, two octaves, no help, every note right and even). Checks happen only when you ask. A mood is *yours* once three keys are solid, one of them a black-key one.
-- **Improvising:** a held drone or one of the progressions as backing; ten left-hand patterns (from root and fifth to Alberti, open tenths, walking bass and pedal point); and ideas for the right hand (color note, chord tones on the strong beats, motif and sequence, thirds and sixths, call and response). DaCapo says what it heard for each and suggests what to try next.
-- **Which mood?** An ear game on Home: hear a phrase, name its mood, learn the note that gave it away.
-- **Home** shows where you left off, the suggested next sitting, what DaCapo noticed in your playing, every mood and key (browsed by mood, by shared hand shape, or around the circle of fifths), and your trajectory.
+- **Play.** Just play. Each chord is named as you play it, with its inversion; DaCapo hears which key you are in, and one tap takes it. Choose a mood instead and its scale lights up across the keyboard, chords get their numerals (♭VI, V), a backing can play (a held drone, or one of the mood's progressions with a bass), and notes outside the scale are noted with whether they resolved. *Try something* gives one idea at a time for each hand: ten left-hand patterns (root and fifth to Alberti, open tenths, walking bass, pedal point) and six right-hand ideas (color note, chord tones on the strong beats, motif and sequence, thirds and sixths, call and response), each with what DaCapo heard. Recordings show every note, even with the pedal held down.
+- **Explore.** Nothing here is recorded. Find a mood by the feel you are after (brooding, tragic, dreamy, fiery…) and hear it. Each of the 17 moods, in any of the 12 keys, has its sound, scale and fingering, its color note (the one that makes it different), its chords and progressions, and its neighbors: one note different, or the same notes from another home. Also: the circle of fifths (signatures, relative minors, the chords of a key), two ear games (name the mood; play back a phrase), and a map of what there is to learn, the core first.
+- **Practice.** When you want to work on something. The core is major and minor (natural and harmonic) in every key, and the circle of fifths; everything else is a tap away. A key has its scale (right, left or both hands), its chords (progressions, inversions, left-hand patterns over a progression) and its arpeggios. Help is yours to switch: keys lit, finger numbers, a metronome, the exact octave (any octave counts otherwise). *Check me* is the one strict moment: both hands, two octaves, no help, every note right and even. Passing it once makes the key known.
+- **Songs.** 29 pieces by Satie, Chopin, Debussy and Rachmaninoff, easy to advanced. A piece is learned a section of about four bars at a time: each hand, then together, in wait mode (the app waits for the right notes), then with the metronome up to tempo (two clean runs out of three raise it about 5%, wrong notes lower it 10%), then the whole piece.
 
-## The full course
+## Theory and fingering
 
-- **A daily session.** One focus area a week, a few minutes of upkeep for the rest, and cold checks of what you learned before.
-- **Six areas:** note reading (treble and bass), sight-reading, technique (scales and arpeggios in all keys), theory (20 units answered by playing, most with a walkthrough), pieces, and improvisation (nine style studies over a backing).
-- **29 pieces** by Satie, Chopin, Debussy and Rachmaninoff, learned in sections of about four bars: hands separately, then together, then up to tempo.
-- Learning happens in wait mode: the app waits for the right notes. Then speed (reading, theory) or tempo (scales, pieces): two clean runs out of three raise the tempo about 5%, wrong notes lower it 10%.
-- An item is *integrated* only when it is right cold (the first thing you play that day) on two different days. Integrated items come back after 3, 7, 15, 30, 60, then every 120 days.
-- When something stalls, the approach changes (one hand, wait mode, hints sooner) instead of repeating.
+- Every scale is spelled with the right note names in every key. Major and minor scales use the published fingerings; modes use their parent scale's (D Dorian is fingered like C major); the rest are worked out from the rules pianists use: thumb off black keys, crossings after 3 or 4, no overstretching. Arpeggios use the standard fingerings, including the black-key ones (D♭ major: 4 1 2 4 in the right hand).
+- Chord numerals count letters from home, the same in every key. Progressions are voiced so each chord takes the shape nearest the last.
 
-## Free play
-
-A chord and key readout, a loop station (with your piano played through the device, split per hand), an ear game, a recorder (it shows every note, even with the pedal held down) and a metronome.
-
-Only MIDI, or the microphone for single notes, counts toward progress. On-screen keys are for trying things out. A practice day runs from 4 am to 4 am.
+Only MIDI, or the microphone for single notes, counts. On-screen keys are for trying things out.
 
 ## Input
 
@@ -42,6 +27,8 @@ Only MIDI, or the microphone for single notes, counts toward progress. On-screen
 | MIDI (USB) | everything: chords, timing, loudness, pedal | Chrome or Edge on Android or desktop; the piano's "USB to Host" port. iPhone and iPad browsers have no Web MIDI. |
 | Microphone | one note at a time | any piano |
 | On-screen keys | touch | practice only, not counted |
+
+Settings can also play your piano through the device with another sound, split at middle C if you like.
 
 ## Development
 
@@ -59,9 +46,9 @@ npm run lint && npm run format:check && node tools/fix-imports.mjs --check
 
 ```
 src/js/core/    log, util, store (state, migration), audio, input (MIDI, mic, touch), ui (router, sheets)
-src/js/music/   theory, notation, analysis, harmony, moods (scales, spelling, fingering, chords), improvising tools, MIDI read/write, the Jam's sounds and loop
-src/js/learn/   curriculum and stages, sessions, skills and focus, moods progress, theory units, walkthroughs, the players
-src/js/views/   home (both paths), a moods sitting, practice, library, free play, settings and panels
+src/js/music/   theory, notation, analysis, harmony, moods (scales, spelling, fingering, chords), improvising tools, sounds, the library
+src/js/learn/   the player, pieces, moods practice, Play's listening and backing, echo, lessons
+src/js/views/   play, explore, practice, songs, settings and panels
 tests/          Playwright tests; pure modules are unit-tested directly
 tools/          LilyPond reader, library builder, import fixer
 ```
