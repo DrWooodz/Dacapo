@@ -1,16 +1,15 @@
 /* Recording yourself: takes kept on the device, with playback. */
 import { $, clamp, esc, fmtTime, meanOf, toast } from '../core/util.js';
 import { AudioEngine } from '../core/audio.js';
-import { Input } from '../core/input.js';
 import { midiName } from '../music/theory.js';
 import { isBlack } from '../music/render.js';
 import { dynName, groupSteps } from '../music/analysis.js';
 import { readTake } from '../music/takeread.js';
+import { createRecorder } from '../learn/sitting.js';
 
 /* ---------- takes: record what you play (any input), see it as a piano roll, play it back ---------- */
-const Takes = {
+export const Takes = {
   rec: null,
-  offs: [],
   playing: null,
   list() {
     try {
@@ -28,29 +27,13 @@ const Takes = {
   },
   start() {
     this.stopRec(true);
-    this.rec = { t0: performance.now(), ev: [] };
-    this.offs = [
-      Input.on(
-        ev =>
-          this.rec && this.rec.ev.push([Math.round(ev.t - this.rec.t0), 'n', ev.m, Math.round(ev.vel * 127)]),
-      ),
-      Input.onOff(ev => {
-        if (!this.rec) return;
-        if (ev.pedal != null) this.rec.ev.push([Math.round(ev.t - this.rec.t0), 'p', ev.pedal ? 1 : 0]);
-        else this.rec.ev.push([Math.round(ev.t - this.rec.t0), 'f', ev.m]);
-      }),
-    ];
+    this.rec = createRecorder();
   },
   stopRec(discard) {
-    this.offs.forEach(f => f());
-    this.offs = [];
     const r = this.rec;
     this.rec = null;
-    if (discard || !r) return null;
-    const ev = r.ev.filter(e => e[0] >= -200).sort((a, b) => a[0] - b[0]);
-    if (!ev.some(e => e[1] === 'n')) return null;
-    const first = ev.find(e => e[1] === 'n')[0];
-    ev.forEach(e => (e[0] -= first));
+    const ev = r && r.stop();
+    if (discard || !ev) return null;
     const take = { id: 't' + Date.now().toString(36), d: Date.now(), ev, name: '' };
     const l = this.list();
     l.unshift(take);
@@ -276,9 +259,7 @@ export function bindTakes(root) {
     const t0 = performance.now();
     tick = setInterval(() => {
       timeEl.textContent =
-        '● ' +
-        fmtTime((performance.now() - t0) / 1000) +
-        (Takes.rec ? ` · ${Takes.rec.ev.filter(e => e[1] === 'n').length} notes` : '');
+        '● ' + fmtTime((performance.now() - t0) / 1000) + (Takes.rec ? ` · ${Takes.rec.notes} notes` : '');
     }, 250);
   };
   paint();

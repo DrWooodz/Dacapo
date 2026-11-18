@@ -104,7 +104,8 @@ def module_body(path, build):
     name = os.path.relpath(path, os.path.join(SRC, 'js'))
     if name == 'data.js':
         data = lambda f: json.dumps(json.loads(read(os.path.join(SRC, 'data', f))), separators=(',', ':'), ensure_ascii=False)
-        return f'const GLYPHS = {data("glyphs.json")};\nconst LIBRARY_DATA = {data("library.json")};\n'
+        return (f'const GLYPHS = {data("glyphs.json")};\nconst LIBRARY_DATA = {data("library.json")};\n'
+                f'const SONGS_DATA = {data("songs.json")};\n')
     text = read(path)
     if name == 'env.js':
         text = text.replace("BUILD = 'dev'", f"BUILD = '{build}'").replace("APP_VERSION = 'dev'", f"APP_VERSION = '{version()}'")

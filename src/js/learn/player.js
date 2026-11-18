@@ -213,6 +213,12 @@ export const Player = {
               Library.clefAt(d.pid || P.def.pid, 1, d.a + bi),
             ],
             clefChanges: [],
+            syms: (d.syms || [])
+              .filter(
+                (c, i, l) =>
+                  c.t < end - 1e-6 && (c.t >= base - 1e-6 || !(l[i + 1] && l[i + 1].t <= base + 1e-6)),
+              )
+              .map(c => ({ ...c, t: Math.max(0, c.t - base) })),
             hl: { cur: map.has(hl.cur) ? map.get(hl.cur) : -1, ok: loc(hl.ok), bad: loc(hl.bad) },
             ppb: 30,
           });
@@ -227,6 +233,7 @@ export const Player = {
             time: d.time,
             clefs: d.clefs,
             clefChanges: d.clefChanges,
+            syms: d.syms,
             hl,
             ppb: d.steps.length > 60 ? 30 : 38,
           });

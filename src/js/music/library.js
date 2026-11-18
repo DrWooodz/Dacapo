@@ -1,17 +1,18 @@
 /* The built-in music. Pieces come from public-domain and Creative Commons editions typeset by
  * volunteers of the Mutopia Project (tools/build_library.py reads their LilyPond sources and checks
- * every bar). Note data is packed as base64 varints: per note, onset delta and duration in ticks,
+ * every bar); the tunes from the public-domain Open Hymnal Project (tools/build_songs.mjs). Note data is packed as base64 varints: per note, onset delta and duration in ticks,
  * pitch change per hand, and one byte with accidental, hand and staff. */
-import { LIBRARY_DATA } from '../data.js';
+import { LIBRARY_DATA, SONGS_DATA } from '../data.js';
 import { Log } from '../core/log.js';
 import { spellAcc } from './theory.js';
 
 export const COMPOSERS = {
+  tunes: { n: 'Tunes', short: 'Tunes', life: 'folk and hymn tunes, with their chords' },
   satie: { n: 'Erik Satie', short: 'Satie', life: '1866–1925' },
   chopin: { n: 'Frédéric Chopin', short: 'Chopin', life: '1810–1849' },
   debussy: { n: 'Claude Debussy', short: 'Debussy', life: '1862–1918' },
   rachmaninoff: { n: 'Sergei Rachmaninoff', short: 'Rachmaninoff', life: '1873–1943' },
-  mine: { n: 'Your files', short: 'Imported', life: '' },
+  mine: { n: 'Your songs', short: 'Yours', life: '' },
 };
 
 export const LEVEL_NAMES = [
@@ -25,7 +26,9 @@ export const LEVEL_NAMES = [
 
 export const listenUrl = p =>
   'https://www.youtube.com/results?search_query=' +
-  encodeURIComponent(`${(COMPOSERS[p.c] || {}).short || ''} ${p.t} ${p.sub || ''} piano`);
+  encodeURIComponent(
+    p.c === 'tunes' ? `${p.t} tune` : `${(COMPOSERS[p.c] || {}).short || ''} ${p.t} ${p.sub || ''} piano`,
+  );
 
 export const scoreUrl = p =>
   'https://imslp.org/index.php?search=' +
@@ -74,6 +77,7 @@ export const Library = {
     try {
       localStorage.setItem('dacapo.imports', JSON.stringify(list));
       this.mine = list;
+      this.every = null;
       return true;
     } catch (e) {
       Log.err(e, 'save import');
@@ -84,8 +88,10 @@ export const Library = {
   forget(id) {
     ['', 'bars:', 'secs:'].forEach(k => this.cache.delete(k + id));
   },
+  every: null, // the built-in pieces, the tunes and your imports, in one list
   all() {
-    return (typeof LIBRARY_DATA !== 'undefined' ? LIBRARY_DATA : []).concat(this.imports());
+    if (!this.every) this.every = [].concat(LIBRARY_DATA || [], SONGS_DATA || [], this.imports());
+    return this.every;
   },
   get(id) {
     return this.all().find(p => p.id === id) || null;
@@ -258,9 +264,18 @@ export const Library = {
         : all
             .filter(n => !want.includes(n.h))
             .map(n => ({ n: spellAcc(n.m, n.acc), st: n.s ? 'b' : 't', d: n.d, t: n.t - s0, ghost: true }));
+    // a tune's chord symbols in these bars (the one sounding at the start included)
+    const syms = (p.showSyms === false ? [] : p.syms || [])
+      .filter(
+        ([t], i, l) =>
+          t < bars[Math.min(z, bars.length - 1)] - 1e-6 &&
+          (t >= s0 - 1e-6 || (l[i + 1] || [Infinity])[0] > s0 + 1e-6),
+      )
+      .map(([t, text]) => ({ t: Math.max(0, t - s0), text }));
     return {
       steps,
       ghost,
+      syms,
       bars: bars.slice(a, z + 1).map(b => b - s0),
       total: bars[Math.min(z, bars.length - 1)] - s0,
       sig: this.keyAt(id, a),

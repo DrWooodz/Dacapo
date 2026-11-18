@@ -12,6 +12,7 @@ import { Thru } from './music/thru.js';
 import { Sounds } from './music/sounds.js';
 import { Player } from './learn/player.js';
 import { addDays, ensureItem, itemDef, itemState, planFor, refreshItems } from './learn/pieces.js';
+import { SITTING } from './learn/sitting.js';
 import { reportSheet } from './views/report.js';
 import { playView } from './views/play.js';
 import { exploreView } from './views/explore.js';
@@ -139,6 +140,8 @@ window.DaCapo = {
   itemState,
   ensureItem,
   planFor,
+  // Play's sittings
+  SITTING,
 };
 
 boot();

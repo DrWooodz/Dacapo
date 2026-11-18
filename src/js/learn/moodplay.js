@@ -6,7 +6,7 @@
 import { Log } from '../core/log.js';
 import { AudioEngine } from '../core/audio.js';
 import { Input } from '../core/input.js';
-import { midiOf } from '../music/theory.js';
+import { midiOf, spellerFor } from '../music/theory.js';
 import {
   callPhrase,
   colorNote,
@@ -20,7 +20,8 @@ import {
   patternBar,
   pc12,
 } from '../music/moodtools.js';
-import { CHORD_TONES, MOOD_BY, moodScale, voiceProgression } from '../music/moods.js';
+import { detectChord } from '../music/harmony.js';
+import { CHORD_TONES, MOOD_BY, moodScale, moodSig, voiceProgression } from '../music/moods.js';
 import { Sounds } from '../music/sounds.js';
 
 const SPLIT = 60; // below middle C is the left hand
@@ -47,12 +48,16 @@ const blankStats = () => ({
   },
 });
 
+// the sitting so far, across moods (for the read-back afterwards: learn/journal.js)
+const blankTally = () => ({ ms: 0, notes: 0, lh: 0, pedalMs: 0, lo: 108, hi: 21, chords: {}, moods: {} });
+
 export function createCompanion({ onChange = () => {} } = {}) {
   const st = {
     mood: null,
     pc: 0,
     backing: 'off',
     prog: 0,
+    song: null, // a tune whose chords the backing plays instead: {id, t, chords: [[s, type, beats, b0, name]]}
     bpm: 72,
     pattern: 'fifth',
     bars: [], // the backing's bars as they sound: {t (performance ms), i (chord)}
@@ -63,6 +68,21 @@ export function createCompanion({ onChange = () => {} } = {}) {
     lastAnswer: null,
   };
   let S = blankStats();
+  let T = blankTally();
+  let lastChord = { name: '', t: 0 };
+  const inMood = () =>
+    K ? (T.moods[st.mood + ':' + st.pc] ||= { ms: 0, notes: 0, outside: 0, resolved: 0, color: 0 }) : null;
+  // the chord your hands hold (three or more notes sounding together), counted once per change
+  const countChord = t => {
+    const ms = [...Input.held.keys()];
+    if (new Set(ms.map(pc12)).size < 3) return;
+    const c = detectChord(ms, spellerFor(K ? moodSig(st.mood, st.pc) : 0));
+    if (!c || c.root == null) return;
+    if (c.name === lastChord.name && t - lastChord.t < 4000) return;
+    lastChord = { name: c.name, t };
+    const x = (T.chords[c.name] ||= { n: 0, root: c.root, type: c.type });
+    x.n++;
+  };
   let lastNote = 0;
   let lastTick = performance.now();
   let lhGroup = null;
@@ -72,7 +92,8 @@ export function createCompanion({ onChange = () => {} } = {}) {
   const timers = [];
   let K = null; // the chosen mood in its key: {M, tonic, tPc, scalePcs, color}
 
-  const prog = () => K.M.progs[st.prog].chords;
+  const prog = () => (st.song ? st.song.chords : K.M.progs[st.prog].chords);
+  const beatsOf = i => (st.song ? st.song.chords[i][2] : 4);
   const voiced = () => voiceProgression(st.mood, st.pc, prog());
   const lhVoiced = () => lhVoicing(st.mood, st.pc, prog());
   // the chord sounding at a moment (performance ms): the backing's when it plays, else the home chord
@@ -81,11 +102,12 @@ export function createCompanion({ onChange = () => {} } = {}) {
     if (st.backing !== 'chords' || !st.bars.length) return { i: 0, beat: null, ...chordOf(0) };
     let b = st.bars[0];
     for (const x of st.bars) if (x.t <= t + 80) b = x;
-    return { i: b.i, beat: (t - b.t) / (60000 / st.bpm), ...chordOf(b.i) };
+    const b0 = st.song ? st.song.chords[b.i][3] : 0; // (a tune's chord can start mid-bar)
+    return { i: b.i, beat: b0 + (t - b.t) / (60000 / st.bpm), ...chordOf(b.i) };
   };
   function chordOf(i) {
-    const [s, type] = prog()[i];
-    return { rootPc: pc12(K.tonic + s), type };
+    const [s, type, , , name] = prog()[i];
+    return { rootPc: pc12(K.tonic + s), type, name };
   }
 
   /* ---------- the backing: a pad that holds, a bass that plays ---------- */
@@ -98,25 +120,27 @@ export function createCompanion({ onChange = () => {} } = {}) {
   const playBar = (t, i) => {
     const v = voiced()[i];
     const spb = 60 / st.bpm;
+    const beats = beatsOf(i);
     v.right.forEach(m => {
       const h = Sounds.start('pad', m, 0.5, t);
-      if (h) Sounds.stop(h, t + spb * 4 - 0.05);
+      if (h) Sounds.stop(h, t + spb * beats - 0.05);
     });
-    [0, 2].forEach(b => {
+    // the bass on beats 1 and 3 of a 4/4 bar; once for a shorter chord
+    (beats >= 4 ? [0, 2] : [0]).forEach(b => {
       const h = Sounds.start('bass', v.root, b ? 0.45 : 0.6, t + b * spb);
-      if (h) Sounds.stop(h, t + (b + 1.7) * spb);
+      if (h) Sounds.stop(h, t + (b + Math.min(1.7, beats - 0.3)) * spb);
     });
   };
   const schedule = () => {
     if (!K || st.backing !== 'chords') return;
     const now = AudioEngine.now();
-    const bar = (60 / st.bpm) * 4;
     while (st.nextBar < now + 0.3) {
       const at = Math.max(now, st.nextBar);
       const i = st.bar % prog().length;
+      const bar = (60 / st.bpm) * beatsOf(i);
       playBar(at, i);
       st.bars.push({ t: AudioEngine.toPerf(at), i });
-      if (st.bars.length > 8) st.bars.shift();
+      if (st.bars.length > 16) st.bars.shift();
       timers.push(setTimeout(() => onChange('chord'), Math.max(0, (at - now) * 1000)));
       st.nextBar = at + bar;
       st.bar++;
@@ -152,16 +176,26 @@ export function createCompanion({ onChange = () => {} } = {}) {
     if (d === 'sixth') S.rh.sixths++;
   };
   const onNote = ev => {
-    if (ev.m == null || !K) return;
+    if (ev.m == null) return;
     const t = ev.t || performance.now();
     lastNote = performance.now();
+    T.notes++;
+    if (ev.m < SPLIT) T.lh++;
+    T.lo = Math.min(T.lo, ev.m);
+    T.hi = Math.max(T.hi, ev.m);
+    clearTimeout(chordT);
+    chordT = setTimeout(() => countChord(t), 120);
+    if (!K) return;
     S.notes++;
+    const B = inMood();
+    B.notes++;
+    if (pc12(ev.m) === K.color.pc) B.color++; // (either hand, for the read-back)
     const hand = ev.m < SPLIT ? 'lh' : 'rh';
     // a note outside the scale, and whether the same hand stepped from it into the scale
     const outside = !K.scalePcs.has(pc12(ev.m));
     const prev = lastIn[hand];
-    if (prev && prev.outside && !outside && Math.abs(ev.m - prev.m) <= 2) S.resolved++;
-    if (outside) S.outside++;
+    if (prev && prev.outside && !outside && Math.abs(ev.m - prev.m) <= 2) (S.resolved++, B.resolved++);
+    if (outside) (S.outside++, B.outside++);
     lastIn[hand] = { m: ev.m, outside };
     if (hand === 'lh') {
       if (lhGroup && t - lhGroup.t < TOGETHER) lhGroup.ms.push(ev.m);
@@ -199,6 +233,7 @@ export function createCompanion({ onChange = () => {} } = {}) {
     }
     if (st.call && t >= st.call.from - 150) st.call.ms.push(ev.m);
   };
+  let chordT = 0;
   const offInput = Input.on(onNote);
 
   const tick = setInterval(
@@ -209,7 +244,9 @@ export function createCompanion({ onChange = () => {} } = {}) {
       // time counts while you play (a note in the last four seconds)
       if (now - lastNote < 4000) {
         S.ms += dt;
-        if (Input.pedal) S.pedalMs += dt;
+        T.ms += dt;
+        if (K) inMood().ms += dt;
+        if (Input.pedal) ((S.pedalMs += dt), (T.pedalMs += dt));
       }
       // a gesture is over once nothing joins it
       if (lhGroup && now - lhGroup.t > 200) (countLh(lhGroup), (lhGroup = null));
@@ -236,6 +273,17 @@ export function createCompanion({ onChange = () => {} } = {}) {
     get key() {
       return K;
     },
+    get tally() {
+      return T;
+    },
+    // since the last note (ms), and a fresh tally for the next sitting
+    get quiet() {
+      return lastNote ? performance.now() - lastNote : Infinity;
+    },
+    newSitting() {
+      T = blankTally();
+      lastChord = { name: '', t: 0 };
+    },
     chordAt,
     voiced,
     lhVoiced,
@@ -244,6 +292,7 @@ export function createCompanion({ onChange = () => {} } = {}) {
       st.mood = mood;
       st.pc = pc || 0;
       st.prog = 0;
+      st.song = null;
       if (!mood) K = null;
       else {
         const scale = moodScale(mood, st.pc);
@@ -269,6 +318,21 @@ export function createCompanion({ onChange = () => {} } = {}) {
     },
     setProg(i) {
       st.prog = i;
+      st.song = null;
+      restartBacking();
+    },
+    /* noodle over a tune's chords: its mood and key, its tempo, its chords looping as the backing.
+       song: {id, t, mood, pc, bpm, chords: songChords(...)} */
+    setSong(song) {
+      this.setMood(song.mood, song.pc);
+      if (!K) return;
+      st.song = {
+        id: song.id,
+        t: song.t,
+        chords: song.chords.map(c => [pc12(c.pc - K.tPc), c.type, c.beats, c.b0, c.name]),
+      };
+      st.bpm = Math.max(48, Math.min(132, song.bpm || st.bpm));
+      st.backing = 'chords';
       restartBacking();
     },
     setBpm(bpm) {
@@ -285,7 +349,8 @@ export function createCompanion({ onChange = () => {} } = {}) {
       const V = lhVoiced();
       const spb = 60 / st.bpm;
       const t0 = AudioEngine.now() + 0.1;
-      V.forEach((_, i) =>
+      // (a tune's first four chords)
+      V.slice(0, 4).forEach((_, i) =>
         patternBar(st.pattern, V, i, K.tPc).forEach(g =>
           g.ms.forEach(m => AudioEngine.note(m, t0 + (i * 4 + g.b) * spb, g.d * spb, 0.55)),
         ),
@@ -308,6 +373,7 @@ export function createCompanion({ onChange = () => {} } = {}) {
     },
     destroy() {
       clearInterval(tick);
+      clearTimeout(chordT);
       offInput();
       stopSound();
       AudioEngine.stopAll();

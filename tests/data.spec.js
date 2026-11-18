@@ -93,7 +93,7 @@ test('progress from DaCapo 1.x: pieces and moods carry on, the course is kept in
   await page.reload();
   await page.waitForFunction(() => window.DaCapo && window.DaCapo.Store);
   const s = await app.eval(() => window.DaCapo.Store.s);
-  expect(s.v).toBe(5);
+  expect(s.v).toBe(6);
   expect(s.settings.volume).toBe(0.5);
   expect(s.profile).toEqual({ favorites: ['satie'], onboarded: true });
   expect(s.piece.working).toEqual([{ pid: 'satie-gym-1' }]);
@@ -111,6 +111,25 @@ test('progress from DaCapo 1.x: pieces and moods carry on, the course is kept in
   await app.eval(() => window.DaCapo.go('practice'));
   await page.locator('details.family summary', { hasText: 'Bittersweet' }).click();
   await expect(page.locator('.keydot.solid[data-mood="dorian"][data-pc="2"]')).toHaveCount(1);
+});
+
+test('a piece with progress you are not learning shows up in Songs again (2.0 data)', async ({
+  app,
+  page,
+}) => {
+  await app.eval(() => {
+    const D = window.DaCapo;
+    const s = JSON.parse(JSON.stringify(D.Store.s));
+    s.v = 5;
+    s.piece.working = [{ pid: 'satie-gym-1' }];
+    s.items['p:chopin-p4:0'] = { stage: 'learn', phase: 'rh', log: [] };
+    localStorage.setItem('dacapo.v1', JSON.stringify(s));
+  });
+  await page.reload();
+  await page.waitForFunction(() => window.DaCapo && window.DaCapo.Store);
+  const s = await app.eval(() => window.DaCapo.Store.s);
+  expect(s.v).toBe(6);
+  expect(s.piece.working.map(w => w.pid).sort()).toEqual(['chopin-p4', 'satie-gym-1']);
 });
 
 test('damaged saved data does not stop the app: wrong shapes keep their defaults, items are repaired', async ({
@@ -145,7 +164,8 @@ test('damaged saved data does not stop the app: wrong shapes keep their defaults
   const s = await app.eval(() => window.DaCapo.Store.s);
   expect(Array.isArray(s.hist) && !Array.isArray(s.days)).toBe(true);
   expect(s.settings.volume).toBe(0.8);
-  expect(s.piece.working).toEqual([]);
+  // (a piece with progress is back among the ones you are learning)
+  expect(s.piece.working).toEqual([{ pid: 'satie-gym-1' }]);
   expect(s.moods.prefs).toMatchObject({ keys: true, octs: 1 });
   await app.song('p:satie-gym-1:1');
   expect(await app.item('p:satie-gym-1:0')).toMatchObject({ stage: 'tempo' });

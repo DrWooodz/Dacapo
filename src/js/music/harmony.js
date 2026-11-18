@@ -1,36 +1,6 @@
-/* Harmony: which key a set of notes is in, and which chord they make (Free play's readout). */
-import { meanOf } from '../core/util.js';
-import { CHORDS, INTERVALS, MAJOR_KEYS, MINOR_KEYS, nameOf, pcOfName, spellAbove } from './theory.js';
-
-const KK_MAJ = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
-
-const KK_MIN = [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
-
-function pearson(x, y) {
-  const mx = meanOf(x),
-    my = meanOf(y);
-  let a = 0,
-    b = 0,
-    c = 0;
-  for (let i = 0; i < x.length; i++) {
-    a += (x[i] - mx) * (y[i] - my);
-    b += (x[i] - mx) ** 2;
-    c += (y[i] - my) ** 2;
-  }
-  return b && c ? a / Math.sqrt(b * c) : 0;
-}
-
-export function detectKey(ms) {
-  if (ms.length < 8) return null;
-  const h = new Array(12).fill(0);
-  ms.forEach(m => h[((m % 12) + 12) % 12]++);
-  const rot = (prof, pc) => prof.map((_, i) => prof[(i - pc + 12) % 12]);
-  const all = [
-    ...MAJOR_KEYS.map(k => ({ ...k, mode: 'major', r: pearson(h, rot(KK_MAJ, pcOfName(k.t))) })),
-    ...MINOR_KEYS.map(k => ({ ...k, mode: 'minor', r: pearson(h, rot(KK_MIN, pcOfName(k.t))) })),
-  ].sort((a, b) => b.r - a.r);
-  return { best: all[0], second: all[1], conf: all[0].r - all[1].r, hist: h };
-}
+/* Harmony: which chord a set of notes makes (Play's readout). The mood and key of a passage is
+   guessMood in moodtools.js. */
+import { CHORDS, INTERVALS, nameOf, spellAbove } from './theory.js';
 
 const CHORD_T = [
   ...Object.entries(CHORDS).map(([k, v]) => ({ k, s: v.s, sym: v.sym, n: v.n })),

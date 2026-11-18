@@ -4,14 +4,15 @@
    and notes outside the scale are noted with whether they resolved. "Try something" gives one idea for
    each hand at a time. Recording and a metronome are at the bottom. Nothing here is scored. */
 import { Log } from '../core/log.js';
-import { $, $$, clamp, esc, fmtTime } from '../core/util.js';
+import { $, $$, clamp, esc, fmtTime, toast, todayKey } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { AudioEngine, Metro } from '../core/audio.js';
 import { Input } from '../core/input.js';
 import { bindSegs, closeBtn, closeSheet, go, onUnmount, openSheet, seg, UI } from '../core/ui.js';
-import { pcOfName, prettyKey, spellerFor } from '../music/theory.js';
+import { spellerFor } from '../music/theory.js';
 import { kbSVG, staffSVG } from '../music/render.js';
 import { dynName, groupSteps, Live } from '../music/analysis.js';
+import { Library } from '../music/library.js';
 import {
   CHORD_TONES,
   chordInfo,
@@ -24,13 +25,18 @@ import {
   plainestKey,
   tonicName,
 } from '../music/moods.js';
-import { detectChord, detectKey } from '../music/harmony.js';
-import { LH_BY, LH_PATTERNS, patternBar, pc12, RH_TOOLS, toolHow } from '../music/moodtools.js';
+import { guessMood, LH_BY, LH_PATTERNS, patternBar, pc12, RH_TOOLS, toolHow } from '../music/moodtools.js';
+import { detectChord } from '../music/harmony.js';
 import { Sounds } from '../music/sounds.js';
+import { readTake } from '../music/takeread.js';
+import { songChords } from '../music/pack.js';
 import { prefs } from '../learn/moods.js';
 import { createCompanion } from '../learn/moodplay.js';
+import { createRecorder, SITTING, Sittings } from '../learn/sitting.js';
+import { readBack } from '../learn/journal.js';
 import { bindConnect, connectNotice } from './connect.js';
 import { bindTakes, takesCardHTML } from './takes.js';
+import { bindJournal, bindReadBack, journalHTML, readBackHTML } from './journal.js';
 
 export const playView = (page, params = {}) => {
   const p = prefs();
@@ -53,6 +59,7 @@ export const playView = (page, params = {}) => {
     </section>`
     }
     ${connectNotice()}
+    <div id="plyReadback"></div>
     <section class="card stack">
       <div class="readout">
         <div class="stack" style="gap:2px;min-width:0">
@@ -67,12 +74,16 @@ export const playView = (page, params = {}) => {
       <div id="plyMood"></div>
       <div class="kbwrap scrollx" id="plyKbWrap"><div class="kb88" id="plyKb"></div></div>
       <p class="small mono" id="plyOut"></p>
+      <div class="row between" id="plySit" hidden><span class="small" id="plySitTime"></span>
+        <button class="btn sm ghost" type="button" id="plyDone">Done</button></div>
       <div class="staffwrap" id="plyStaff"></div>
     </section>
     <div id="plyBacking"></div>
     <div id="plyTry"></div>
     <details class="card" id="plyTakesBox"><summary><b>Recordings</b> <span class="small">record a run, listen back</span></summary>
       <div id="plyTakes"></div></details>
+    <details class="card" id="plyJournalBox"><summary><b>Journal</b> <span class="small">each sitting, read back</span></summary>
+      <div id="plyJournal"></div></details>
     <section class="card row between" id="plyMetro"></section>`;
   bindConnect();
   const hi = $('#plyHi', page);
@@ -122,7 +133,7 @@ export const playView = (page, params = {}) => {
   // the key it hears, while no mood is chosen; one tap takes it
   let keyNow = null;
   const paintKey = () => {
-    keyNow = detectKey(Live.hist.slice(-60).map(h => h.m));
+    keyNow = guessMood(Live.hist.slice(-80));
     const e = $('#plyKey', page);
     if (!e) return;
     const use = $('#plyUse', page);
@@ -131,13 +142,13 @@ export const playView = (page, params = {}) => {
       use.hidden = true;
       return;
     }
-    const { best, second, conf } = keyNow;
-    const how = conf > 0.08 ? 'Clearly' : conf > 0.03 ? 'Probably' : 'Possibly';
-    const or = conf <= 0.08 ? ` (or ${prettyKey(second.k)} ${second.mode})` : '';
-    e.textContent = `${how} ${prettyKey(best.k)} ${best.mode}${or}.`;
+    const { mood, pc, alt, sure } = keyNow;
+    const how = sure > 0.5 ? 'Sounds like' : sure > 0.2 ? 'Probably' : 'Possibly';
+    const or = sure <= 0.5 ? ` (or ${moodName(alt.mood, alt.pc)})` : '';
+    e.textContent = `${how} ${moodName(mood, pc)}${or}.`;
     use.hidden = false;
-    use.textContent = `Use ${prettyKey(best.k)} ${best.mode}`;
-    use.onclick = () => setMood(best.mode === 'major' ? 'major' : 'natural', pcOfName(best.k));
+    use.textContent = 'Use it';
+    use.onclick = () => setMood(mood, pc);
   };
 
   function chooseSheet() {
@@ -280,6 +291,33 @@ export const playView = (page, params = {}) => {
     const M = C.key.M;
     const V = C.voiced();
     const c = C.chordAt(performance.now());
+    if (st.song && st.backing === 'chords') {
+      box.innerHTML = `<section class="card stack">
+        <div class="row between"><span><span class="eyebrow">Over the chords of</span> <b>${esc(st.song.t)}</b></span>
+          <button class="btn sm ghost" type="button" id="plySongOff">Stop</button></div>
+        <div class="row between">
+          <div class="improv-chords" id="plyChords">${songChips(c.i)}</div>
+          <span class="row" style="gap:4px"><span class="small mono">♩ ${st.bpm}</span>
+            <button class="btn sm ghost" type="button" data-bbpm="-6" aria-label="Slower">−</button>
+            <button class="btn sm ghost" type="button" data-bbpm="6" aria-label="Faster">+</button></span>
+        </div>
+        <p class="small">The tune's chords loop, with its numerals in ${esc(moodName(st.mood, st.pc))}.
+          Play the tune over them, or your own line.</p>
+        ${Sounds.on() ? '' : '<p class="small">Sound is off in Settings.</p>'}
+      </section>`;
+      $('#plySongOff', box).onclick = () => {
+        C.setProg(0);
+        C.setBacking('off');
+        paintBacking();
+      };
+      $$('[data-bbpm]', box).forEach(b => {
+        b.onclick = () => {
+          C.setBpm(st.bpm + +b.dataset.bbpm);
+          paintBacking();
+        };
+      });
+      return;
+    }
     box.innerHTML = `<section class="card stack">
       <div class="row between"><span class="eyebrow">Backing</span>
         ${Sounds.on() ? '' : '<span class="small">Sound is off in Settings.</span>'}</div>
@@ -333,9 +371,23 @@ export const playView = (page, params = {}) => {
       };
     });
   };
+  // a tune's chord now and the three after it, with their numerals
+  const songChips = i => {
+    const ch = C.st.song.chords;
+    return [0, 1, 2, 3]
+      .map(k => {
+        const [s, type, , , name] = ch[(i + k) % ch.length];
+        const num = chordInfo(C.st.mood, C.st.pc, [s, type]).num;
+        return `<span class="chip" aria-pressed="${k === 0}">${esc(name)} <span class="small">${esc(num)}</span></span>`;
+      })
+      .join('');
+  };
   const paintChordChips = () => {
     const c = C.chordAt(performance.now());
-    if (c)
+    if (c && C.st.song) {
+      const box = $('#plyChords', page);
+      if (box) box.innerHTML = songChips(c.i);
+    } else if (c)
       $$('#plyChords .chip', page).forEach((el, k) => el.setAttribute('aria-pressed', String(k === c.i)));
   };
 
@@ -533,6 +585,64 @@ export const playView = (page, params = {}) => {
     cancelAnimationFrame(raf);
     clearTimeout(keyT);
   });
+  /* ---------- a sitting: from your first note until you stop (90 s quiet, Done, or leaving Play) ---------- */
+  let rec = createRecorder();
+  const endSitting = reason => {
+    const T = C.tally;
+    const ev = rec ? rec.stop() : null;
+    rec = reason === 'leave' ? null : createRecorder();
+    C.newSitting();
+    $('#plySit', page).hidden = true;
+    // a few notes in passing are not a sitting
+    if (!ev || T.notes < SITTING.minNotes || T.ms < SITTING.minMs) return;
+    const { notes } = readTake(ev);
+    const id = 's' + Date.now().toString(36);
+    const entry = readBack(T, {
+      guess: guessMood(notes.map(n => ({ m: n.m, t: n.t, d: n.dur }))),
+      day: todayKey(),
+      at: Date.now(),
+      id,
+    });
+    Store.s.journal.push(entry);
+    Store.save();
+    Sittings.save(id, ev);
+    Log.ev('sitting', { min: entry.min, notes: entry.notes, mood: entry.mood, reason });
+    if (reason === 'leave') {
+      toast('Your sitting is in the journal');
+      return;
+    }
+    showReadBack(entry);
+    paintJournal();
+  };
+  const showReadBack = entry => {
+    const box = $('#plyReadback', page);
+    box.innerHTML = `<section class="card stack readback">
+      <div class="row between"><h2 class="h2">That sitting</h2>
+        <button class="btn sm ghost" type="button" id="plyRbClose" aria-label="Close">×</button></div>
+      ${readBackHTML(entry)}</section>`;
+    bindReadBack(box, entry, { onTry: (mood, pc) => setMood(mood, pc) });
+    $('#plyRbClose', box).onclick = () => (box.innerHTML = '');
+    box.scrollIntoView({ block: 'nearest' });
+  };
+  const paintJournal = () => {
+    const box = $('#plyJournal', page);
+    box.innerHTML = journalHTML();
+    bindJournal(box, { onTry: (mood, pc) => setMood(mood, pc) });
+  };
+  paintJournal();
+  $('#plyDone', page).onclick = () => endSitting('done');
+  const paintSit = () => {
+    const T = C.tally;
+    if (!T.notes) return;
+    if (C.quiet > SITTING.quiet) {
+      endSitting('quiet');
+      return;
+    }
+    $('#plySit', page).hidden = false;
+    $('#plySitTime', page).textContent = `This sitting: ${fmtTime(T.ms / 1000)} · ${T.notes} notes`;
+  };
+  onUnmount(() => endSitting('leave'));
+
   function changed(kind) {
     if (kind === 'chord') {
       paintChordChips();
@@ -540,12 +650,23 @@ export const playView = (page, params = {}) => {
     } else if (kind === 'answer' || kind === 'tick') {
       paintOut();
       paintFeedback();
+      if (kind === 'tick') paintSit();
     }
   }
 
   // a mood to start in: from Explore or Practice ("Noodle in this"), else none until you choose one
   const start = params.mood && MOOD_BY[params.mood] ? params.mood : null;
   setMood(start, start ? (Number.isInteger(+params.pc) ? +params.pc % 12 : plainestKey(start)) : 0);
+  // or a tune's chords (Songs: "Noodle over its chords")
+  const song = params.song && Library.get(params.song);
+  if (song && song.syms && song.mood) {
+    C.setSong({ ...song, chords: songChords(song.syms, Library.bars(song.id)) });
+    Object.assign(p, { mood: song.mood, pc: song.pc });
+    paintMood();
+    paintBacking();
+    paintTry();
+    paintKb();
+  }
   // keep the middle of the keyboard in view
   requestAnimationFrame(() => {
     const wrap = $('#plyKbWrap', page);

@@ -8,10 +8,10 @@ No account, server or tracking. Progress stays in the browser; Settings has back
 
 ## Four tabs
 
-- **Play.** Just play. Each chord is named as you play it, with its inversion; DaCapo hears which key you are in, and one tap takes it. Choose a mood instead and its scale lights up across the keyboard, chords get their numerals (♭VI, V), a backing can play (a held drone, or one of the mood's progressions with a bass), and notes outside the scale are noted with whether they resolved. *Try something* gives one idea at a time for each hand: ten left-hand patterns (root and fifth to Alberti, open tenths, walking bass, pedal point) and six right-hand ideas (color note, chord tones on the strong beats, motif and sequence, thirds and sixths, call and response), each with what DaCapo heard. Recordings show every note, even with the pedal held down.
+- **Play.** Just play. Each chord is named as you play it, with its inversion; DaCapo hears which mood and key you are in (all 17 moods: "Probably D Dorian"), and one tap takes it. Choose a mood instead and its scale lights up across the keyboard, chords get their numerals (♭VI, V), a backing can play (a held drone, or one of the mood's progressions with a bass), and notes outside the scale are noted with whether they resolved. *Try something* gives one idea at a time for each hand: ten left-hand patterns (root and fifth to Alberti, open tenths, walking bass, pedal point) and six right-hand ideas (color note, chord tones on the strong beats, motif and sequence, thirds and sixths, call and response), each with what DaCapo heard. When you stop, the sitting is read back (the mood, the chords you held with their numerals, outside notes and whether they resolved, the color note, the left hand and the pedal) with one thing to try next time, and kept in a journal with its recording. Recordings show every note, even with the pedal held down.
 - **Explore.** Nothing here is recorded. Find a mood by the feel you are after (brooding, tragic, dreamy, fiery…) and hear it. Each of the 17 moods, in any of the 12 keys, has its sound, scale and fingering, its color note (the one that makes it different), its chords and progressions, and its neighbors: one note different, or the same notes from another home. Also: the circle of fifths (signatures, relative minors, the chords of a key), two ear games (name the mood; play back a phrase), and a map of what there is to learn, the core first.
 - **Practice.** When you want to work on something. The core is major and minor (natural and harmonic) in every key, and the circle of fifths; everything else is a tap away. A key has its scale (right, left or both hands), its chords (progressions, inversions, left-hand patterns over a progression) and its arpeggios. Help is yours to switch: keys lit, finger numbers, a metronome, the exact octave (any octave counts otherwise). *Check me* is the one strict moment: both hands, two octaves, no help, every note right and even. Passing it once makes the key known.
-- **Songs.** 29 pieces by Satie, Chopin, Debussy and Rachmaninoff, easy to advanced. A piece is learned a section of about four bars at a time: each hand, then together, in wait mode (the app waits for the right notes), then with the metronome up to tempo (two clean runs out of three raise it about 5%, wrong notes lower it 10%), then the whole piece.
+- **Songs.** 18 tunes with their chords (folk and hymn melodies, each as melody and chords or a four-part setting) and 29 pieces by Satie, Chopin, Debussy and Rachmaninoff, easy to advanced. Noodle over a tune's chords in Play. Add your own as MusicXML (MuseScore and every notation app export it). A piece is learned a section of about four bars at a time: each hand, then together, in wait mode (the app waits for the right notes), then with the metronome up to tempo (two clean runs out of three raise it about 5%, wrong notes lower it 10%), then the whole piece.
 
 ## Theory and fingering
 
@@ -42,15 +42,15 @@ npm test                       # build, then Playwright tests (simulated MIDI in
 npm run lint && npm run format:check && node tools/fix-imports.mjs --check
 ```
 
-`build.py` bundles the ES modules in `src/js` into one file: it orders them, strips `import`/`export`, checks that every import is exported and no top-level name is declared twice, and inlines styles and data. `docs/` is committed because GitHub Pages serves it; CI checks it matches the source. Rebuild the music data with `python3 tools/build_library.py /path/to/MutopiaProject/ftp`.
+`build.py` bundles the ES modules in `src/js` into one file: it orders them, strips `import`/`export`, checks that every import is exported and no top-level name is declared twice, and inlines styles and data. `docs/` is committed because GitHub Pages serves it; CI checks it matches the source. Rebuild the music data with `python3 tools/build_library.py /path/to/MutopiaProject/ftp` and the tunes with `node tools/build_songs.mjs /path/to/openhymnal` (a clone of the Open Hymnal Project's ABC files).
 
 ```
 src/js/core/    log, util, store (state, migration), audio, input (MIDI, mic, touch), ui (router, sheets)
-src/js/music/   theory, notation, analysis, harmony, moods (scales, spelling, fingering, chords), improvising tools, sounds, the library
-src/js/learn/   the player, pieces, moods practice, Play's listening and backing, echo, lessons
+src/js/music/   theory, notation, analysis, harmony, moods (scales, spelling, fingering, chords), improvising tools, sounds, the library, MusicXML
+src/js/learn/   the player, pieces, moods practice, Play's listening and backing, sittings and the journal, echo, lessons
 src/js/views/   play, explore, practice, songs, settings and panels
 tests/          Playwright tests; pure modules are unit-tested directly
-tools/          LilyPond reader, library builder, import fixer
+tools/          LilyPond and ABC readers, library and tunes builders, import fixer
 ```
 
 Conventions:
@@ -63,7 +63,7 @@ Conventions:
 ## Licenses
 
 - Code: MIT, © 2026 DrWooodz (`LICENSE`).
-- Music data: from [Mutopia Project](https://www.mutopiaproject.org) editions, public domain or CC BY-SA 3.0/4.0 per piece (`LICENSES/MUSIC-DATA.md`).
+- Music data: from [Mutopia Project](https://www.mutopiaproject.org) editions, public domain or CC BY-SA 3.0/4.0 per piece (`LICENSES/MUSIC-DATA.md`). Tunes: from the [Open Hymnal Project](https://openhymnal.org), public domain.
 - Notation glyphs: Bravura, SIL Open Font License 1.1 (`LICENSES/OFL-1.1-Bravura.txt`).
 - Fonts: Bodoni Moda, Instrument Sans, IBM Plex Mono (Google Fonts).
 

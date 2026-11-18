@@ -206,8 +206,6 @@ export const CHORDS = {
 
 const pcOf = n => (((LPC[n.l] + n.a) % 12) + 12) % 12;
 
-export const pcOfName = t => pcOf(parseNote(t + '4'));
-
 function spellMidi(m, preferFlat = false) {
   const pc = ((m % 12) + 12) % 12;
   const o = Math.floor(m / 12) - 1;

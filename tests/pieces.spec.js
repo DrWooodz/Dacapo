@@ -123,3 +123,14 @@ test('a long piece is drawn a few bars at a time and follows the playing', async
   expect(await app.phase()).toBe('stopped');
   expect(await app.message()).toMatch(/^Stopped\./);
 });
+
+test('a section can start over from wait mode, with two taps', async ({ app, page }) => {
+  const id = 'p:satie-gym-1:1';
+  await app.setItem(id, { stage: 'tempo', phase: null, bpm: 40 });
+  await page.locator('#sgReset').click();
+  await expect(page.locator('#sgReset')).toHaveText('Tap again to start over');
+  expect(await app.item(id)).toMatchObject({ stage: 'tempo' });
+  await page.locator('#sgReset').click();
+  expect(await app.plan()).toMatchObject({ hand: 'rh', mode: 'wait' });
+  expect((await app.item(id)) || { stage: 'learn' }).toMatchObject({ stage: 'learn' });
+});

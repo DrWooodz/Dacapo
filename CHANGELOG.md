@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.2.0
+
+This release brings both planned steps, 2.1 (Play) and 2.2 (Songs).
+
+**Play**
+
+- When you stop playing (90 seconds without a note, **Done**, or leaving Play), the sitting is read back: the mood you were in, or the one it sounded like; minutes and notes; the chords you held, with their numerals; notes outside the scale and whether they resolved; the color note; how much the left hand and the pedal did; and one thing to try next time. Links go to the mood's page and its practice, or to the suggested neighbor mood.
+- A journal keeps each sitting. The last six are recorded automatically and can be heard again. Takes you record yourself stay separate.
+- The key it hears now covers all 17 moods: "Probably D Dorian (or C major)". A five-note tune comes out pentatonic, and a raised 7th points to harmonic minor. One tap takes it.
+
+**Songs**
+
+- Tunes: 18 public-domain melodies with their chords (Greensleeves, Picardy, Slane, the Passion Chorale, Kingsfold, Ode to Joy and others) from the Open Hymnal Project. Each has two arrangements. *Melody and chords* has the tune in the right hand and root-position chords in the left. *Four-part setting* is the hymn harmony.
+- Chord symbols appear above the staff.
+- **Noodle over its chords** opens Play in the tune's mood and key, with its chords looping as the backing, their numerals shown.
+- **Add a song** reads MusicXML files (.musicxml, .xml, .mxl), the format every notation app exports. That includes both staves, ties, key and time signatures, clefs, tempo, fingerings and chord symbols. When a file has no chord symbols, DaCapo names the chords itself for noodling but does not print its guesses.
+- Pieces with progress always show under Learning. **Start this section over** sends a section back to wait mode, after a second tap to confirm.
+
 ## 2.0.0
 
 DaCapo is now a companion for playing, not a course. Four tabs:

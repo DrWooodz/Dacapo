@@ -33,3 +33,28 @@ The note data of the built-in pieces is derived from editions typeset by volunte
 | Prelude in C-sharp minor (Op. 3 No. 2) | Sergei Rachmaninoff | Creative Commons Attribution-ShareAlike 4.0 | Petro Kostandy | Mutopia-2015/07/09-2033 |
 | Prelude in D major (Op. 23 No. 4) | Sergei Rachmaninoff | Creative Commons Attribution-ShareAlike 4.0 | Abel Cheung | Mutopia-2014/08/15-1993 |
 | Prelude in G minor (Op. 23 No. 5) | Sergei Rachmaninoff | Creative Commons Attribution-ShareAlike 4.0 | Joram Berger | Mutopia-2015/09/28-2001 |
+
+## Tunes
+
+The tunes (melodies, their harmony and the four-part settings) are from the ABC files of the Open Hymnal Project (https://openhymnal.org), which are in the public domain. The melody-and-chords arrangements and the chord symbols are DaCapo's own, derived from those settings.
+
+| Tune | Origin |
+|---|---|
+| Greensleeves | English, 16th century |
+| Veni Emmanuel | French, 15th century |
+| Picardy | French, 17th century |
+| Third Mode Melody | Thomas Tallis, 1567 |
+| Passion Chorale | Hans Leo Hassler, 1601 |
+| Ebenezer | Thomas J. Williams, 1890 (Welsh) |
+| Kingsfold | English folk tune |
+| O Waly Waly | English folk tune |
+| God Rest Ye Merry | English, 18th century |
+| Slane | Irish folk tune |
+| Brother James’s Air | James Leith Macbeth Bain, 1915 |
+| Ar Hyd y Nos | Welsh folk tune |
+| Ode to Joy | Ludwig van Beethoven, 1824 |
+| Stille Nacht | Franz Xaver Gruber, 1818 |
+| New Britain | American, 1829 |
+| Es ist ein Ros | Michael Praetorius, 1609 |
+| Finlandia | Jean Sibelius, 1899 |
+| Cranham | Gustav Holst, 1906 |

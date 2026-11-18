@@ -298,6 +298,7 @@ export function pieceStaffSVG({
   time = null,
   clefs = ['t', 'b'],
   clefChanges = [],
+  syms = [],
   hl = {},
   ppb = 34,
 } = {}) {
@@ -485,6 +486,18 @@ export function pieceStaffSVG({
         }
       });
     });
+  });
+  // chord symbols above the treble staff, at the note they start on (or where that time falls)
+  const xAt = t => {
+    if (pos.has(key(t))) return pos.get(key(t));
+    const before = times.filter(u => u <= t + 1e-6 && pos.has(key(u)));
+    return before.length ? pos.get(key(before[before.length - 1])) : x0;
+  };
+  let lastX = -99;
+  syms.forEach(c => {
+    const sx = Math.max(xAt(c.t), lastX + 8 * c.text.length);
+    body += `<text class="csym" x="${sx}" y="14">${esc(c.text)}</text>`;
+    lastX = sx;
   });
   return {
     svg: `<svg class="staff piece" viewBox="0 0 ${W} ${H}" role="img" aria-label="Score">${lines}${body}</svg>`,

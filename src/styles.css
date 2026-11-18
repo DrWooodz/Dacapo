@@ -705,6 +705,12 @@ svg.staff .fing.rh {
 svg.staff .fing.lh {
   fill: var(--lh);
 }
+svg.staff .csym {
+  font-family: var(--f-ui);
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--ink);
+}
 svg.staff .lbl {
   font-family: var(--f-ui);
   font-size: 8px;
@@ -1765,4 +1771,18 @@ svg.cof .ctr {
 .secbtn[aria-pressed='true'] {
   outline: 2px solid var(--cover);
   outline-offset: 1px;
+}
+
+/* ---------- a sitting, read back ---------- */
+.callout {
+  border-left: 3px solid var(--brass);
+  background: var(--brass-soft);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.callout p {
+  margin: 4px 0 0;
+}
+.chip.out {
+  border-style: dashed;
 }

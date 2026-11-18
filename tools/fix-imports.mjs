@@ -15,7 +15,10 @@ const escope = require('eslint-scope');
 
 const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'src', 'js');
 // hand-written modules whose exports are fixed: build-time facts and the built-in data
-const PROVIDERS = { 'env.js': ['BUILD', 'APP_VERSION', 'IN_CLAUDE'], 'data.js': ['GLYPHS', 'LIBRARY_DATA'] };
+const PROVIDERS = {
+  'env.js': ['BUILD', 'APP_VERSION', 'IN_CLAUDE'],
+  'data.js': ['GLYPHS', 'LIBRARY_DATA', 'SONGS_DATA'],
+};
 // import order: foundations first, screens last
 const ORDER = ['env.js', 'data.js', 'core/', 'music/', 'learn/', 'views/'];
 const CORE_ORDER = ['log', 'util', 'store', 'audio', 'input', 'ui', 'files'];

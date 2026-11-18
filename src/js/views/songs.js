@@ -1,12 +1,15 @@
 /* Songs: the pieces you are learning, and the music to choose from, one composer at a time. Hard pieces
    are here on purpose: goals to aim for. A piece is learned a section at a time (about four bars): each
    hand, then together, then up to tempo with the metronome; the whole piece last. Tap any section. */
+import { Log } from '../core/log.js';
 import { $, $$, esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { AudioEngine } from '../core/audio.js';
 import { bindSegs, closeBtn, go, onUnmount, openSheet, seg, UI } from '../core/ui.js';
+import { scoreText } from '../core/files.js';
 import { MAJOR_KEYS, MINOR_KEYS, prettyKey } from '../music/theory.js';
 import { COMPOSERS, LEVEL_NAMES, Library, listenUrl, scoreUrl } from '../music/library.js';
+import { parseMusicXML, pieceFromScore } from '../music/musicxml.js';
 import { Player } from '../learn/player.js';
 import {
   criterion,
@@ -35,10 +38,9 @@ export const songsView = (page, params = {}) => {
   if (params.pid && Library.get(params.pid)) return piecePage(page, params.pid, params.item);
   const fav = Store.s.profile.favorites || [];
   const all = Library.all();
-  // (Your files appears only for pieces imported in earlier versions)
   const shelves = Object.keys(COMPOSERS).filter(c => all.some(p => p.c === c));
   const shelf = shelves.includes(UI.shelf) ? UI.shelf : shelves.find(c => fav.includes(c)) || shelves[0];
-  const shelfName = c => (c === 'mine' ? 'Your files' : COMPOSERS[c].short);
+  const shelfName = c => (c === 'mine' ? 'Yours' : COMPOSERS[c].short);
   const working = workingPieces();
   page.innerHTML = `
     <h1 class="h1 pagetitle">Songs</h1>
@@ -68,8 +70,16 @@ export const songsView = (page, params = {}) => {
       )}
       ${shelfBody(shelf, all)}
     </section>
-    <p class="small">Scores: the Mutopia Project (mutopiaproject.org). Each piece shows its license and
-      typesetter. Suggested listening and full scores open on YouTube and IMSLP.</p>`;
+    <section class="card stack">
+      <div class="row between"><b>Add a song</b>
+        <label class="btn sm">Choose a MusicXML file<input type="file" id="sgFile" accept=".musicxml,.xml,.mxl" hidden></label></div>
+      <p class="small">MusicXML is the score format every notation app exports (MuseScore: File, Export,
+        MusicXML). Many scores on musescore.com and IMSLP download as MusicXML too. Chord symbols in the file
+        show on the score. The song stays on this device.</p>
+    </section>
+    <p class="small">Scores: the Mutopia Project (mutopiaproject.org); tunes: the Open Hymnal Project
+      (openhymnal.org), public domain. Each piece shows its license and typesetter. Suggested listening and
+      full scores open on YouTube and IMSLP.</p>`;
   bindSegs(page, {
     sgShelf: v => {
       UI.shelf = v;
@@ -82,7 +92,28 @@ export const songsView = (page, params = {}) => {
   $$('[data-open]', page).forEach(b => {
     b.onclick = () => pieceSheet(b.dataset.open);
   });
+  $('#sgFile', page).onchange = e => e.target.files[0] && addScore(e.target.files[0]);
 };
+
+// a MusicXML file becomes one of your songs
+async function addScore(file) {
+  try {
+    const sc = parseMusicXML(await scoreText(file));
+    const p = pieceFromScore(sc, { file: file.name });
+    if (!Library.saveImports(Library.imports().concat(p))) {
+      toast('Not enough room on this device for that score.');
+      return;
+    }
+    Log.ev('score added', { n: p.n, nb: p.nb, syms: p.showSyms });
+    UI.shelf = 'mine';
+    go('songs');
+    toast(`Added ${p.t}`);
+    pieceSheet(p.id);
+  } catch (e) {
+    Log.warn('score not read', String((e && e.message) || e));
+    toast((e && e.message) || 'Could not read that file.');
+  }
+}
 
 // difficulty as five dots
 const levelDots = n =>
@@ -92,10 +123,13 @@ const levelDots = n =>
 
 // the pieces on one shelf (a composer, or your own files), easiest first
 function shelfBody(c, all) {
-  const list = all.filter(p => p.c === c).sort((a, b) => a.lvl - b.lvl || a.t.localeCompare(b.t));
+  // a tune is listed once; its four-part setting is a switch in its panel
+  const list = all
+    .filter(p => p.c === c && !(p.pair && p.id.endsWith('-4')))
+    .sort((a, b) => a.lvl - b.lvl || a.t.localeCompare(b.t));
   const head =
     c === 'mine'
-      ? '<p class="small">Pieces you imported from MIDI files in earlier versions of DaCapo.</p>'
+      ? '<p class="small">Songs you added. They stay on this device.</p>'
       : `<p class="small">${esc(COMPOSERS[c].n)} · ${esc(COMPOSERS[c].life)}</p>`;
   return `${head}<div class="stack" style="gap:0">${list.map(pieceRow).join('')}</div>`;
 }
@@ -135,17 +169,34 @@ function pieceSheet(pid) {
   const minor = MINOR_KEYS.find(k => k.sig === sig);
   const keyName = major ? `${prettyKey(major.k)} major / ${prettyKey(minor.k)} minor signature` : '';
   const meter = p.ts && p.ts[0] ? `${p.ts[0][1]}/${p.ts[0][2]}` : '';
+  const tune = p.c === 'tunes';
   const links = mine
     ? ''
-    : `<a class="btn ghost" href="${scoreUrl(p)}" target="_blank" rel="noopener">Score</a>
+    : tune
+      ? `<a class="btn ghost" href="${listenUrl(p)}" target="_blank" rel="noopener">Listen</a>`
+      : `<a class="btn ghost" href="${scoreUrl(p)}" target="_blank" rel="noopener">Score</a>
        <a class="btn ghost" href="${listenUrl(p)}" target="_blank" rel="noopener">Listen</a>`;
   const source = mine
     ? esc(p.src || '') + ' · stays on this device'
-    : `Edition: ${esc(p.lic)}${p.by ? ' · typeset by ' + esc(p.by) : ''}${p.mut ? ' · ' + esc(p.mut) : ''}`;
+    : tune
+      ? `${esc(p.lic)} · from the ${esc(p.by)} (${esc(p.src)})`
+      : `Edition: ${esc(p.lic)}${p.by ? ' · typeset by ' + esc(p.by) : ''}${p.mut ? ' · ' + esc(p.mut) : ''}`;
   openSheet(
     `<div class="sheethead"><h2 class="h2">${esc(p.t)}</h2>${closeBtn}</div>
      <p class="small">${p.sub ? esc(p.sub) + ' · ' : ''}${esc((COMPOSERS[p.c] || {}).n || '')}${p.y ? ', ' + p.y : ''}</p>
      <p>${esc(p.tip || '')}</p>
+     ${
+       p.pair
+         ? `<div class="seg" role="group" aria-label="Arrangement">${[pid, p.pair]
+             .map(id => Library.get(id))
+             .sort((a, b) => a.lvl - b.lvl)
+             .map(
+               q =>
+                 `<button type="button" data-arr="${esc(q.id)}" aria-pressed="${q.id === pid}">${esc(q.sub)}</button>`,
+             )
+             .join('')}</div>`
+         : ''
+     }
      <div class="stats">
        <div class="stat"><b>${p.nb}</b><span>bars</span></div>
        <div class="stat"><b>${secs.length}</b><span>sections</span></div>
@@ -160,14 +211,20 @@ function pieceSheet(pid) {
        ${links}
      </div>
      <button class="btn cover big" type="button" id="psGo">${isWorking(pid) ? 'Open' : 'Learn this piece'}</button>
+     ${p.syms && p.syms.length ? '<button class="btn" type="button" id="psNoodle">Noodle over its chords</button>' : ''}
      <p class="small">${source}</p>
-     ${mine ? '<button class="btn sm ghost" type="button" id="psDel">Remove this file</button>' : ''}`,
+     ${mine ? '<button class="btn sm ghost" type="button" id="psDel">Remove this song</button>' : ''}`,
     sheet => {
       $('#psHear', sheet).onclick = () => playOpening(p);
       $('#psGo', sheet).onclick = () => {
         startPiece(pid);
         go('songs', { pid });
       };
+      $$('[data-arr]', sheet).forEach(b => {
+        b.onclick = () => b.dataset.arr !== pid && setTimeout(() => pieceSheet(b.dataset.arr));
+      });
+      const noodle = $('#psNoodle', sheet);
+      if (noodle) noodle.onclick = () => go('play', { song: pid });
       const del = $('#psDel', sheet);
       if (del) del.onclick = () => removeImport(pid);
       return () => AudioEngine.stopAll();
@@ -192,15 +249,33 @@ function piecePage(page, pid, itemParam) {
         <button class="btn sm ghost" type="button" id="sgInfo">About the piece</button>
       </div>
       <h1 class="h1 pagetitle">${esc(P.t)}</h1>
-      <p class="small">${esc((COMPOSERS[P.c] || {}).n || '')} · ♩ ${P.bpm} · ${esc(LEVEL_NAMES[P.lvl] || '')}</p>
+      <p class="small">${esc(P.c === 'tunes' ? P.sub : (COMPOSERS[P.c] || {}).n || '')} · ♩ ${P.bpm} · ${esc(LEVEL_NAMES[P.lvl] || '')}</p>
       <div class="sections" id="sgSecs"></div>
     </section>
     ${connectNotice()}
     <div id="sgBody"></div>
-    <div class="row"><button class="btn sm ghost" type="button" id="sgStop">Stop learning this piece</button></div>`;
+    <div class="row">
+      <button class="btn sm ghost" type="button" id="sgReset">Start this section over</button>
+      <button class="btn sm ghost" type="button" id="sgStop">Stop learning this piece</button>
+    </div>`;
   bindConnect();
   $('#sgBack', page).onclick = () => go('songs');
   $('#sgInfo', page).onclick = () => pieceSheet(pid);
+  // a section that went wrong (stuck slow, or one hand alone) can start again from wait mode; two taps
+  let resetArmed = false;
+  $('#sgReset', page).onclick = e => {
+    if (!resetArmed) {
+      resetArmed = true;
+      e.target.textContent = 'Tap again to start over';
+      return;
+    }
+    resetArmed = false;
+    e.target.textContent = 'Start this section over';
+    delete Store.s.items[st.item];
+    Store.save();
+    toast('Started over');
+    mount();
+  };
   $('#sgStop', page).onclick = () => {
     stopPiece(pid);
     toast('Stopped. Its progress is kept.');

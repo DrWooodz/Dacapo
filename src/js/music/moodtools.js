@@ -297,3 +297,70 @@ export function lhPatternRun(mood, pc, id, prog = 0) {
   );
   return { steps, sig: moodSig(mood, pc), clef: 'bass' };
 }
+
+/* which mood a passage is probably in, from its notes ([{m, t?, d?}], durations in any unit; without
+   them each note counts once). Every mood in every key is scored: how much of what sounds is in its scale,
+   how much of its scale sounds (a five-note tune is pentatonic, not major with two notes missing), and how
+   strongly its home is heard (the last note and the lowest notes, where tunes and bass lines come to rest).
+   The common moods get a small head start. {mood, pc, alt: {mood, pc}, sure (0..1)} or null. */
+const COMMON = new Set(['major', 'natural', 'harmonic']);
+export function guessMood(notes, { min = 12 } = {}) {
+  if (notes.length < min) return null;
+  const timed = notes.every(n => n.t != null && n.d > 0);
+  const w = new Array(12).fill(0);
+  notes.forEach(n => (w[pc12(n.m)] += timed ? n.d : 1));
+  const total = w.reduce((a, b) => a + b, 0);
+  // the bass: the lowest note sounding, moment by moment; and what sounds at the very end
+  const low = new Array(12).fill(0);
+  let finalBass;
+  let finalTop;
+  if (timed) {
+    const sorted = notes.slice().sort((a, b) => a.t - b.t);
+    const times = [...new Set(sorted.map(n => n.t))];
+    times.forEach((x, i) => {
+      const next = i + 1 < times.length ? times[i + 1] : x + 1;
+      let lo = null;
+      for (const n of sorted) {
+        if (n.t > x + 1e-6) break;
+        if (n.t + n.d > x + 1e-6 && (!lo || n.m < lo.m)) lo = n;
+      }
+      if (lo) low[pc12(lo.m)] += next - x;
+    });
+    const end = Math.max(...notes.map(n => n.t + n.d));
+    const last = notes.filter(n => n.t + n.d >= end - 1e-3);
+    finalBass = pc12(Math.min(...last.map(n => n.m)));
+    finalTop = pc12(Math.max(...last.map(n => n.m)));
+  } else {
+    // (played live: below middle C is the bass)
+    notes.forEach(n => n.m < 60 && (low[pc12(n.m)] += 1));
+    const lastLow = notes.filter(n => n.m < 60).pop();
+    finalBass = lastLow ? pc12(lastLow.m) : null;
+    finalTop = pc12(notes[notes.length - 1].m);
+  }
+  const lowTotal = low.reduce((a, b) => a + b, 0) || 1;
+  const all = [];
+  for (const M of Object.values(MOOD_BY))
+    for (let t = 0; t < 12; t++) {
+      const pcs = new Set(M.semis.map(s => (t + s) % 12));
+      let fit = 0;
+      pcs.forEach(p => (fit += w[p]));
+      fit /= total;
+      const missing = [...pcs].filter(p => w[p] < total * 0.03).length;
+      const home =
+        (finalBass === t ? 0.4 : 0) +
+        (finalTop === t ? 0.15 : 0) +
+        (low[t] / lowTotal) * 0.3 +
+        (w[t] / Math.max(...w)) * 0.1;
+      const score = fit - missing * 0.06 + home * 0.3 + (COMMON.has(M.id) ? 0.02 : 0);
+      all.push({ mood: M.id, pc: t, score });
+    }
+  all.sort((a, b) => b.score - a.score);
+  const best = all[0];
+  const alt = all.find(x => x.mood !== best.mood);
+  return {
+    mood: best.mood,
+    pc: best.pc,
+    alt: { mood: alt.mood, pc: alt.pc },
+    sure: Math.min(1, (best.score - alt.score) * 5),
+  };
+}

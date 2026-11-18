@@ -4,7 +4,7 @@ import { Log } from './log.js';
 import { DAY, todayKey } from './util.js';
 
 /* ---------- state + sync ---------- */
-const STATE_VERSION = 5;
+const STATE_VERSION = 6;
 
 export const DEFAULT_STATE = () => ({
   v: STATE_VERSION,
@@ -32,6 +32,7 @@ export const DEFAULT_STATE = () => ({
   hist: [], // milestones: {d, id, e}
   lessonsSeen: {}, // kind of drill -> the day its body-and-hands note was last shown
   games: {}, // ear games: best levels
+  journal: [], // each sitting at Play, read back (learn/journal.js)
   moods: {
     keys: {}, // 'mood:pc' -> {checks: [days], extra: {drill: clean runs}, last}
     prefs: {
@@ -183,6 +184,14 @@ export function migrate(o) {
   if (!o || typeof o !== 'object') return DEFAULT_STATE();
   const from = o.v || 1;
   const s = from < 5 ? fromVersion4(o) : deepMerge(DEFAULT_STATE(), o);
+  // version 6: a piece with progress is one you are learning (1.x kept only the daily piece in the list)
+  if (from < 6) {
+    const pids = Object.keys(s.items || {})
+      .filter(id => id.startsWith('p:'))
+      .map(id => id.split(':')[1]);
+    const working = (s.piece.working || []).map(w => w.pid);
+    s.piece.working = [...new Set([...working, ...pids])].map(pid => ({ pid }));
+  }
   s.v = STATE_VERSION;
   if (from < STATE_VERSION) Log.ev('migrated state', { from, to: STATE_VERSION });
   return s;
@@ -223,6 +232,7 @@ function pruneState(s, hard = false) {
     if (arr && arr.length > n) arr.splice(0, arr.length - n);
   };
   cap(s.hist, hard ? 150 : 400);
+  cap(s.journal, hard ? 40 : 100);
   Object.values(s.items || {}).forEach(it => cap(it.log, hard ? 12 : 30));
   if (s.archive && s.archive.items) Object.values(s.archive.items).forEach(it => it && delete it.log);
   const cutoff = todayKey(new Date(Date.now() - (hard ? 200 : 800) * DAY));
