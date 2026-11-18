@@ -50,9 +50,13 @@ export function parseAbc(text) {
   const clefOf = {};
   const voices = new Map(); // id -> music text
   let inBody = false;
+  let cur = '1';
+  let named = false;
   for (const raw of lines) {
     if (raw.startsWith('%%staves')) staves = raw.slice(8);
     const line = raw.replace(/(^|[^\\])%.*$/, '$1').trimEnd();
+    // (in a one-voice tune, an empty line ends it: text may follow)
+    if (!raw.trim() && inBody && !named && voices.size) break;
     if (!line.trim()) continue;
     const field = /^([A-Za-z]):\s*(.*)$/.exec(line);
     if (field && !line.startsWith('[')) {
@@ -60,6 +64,7 @@ export function parseAbc(text) {
       if (f === 'w' || f === 'W') continue;
       if (f === 'V') {
         const [id, ...rest] = v.trim().split(/\s+/);
+        cur = id;
         if (/clef=bass/.test(rest.join(' '))) clefOf[id] = 'bass';
         else if (/clef=treble/.test(rest.join(' '))) clefOf[id] = 'treble';
         continue;
@@ -69,8 +74,12 @@ export function parseAbc(text) {
       continue;
     }
     if (!inBody) continue;
+    // a line of music: for the voice it names ([V: S1V1] …), else the current one (one voice: '1')
     const v = /^\[V:\s*([^\]\s]+)\s*\]\s*(.*)$/.exec(line);
-    if (v) voices.set(v[1], (voices.get(v[1]) || '') + ' ' + v[2]);
+    if (v) ((cur = v[1]), (named = true));
+    // (where voices are named on each line, a line without a name is text, not music)
+    else if (named) continue;
+    voices.set(cur, (voices.get(cur) || '') + ' ' + (v ? v[2] : line));
   }
   const L = head.L ? frac(head.L) : 1 / 8;
   const meter =

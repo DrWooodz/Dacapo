@@ -36,7 +36,7 @@ The note data of the built-in pieces is derived from editions typeset by volunte
 
 ## Tunes
 
-The tunes (melodies, their harmony and the four-part settings) are from the ABC files of the Open Hymnal Project (https://openhymnal.org), which are in the public domain. The melody-and-chords arrangements and the chord symbols are DaCapo's own, derived from those settings.
+The tunes (melodies, their harmony and the four-part settings) are from the ABC files of the Open Hymnal Project (https://openhymnal.org), which are in the public domain in the US (all were published before 1930). Two are still in copyright in the EU and the UK, as noted below. The melody-and-chords arrangements and the chord symbols are DaCapo's own, derived from those settings.
 
 | Tune | Origin |
 |---|---|
@@ -46,7 +46,7 @@ The tunes (melodies, their harmony and the four-part settings) are from the ABC 
 | Third Mode Melody | Thomas Tallis, 1567 |
 | Passion Chorale | Hans Leo Hassler, 1601 |
 | Ebenezer | Thomas J. Williams, 1890 (Welsh) |
-| Kingsfold | English folk tune |
+| Kingsfold | English folk tune. The four-part setting is by Ralph Vaughan Williams (1906), who died in 1958: public domain in the US, in copyright in the EU and the UK until the end of 2028. |
 | O Waly Waly | English folk tune |
 | God Rest Ye Merry | English, 18th century |
 | Slane | Irish folk tune |
@@ -56,5 +56,5 @@ The tunes (melodies, their harmony and the four-part settings) are from the ABC 
 | Stille Nacht | Franz Xaver Gruber, 1818 |
 | New Britain | American, 1829 |
 | Es ist ein Ros | Michael Praetorius, 1609 |
-| Finlandia | Jean Sibelius, 1899 |
+| Finlandia | Jean Sibelius, 1899. Sibelius died in 1957: public domain in the US, in copyright in the EU and the UK until the end of 2027. |
 | Cranham | Gustav Holst, 1906 |

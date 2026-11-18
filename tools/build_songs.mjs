@@ -242,6 +242,18 @@ function symbolPcs(sym) {
 }
 
 const out = [];
+/* Copyright outside the US. Every tune here was published before 1930, so it is public domain in the US.
+   Where the EU's term (the author's life plus 70 years) has not run out, the license says so. */
+const LIC = {
+  finlandia: {
+    '': 'Public domain in the US; in copyright in the EU and the UK until the end of 2027 (Sibelius died in 1957)',
+    '-4': 'Public domain in the US; in copyright in the EU and the UK until the end of 2027 (Sibelius died in 1957)',
+  },
+  kingsfold: {
+    '-4': 'Public domain in the US; this setting by Vaughan Williams (died 1958) is in copyright in the EU and the UK until the end of 2028. The melody is traditional',
+  },
+};
+
 for (const [id, file, title, origin, lvl, mood, pc, tip] of TUNES) {
   const path = findFile(file);
   const abc = parseAbc(readFileSync(path, 'latin1'));
@@ -354,6 +366,7 @@ for (const [id, file, title, origin, lvl, mood, pc, tip] of TUNES) {
       ...base,
       lvl: lv,
       tip,
+      lic: (LIC[id] || {})[suffix] || 'Public domain',
       ...packed,
       secs: sectionsOf(notes, bars, { len: secLen, pickup }),
       pair: `tune-${id}${suffix ? '' : '-4'}`,
