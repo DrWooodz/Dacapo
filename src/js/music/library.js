@@ -6,13 +6,38 @@ import { LIBRARY_DATA, SONGS_DATA } from '../data.js';
 import { Log } from '../core/log.js';
 import { spellAcc } from './theory.js';
 
+// era: the shelf a composer is on in Songs (ERAS)
 export const COMPOSERS = {
-  tunes: { n: 'Tunes', short: 'Tunes', life: 'folk and hymn tunes, with their chords' },
-  satie: { n: 'Erik Satie', short: 'Satie', life: '1866–1925' },
-  chopin: { n: 'Frédéric Chopin', short: 'Chopin', life: '1810–1849' },
-  debussy: { n: 'Claude Debussy', short: 'Debussy', life: '1862–1918' },
-  rachmaninoff: { n: 'Sergei Rachmaninoff', short: 'Rachmaninoff', life: '1873–1943' },
-  mine: { n: 'Your songs', short: 'Yours', life: '' },
+  tunes: { n: 'Tunes', short: 'Tunes', life: 'folk and hymn tunes, with their chords', era: 'tunes' },
+  japan: {
+    n: 'Japanese traditional',
+    short: 'Japan',
+    life: 'koto music, from a collection of 1895',
+    era: 'tunes',
+  },
+  bach: { n: 'Johann Sebastian Bach', short: 'Bach', life: '1685–1750', era: 'classical' },
+  mozart: { n: 'Wolfgang Amadeus Mozart', short: 'Mozart', life: '1756–1791', era: 'classical' },
+  beethoven: { n: 'Ludwig van Beethoven', short: 'Beethoven', life: '1770–1827', era: 'classical' },
+  schubert: { n: 'Franz Schubert', short: 'Schubert', life: '1797–1828', era: 'classical' },
+  chopin: { n: 'Frédéric Chopin', short: 'Chopin', life: '1810–1849', era: 'romantic' },
+  schumann: { n: 'Robert Schumann', short: 'Schumann', life: '1810–1856', era: 'romantic' },
+  mussorgsky: { n: 'Modest Mussorgsky', short: 'Mussorgsky', life: '1839–1881', era: 'romantic' },
+  tchaikovsky: { n: 'Pyotr Ilyich Tchaikovsky', short: 'Tchaikovsky', life: '1840–1893', era: 'romantic' },
+  grieg: { n: 'Edvard Grieg', short: 'Grieg', life: '1843–1907', era: 'romantic' },
+  albeniz: { n: 'Isaac Albéniz', short: 'Albéniz', life: '1860–1909', era: 'romantic' },
+  rachmaninoff: { n: 'Sergei Rachmaninoff', short: 'Rachmaninoff', life: '1873–1943', era: 'romantic' },
+  debussy: { n: 'Claude Debussy', short: 'Debussy', life: '1862–1918', era: 'modern' },
+  satie: { n: 'Erik Satie', short: 'Satie', life: '1866–1925', era: 'modern' },
+  bartok: { n: 'Béla Bartók', short: 'Bartók', life: '1881–1945', era: 'modern' },
+  mine: { n: 'Your songs', short: 'Yours', life: '', era: 'mine' },
+};
+// Songs' shelves, in order
+export const ERAS = {
+  tunes: 'Tunes',
+  classical: 'Bach to Schubert',
+  romantic: 'Romantic',
+  modern: 'Modern',
+  mine: 'Yours',
 };
 
 export const LEVEL_NAMES = [
@@ -27,7 +52,11 @@ export const LEVEL_NAMES = [
 export const listenUrl = p =>
   'https://www.youtube.com/results?search_query=' +
   encodeURIComponent(
-    p.c === 'tunes' ? `${p.t} tune` : `${(COMPOSERS[p.c] || {}).short || ''} ${p.t} ${p.sub || ''} piano`,
+    p.c === 'tunes'
+      ? `${p.t} tune`
+      : p.c === 'japan'
+        ? `${p.t} koto`
+        : `${(COMPOSERS[p.c] || {}).short || ''} ${p.t} ${p.sub || ''} piano`,
   );
 
 export const scoreUrl = p =>

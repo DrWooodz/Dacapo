@@ -10,6 +10,7 @@ import { startLive } from './music/analysis.js';
 import { Library } from './music/library.js';
 import { Thru } from './music/thru.js';
 import { Sounds } from './music/sounds.js';
+import { MOOD_BY } from './music/moods.js';
 import { Player } from './learn/player.js';
 import { addDays, ensureItem, itemDef, itemState, planFor, refreshItems } from './learn/pieces.js';
 import { SITTING } from './learn/sitting.js';
@@ -142,6 +143,7 @@ window.DaCapo = {
   planFor,
   // Play's sittings
   SITTING,
+  MOOD_BY,
 };
 
 boot();

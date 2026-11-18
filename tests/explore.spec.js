@@ -125,3 +125,49 @@ test('the map: what there is to learn, the core first, and where each part is', 
   await page.locator('.maprow', { hasText: 'Keys and the circle of fifths' }).locator('button').click();
   await expect(page.locator('.cof')).toBeVisible();
 });
+
+test('a mood page lists the music clearly in that mood; the minors list each other', async ({
+  app,
+  page,
+}) => {
+  await app.eval(() => window.DaCapo.go('explore', { mood: 'dorian', pc: 2 }));
+  const dorian = page.locator('section:has(h2:text("Music in this mood")) .piecerow');
+  await expect(dorian).toHaveCount(1);
+  await expect(dorian).toContainText('Brâul');
+  await dorian.click();
+  await page.locator('#psMood').click();
+  await expect(page.locator('#plyMood')).toContainText('D Dorian');
+  await app.eval(() => window.DaCapo.go('explore', { mood: 'natural', pc: 9 }));
+  const minor = page.locator('section:has(h2:text("Music in this mood"))');
+  await expect(minor).toContainText('The Old Castle');
+  await expect(minor).toContainText('Also in a minor key');
+  await expect(minor).toContainText('Für Elise'); // tagged harmonic minor
+  // no list where nothing is clearly in the mood
+  await app.eval(() => window.DaCapo.go('explore', { mood: 'locrian', pc: 11 }));
+  await expect(page.locator('h2:text("Music in this mood")')).toHaveCount(0);
+});
+
+test('every piece tagged with a mood is mostly in its scale and ends with its home note sounding', async ({
+  app,
+}) => {
+  const off = await app.eval(() => {
+    const { Library, MOOD_BY } = window.DaCapo;
+    return Library.all()
+      .filter(p => p.mood && !p.id.endsWith('-4') && p.c !== 'mine')
+      .map(p => {
+        const ns = Library.notes(p.id);
+        const set = new Set(MOOD_BY[p.mood].semis.map(s => (p.pc + s) % 12));
+        let inW = 0;
+        let all = 0;
+        ns.forEach(n => ((all += n.d), set.has(n.m % 12) && (inW += n.d)));
+        // the pitch classes sounding in the last beat
+        const end = Math.max(...ns.map(n => n.t + n.d));
+        const final = new Set(ns.filter(n => n.t + n.d > end - 1).map(n => n.m % 12));
+        return { id: p.id, share: inW / all, home: final.has(p.pc), mood: p.mood };
+      })
+      .filter(r => r.share < 0.8 || (!r.home && !['wholetone', 'hirajoshi'].includes(r.mood)));
+  });
+  // (two known exceptions, checked against the score: the Passion Chorale closes on its dominant, and
+  // Mozart's D minor Fantasia ends in D major)
+  expect(off.map(r => r.id).sort()).toEqual(['mozart-k397', 'tune-passion-chorale']);
+});

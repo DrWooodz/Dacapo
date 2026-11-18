@@ -7,6 +7,7 @@ import { Store } from '../core/store.js';
 import { AudioEngine } from '../core/audio.js';
 import { bindSegs, closeBtn, go, onUnmount, openSheet, seg, UI } from '../core/ui.js';
 import { kbSVG, staffSVG } from '../music/render.js';
+import { COMPOSERS, LEVEL_NAMES, Library } from '../music/library.js';
 import {
   blackKey,
   CIRCLE,
@@ -29,6 +30,7 @@ import {
 import { colorNote, earRound } from '../music/moodtools.js';
 import { prefs } from '../learn/moods.js';
 import { hearChords, hearPhrase, hearScale } from './hear.js';
+import { pieceSheet } from './songs.js';
 import { drawEcho } from './echo.js';
 
 const TABS = [
@@ -242,6 +244,7 @@ function moodPage(page, mood, pcParam) {
       <p><b>Color note: ${esc(color.name)}</b>, ${esc(color.what)}: ${esc(color.tip)}.</p>
       <p class="small">Where you have heard it: ${esc(M.hear)}.</p>
     </section>
+    ${musicIn(mood)}
     <section class="card stack">
       <h2 class="h2">The scale</h2>
       <div class="staffwrap"><div style="max-width:520px;margin:0 auto">${staff.svg}</div></div>
@@ -308,11 +311,42 @@ function moodPage(page, mood, pcParam) {
     else if (d.hearn) hearPhrase(d.hearn, pc);
     else if (d.hearr) hearPhrase(d.hearr, +d.rpc);
     else if (d.go) go('explore', { mood: d.go, pc: +d.gopc });
+    else if (d.piece) pieceSheet(d.piece);
   });
   onUnmount(() => AudioEngine.stopAll());
   // remembered for Play and Practice
   Object.assign(p, { mood, pc });
   Store.save();
+}
+
+/* music clearly in this mood: pieces and tunes tagged with it (learn/pieces), any key. Minor-key music
+   uses both minors (the natural one in its melodies, the raised 7th of harmonic minor in its chords), so
+   each of those pages lists the other's pieces too. */
+const MINORS = ['natural', 'harmonic'];
+function musicIn(mood) {
+  const all = Library.all().filter(p => p.mood && p.c !== 'mine' && !(p.pair && p.id.endsWith('-4')));
+  const order = (a, b) => a.lvl - b.lvl || a.t.localeCompare(b.t);
+  const mine = all.filter(p => p.mood === mood).sort(order);
+  const other = MINORS.includes(mood)
+    ? all.filter(p => p.mood !== mood && MINORS.includes(p.mood)).sort(order)
+    : [];
+  if (!mine.length && !other.length) return '';
+  const row = p => `<button type="button" class="piecerow" data-piece="${esc(p.id)}">
+      <span class="grow"><span class="ttl">${esc(p.t)}</span>
+        <span class="small">${esc((COMPOSERS[p.c] || {}).short || '')} · ${esc(moodName(p.mood, p.pc))} · ${esc(LEVEL_NAMES[p.lvl] || '')}</span></span>
+      <span class="chev" aria-hidden="true">›</span></button>`;
+  return `<section class="card stack">
+      <h2 class="h2">Music in this mood</h2>
+      <p class="small">Tap one to hear it, learn it, or noodle in its key.</p>
+      <div class="stack" style="gap:0">${mine.map(row).join('')}</div>
+      ${
+        other.length
+          ? `<p class="small">Minor-key music mixes both minors: the natural minor in its melodies, the raised
+        7th of harmonic minor in its chords. Also in a minor key:</p>
+      <div class="stack" style="gap:0">${other.map(row).join('')}</div>`
+          : ''
+      }
+    </section>`;
 }
 
 /* ---------- the circle of fifths ---------- */

@@ -8,8 +8,9 @@ import { AudioEngine } from '../core/audio.js';
 import { bindSegs, closeBtn, go, onUnmount, openSheet, seg, UI } from '../core/ui.js';
 import { scoreText } from '../core/files.js';
 import { MAJOR_KEYS, MINOR_KEYS, prettyKey } from '../music/theory.js';
-import { COMPOSERS, LEVEL_NAMES, Library, listenUrl, scoreUrl } from '../music/library.js';
+import { COMPOSERS, ERAS, LEVEL_NAMES, Library, listenUrl, scoreUrl } from '../music/library.js';
 import { parseMusicXML, pieceFromScore } from '../music/musicxml.js';
+import { moodName } from '../music/moods.js';
 import { Player } from '../learn/player.js';
 import {
   criterion,
@@ -38,9 +39,14 @@ export const songsView = (page, params = {}) => {
   if (params.pid && Library.get(params.pid)) return piecePage(page, params.pid, params.item);
   const fav = Store.s.profile.favorites || [];
   const all = Library.all();
-  const shelves = Object.keys(COMPOSERS).filter(c => all.some(p => p.c === c));
-  const shelf = shelves.includes(UI.shelf) ? UI.shelf : shelves.find(c => fav.includes(c)) || shelves[0];
-  const shelfName = c => (c === 'mine' ? 'Yours' : COMPOSERS[c].short);
+  // shelves by era (a shelf remembered as a composer opens that composer's era)
+  const eraOf = c => (COMPOSERS[c] || {}).era;
+  const shelves = Object.keys(ERAS).filter(e => all.some(p => eraOf(p.c) === e));
+  const want = ERAS[UI.shelf] ? UI.shelf : eraOf(UI.shelf);
+  const shelf = shelves.includes(want)
+    ? want
+    : shelves.find(e => fav.some(c => eraOf(c) === e)) || shelves[0];
+  const shelfName = e => ERAS[e];
   const working = workingPieces();
   page.innerHTML = `
     <h1 class="h1 pagetitle">Songs</h1>
@@ -121,17 +127,26 @@ const levelDots = n =>
   [1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('') +
   '</span>';
 
-// the pieces on one shelf (a composer, or your own files), easiest first
-function shelfBody(c, all) {
+// the pieces on one shelf: an era's composers, oldest first, each one's pieces easiest first (or your own)
+function shelfBody(era, all) {
   // a tune is listed once; its four-part setting is a switch in its panel
-  const list = all
-    .filter(p => p.c === c && !(p.pair && p.id.endsWith('-4')))
-    .sort((a, b) => a.lvl - b.lvl || a.t.localeCompare(b.t));
-  const head =
-    c === 'mine'
-      ? '<p class="small">Songs you added. They stay on this device.</p>'
-      : `<p class="small">${esc(COMPOSERS[c].n)} · ${esc(COMPOSERS[c].life)}</p>`;
-  return `${head}<div class="stack" style="gap:0">${list.map(pieceRow).join('')}</div>`;
+  const list = all.filter(p => (COMPOSERS[p.c] || {}).era === era && !(p.pair && p.id.endsWith('-4')));
+  if (era === 'mine')
+    return `<p class="small">Songs you added. They stay on this device.</p><div class="stack" style="gap:0">${list
+      .sort((a, b) => a.t.localeCompare(b.t))
+      .map(pieceRow)
+      .join('')}</div>`;
+  return Object.keys(COMPOSERS)
+    .filter(c => list.some(p => p.c === c))
+    .map(
+      c => `<p class="small shelfhead"><b>${esc(COMPOSERS[c].n)}</b> · ${esc(COMPOSERS[c].life)}</p>
+        <div class="stack" style="gap:0">${list
+          .filter(p => p.c === c)
+          .sort((a, b) => a.lvl - b.lvl || a.t.localeCompare(b.t))
+          .map(pieceRow)
+          .join('')}</div>`,
+    )
+    .join('');
 }
 
 function pieceRow(p) {
@@ -159,7 +174,7 @@ function sectionMap(pid) {
 }
 
 // a piece in a panel: what it is, how hard, and a way in
-function pieceSheet(pid) {
+export function pieceSheet(pid) {
   const p = Library.get(pid);
   if (!p) return;
   const mine = p.c === 'mine';
@@ -211,7 +226,13 @@ function pieceSheet(pid) {
        ${links}
      </div>
      <button class="btn cover big" type="button" id="psGo">${isWorking(pid) ? 'Open' : 'Learn this piece'}</button>
-     ${p.syms && p.syms.length ? '<button class="btn" type="button" id="psNoodle">Noodle over its chords</button>' : ''}
+     ${
+       p.syms && p.syms.length
+         ? '<button class="btn" type="button" id="psNoodle">Noodle over its chords</button>'
+         : p.mood
+           ? `<button class="btn" type="button" id="psMood">Noodle in ${esc(moodName(p.mood, p.pc))}</button>`
+           : ''
+     }
      <p class="small">${source}</p>
      ${mine ? '<button class="btn sm ghost" type="button" id="psDel">Remove this song</button>' : ''}`,
     sheet => {
@@ -225,6 +246,8 @@ function pieceSheet(pid) {
       });
       const noodle = $('#psNoodle', sheet);
       if (noodle) noodle.onclick = () => go('play', { song: pid });
+      const inMood = $('#psMood', sheet);
+      if (inMood) inMood.onclick = () => go('play', { mood: p.mood, pc: p.pc });
       const del = $('#psDel', sheet);
       if (del) del.onclick = () => removeImport(pid);
       return () => AudioEngine.stopAll();

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.3.0
+
+- 15 more pieces by masters, from Mutopia Project editions:
+  - Bach: Prelude in C major
+  - Mozart: Sonata K. 545 (first movement), Fantasia in D minor
+  - Beethoven: Für Elise, "Moonlight" Sonata (first movement)
+  - Schubert: Moment musical No. 3
+  - Schumann: Melody, First Loss
+  - Tchaikovsky: Old French Song
+  - Mussorgsky: The Old Castle
+  - Grieg: Åse's Death
+  - Albéniz: Rumores de la Caleta
+  - Bartók: Brâul
+  - Chopin: the "Black Key" Étude
+  - Sakura, from an 1895 collection of Japanese koto music
+- Each mood's page in Explore lists the music clearly in that mood: the pieces and tunes whose scale it is and where they come to rest. Natural and harmonic minor list each other's pieces too, since minor-key music uses both. Moods no piece is clearly in have no list.
+- A piece's panel can open Play in its mood and key.
+- Songs is shelved by era (Tunes, Bach to Schubert, Romantic, Modern).
+- Where a tune is still in copyright outside the US (Finlandia, Kingsfold's four-part setting), its license line says so.
+
 ## 2.2.0
 
 This release brings both planned steps, 2.1 (Play) and 2.2 (Songs).

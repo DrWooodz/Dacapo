@@ -8,7 +8,7 @@ test.beforeEach(async ({ app }) => {
 
 test('learning a piece from the shelf: its page opens on the first section', async ({ app, page }) => {
   await page.locator('#tabs [data-view="songs"]').click();
-  await page.locator('[data-seg="sgShelf"] [data-v="chopin"]').click();
+  await page.locator('[data-seg="sgShelf"] [data-v="romantic"]').click();
   await page.locator('[data-open="chopin-p4"]').click();
   await page.locator('#psHear').click();
   await page.locator('#psGo').click();

@@ -1,6 +1,6 @@
 # Music data in `src/data/library.json`
 
-The note data of the built-in pieces is derived from editions typeset by volunteers of the Mutopia Project (https://www.mutopiaproject.org). Each source carries its own license, listed below. Data derived from a Creative Commons Attribution-ShareAlike edition is shared under that same license (version 3.0 or 4.0, as listed: https://creativecommons.org/licenses/by-sa/4.0/ and https://creativecommons.org/licenses/by-sa/3.0/). Public-domain data carries no restrictions. DaCapo's code is MIT-licensed separately.
+The note data of the built-in pieces is derived from editions typeset by volunteers of the Mutopia Project (https://www.mutopiaproject.org). Each source carries its own license, listed below. Data derived from a Creative Commons Attribution-ShareAlike edition is shared under that same license (version 2.5, 3.0 or 4.0, as listed: https://creativecommons.org/licenses/by-sa/4.0/, https://creativecommons.org/licenses/by-sa/3.0/ and https://creativecommons.org/licenses/by-sa/2.5/). Public-domain data carries no restrictions. DaCapo's code is MIT-licensed separately.
 
 | Piece | Composer | License | Typeset by | Mutopia ID |
 |---|---|---|---|---|
@@ -33,6 +33,21 @@ The note data of the built-in pieces is derived from editions typeset by volunte
 | Prelude in C-sharp minor (Op. 3 No. 2) | Sergei Rachmaninoff | Creative Commons Attribution-ShareAlike 4.0 | Petro Kostandy | Mutopia-2015/07/09-2033 |
 | Prelude in D major (Op. 23 No. 4) | Sergei Rachmaninoff | Creative Commons Attribution-ShareAlike 4.0 | Abel Cheung | Mutopia-2014/08/15-1993 |
 | Prelude in G minor (Op. 23 No. 5) | Sergei Rachmaninoff | Creative Commons Attribution-ShareAlike 4.0 | Joram Berger | Mutopia-2015/09/28-2001 |
+| Prelude in C major (Well-Tempered Clavier I, BWV 846) | Johann Sebastian Bach | Public Domain | Tobias Erbsland | Mutopia-2011/09/12-5 |
+| Sonata in C major, I. Allegro (K. 545) | Wolfgang Amadeus Mozart | Creative Commons Attribution-ShareAlike 3.0 | Alejandro Sierra | Mutopia-2013/09/01-998 |
+| Fantasia in D minor (K. 397) | Wolfgang Amadeus Mozart | Public Domain | Andrés Necochea | Mutopia-2015/07/09-2034 |
+| Für Elise (WoO 59) | Ludwig van Beethoven | Public Domain | Stelios Samelis | Mutopia-2015/08/18-931 |
+| "Moonlight" Sonata, I. Adagio sostenuto (Op. 27 No. 2) | Ludwig van Beethoven | Creative Commons Attribution-ShareAlike 2.5 | Stewart Holmes | Mutopia-2007/02/11-276 |
+| Moment musical No. 3 in F minor (D 780) | Franz Schubert | Public Domain | Claude Chaudron | Mutopia-2007/08/11-1023 |
+| Melody (Album for the Young, Op. 68 No. 1) | Robert Schumann | Creative Commons Attribution-ShareAlike 2.5 | Philippe Hézaine | Mutopia-2007/02/11-647 |
+| First Loss (Album for the Young, Op. 68 No. 16) | Robert Schumann | Creative Commons Attribution-ShareAlike 2.5 | Philippe Hézaine | Mutopia-2007/02/11-676 |
+| Old French Song (Album for the Young, Op. 39 No. 16) | Pyotr Ilyich Tchaikovsky | Public Domain | David McNamara | Mutopia-2015/11/27-2080 |
+| The Old Castle (Pictures at an Exhibition) | Modest Mussorgsky | Creative Commons Attribution-ShareAlike 4.0 | Knute Snortum | Mutopia-2016/12/31-475 |
+| Åse's Death (Peer Gynt Suite No. 1, Op. 46) | Edvard Grieg | Public Domain | Deborah Lowrey | — |
+| Rumores de la Caleta (Malagueña, Recuerdos de viaje Op. 71 No. 6) | Isaac Albéniz | Public Domain | David Surtees | Mutopia-2006/12/29-898 |
+| Brâul (Romanian Folk Dances No. 2) | Béla Bartók | Public Domain | John Mamoun | Mutopia-2017/01/11-2162 |
+| Étude in G-flat major "Black Key" (Op. 10 No. 5) | Frédéric Chopin | Public Domain | Roland Goretzki | — |
+| Sakura (Cherry blossoms, for koto) | Japanese traditional | Public Domain | patrick stanistreet | Mutopia-2014/07/27-1971 |
 
 ## Tunes
 

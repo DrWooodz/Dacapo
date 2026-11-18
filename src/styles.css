@@ -1786,3 +1786,10 @@ svg.cof .ctr {
 .chip.out {
   border-style: dashed;
 }
+
+.shelfhead {
+  margin: 12px 0 2px;
+}
+.shelfhead:first-child {
+  margin-top: 4px;
+}
